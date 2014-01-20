@@ -18,7 +18,15 @@ find_package(PythonLibs ${PYTHON_VERSION_STRING} REQUIRED)
 find_package(NumPy REQUIRED)
 find_package(boost REQUIRED)
 
-list(APPEND ${PROJECT_NAME}_LIB_SOURCE_FILES
+list(APPEND ${PROJECT_NAME}_libboostnumpy_INCLUDE_DIRS
+    ${PYTHON_INCLUDE_DIRS}
+    ${NUMPY_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+
+list(APPEND ${PROJECT_NAME}_libboostnumpy_SOURCE_FILES
     src/boost/numpy/detail/iter.cpp
     src/boost/numpy/dtype.cpp
     src/boost/numpy/matrix.cpp
@@ -27,6 +35,13 @@ list(APPEND ${PROJECT_NAME}_LIB_SOURCE_FILES
     src/boost/numpy/scalars.cpp
 )
 
-#add_library(boostnumpy
+include_directories(
+    ${PROJECT_NAME}_libboostnumpy_INCLUDE_DIRS
+)
 
-#)
+add_library(boostnumpy
+    ${PROJECT_NAME}_libboostnumpy_SOURCE_FILES
+)
+target_link_libraries(boostnumpy
+    ${Boost_LIBRARIES}
+)
