@@ -1,15 +1,12 @@
 message(STATUS "Entering 'config.cmake'")
 
+set(BUILD_SHARED_LIBS TRUE)
+
 add_definitions(-fPIC)
 
-#
-# libraries everybody links to
-#
-if (${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
-    # FreeBSD keeps libdl stuff in libc
-    link_libraries(m stdc++)
-else (${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
-    link_libraries(m dl stdc++)
-endif (${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
+link_libraries(stdc++)
 
-message(STATUS "Leaving 'config.cmake'")
+set(BOOSTNUMPY_VERSION_STRING "1.0.0" CACHE STRING "The BoostNumpy version." FORCE)
+
+message(STATUS "+    BOOSTNUMPY_VERSION: ${BOOSTNUMPY_VERSION_STRING}")
+message(STATUS "+    CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
