@@ -25,11 +25,11 @@
 #define BOOST_NUMPY_INTERNAL_IMPL_MAIN
 #include <boost/numpy/internal_impl.hpp>
 
-#include <boost/assert.hpp>
-#include <boost/version.hpp>
-
 #include <boost/numpy/numpy_c_api.hpp>
 #include <boost/numpy/dtype.hpp>
+
+#include <boost/assert.hpp>
+#include <boost/version.hpp>
 
 namespace boost {
 namespace numpy {

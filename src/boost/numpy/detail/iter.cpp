@@ -19,13 +19,13 @@
  */
 #define BOOST_NUMPY_INTERNAL_IMPL
 #include <boost/numpy/internal_impl.hpp>
+#include <boost/numpy/numpy_c_api.hpp>
 
 #include <iostream>
 
 #include <boost/preprocessor/iteration/iterate.hpp>
 
 #include <boost/numpy/limits.hpp>
-#include <boost/numpy/numpy_c_api.hpp>
 #include <boost/numpy/detail/iter.hpp>
 
 #define print_c_array(NAME, SIZE) \

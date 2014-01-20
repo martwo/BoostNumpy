@@ -6,17 +6,24 @@ project(BoostNumpy CXX)
 message(STATUS "Configuring project \"${PROJECT_NAME}\"")
 message(STATUS "+    project source dir: ${PROJECT_SOURCE_DIR}")
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
+    CACHE PATH "Output directory for static libraries.")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
+    CACHE PATH "Output directory for shared libraries.")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    CACHE PATH "Output directory for executables and DLL's.")
 
-# Put our local cmake find scripts at the beginning of the cmake
-# module search path.
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/tools ${CMAKE_MODULE_PATH})
+include(${CMAKE_SOURCE_DIR}/cmake/config.cmake)
 
 set(BUILD_SHARED_LIBS TRUE)
 
 find_package(PythonInterp REQUIRED)
 find_package(PythonLibs ${PYTHON_VERSION_STRING} REQUIRED)
-find_package(NumPy REQUIRED)
-find_package(boost REQUIRED)
+
+include(${CMAKE_SOURCE_DIR}/cmake/tools/NumPy.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/tools/boost.cmake)
+
+message(STATUS "Python include dirs: ${PYTHON_INCLUDE_DIRS}")
 
 list(APPEND ${PROJECT_NAME}_libboostnumpy_INCLUDE_DIRS
     ${PYTHON_INCLUDE_DIRS}
@@ -35,13 +42,31 @@ list(APPEND ${PROJECT_NAME}_libboostnumpy_SOURCE_FILES
     src/boost/numpy/scalars.cpp
 )
 
-include_directories(
-    ${PROJECT_NAME}_libboostnumpy_INCLUDE_DIRS
+list(APPEND ${PROJECT_NAME}_libboostnumpy_LIBRARIES
+    ${PYTHON_LIBRARIES}
+    ${Boost_LIBRARIES}
 )
 
+include_directories(
+    ${${PROJECT_NAME}_libboostnumpy_INCLUDE_DIRS}
+)
 add_library(boostnumpy
-    ${PROJECT_NAME}_libboostnumpy_SOURCE_FILES
+    ${${PROJECT_NAME}_libboostnumpy_SOURCE_FILES}
 )
 target_link_libraries(boostnumpy
-    ${Boost_LIBRARIES}
+    ${${PROJECT_NAME}_libboostnumpy_LIBRARIES}
+)
+get_target_property(${PROJECT_NAME}_libboostnumpy_LIBRARY_OUTPUT_DIRECTORY
+    boostnumpy LIBRARY_OUTPUT_DIRECTORY)
+add_custom_command(TARGET boostnumpy
+    PRE_LINK
+    COMMAND mkdir -p ${${PROJECT_NAME}_libboostnumpy_LIBRARY_OUTPUT_DIRECTORY}
+)
+
+# Install all the public header files into the include directory in the build
+# tree.
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+        DESTINATION ${CMAKE_BINARY_DIR}/include
+        FILES_MATCHING PATTERN "*.hpp"
+        PATTERN ".svn" EXCLUDE
 )
