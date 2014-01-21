@@ -1,6 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env python
 
-rm -rf build
-mkdir -p build
-cd build
-cmake -DCMAKE_CXX_COMPILER=`which clang++` -DCMAKE_INSTALL_PREFIX="$I3_PORTS" ..
+from optparse import OptionParser
+from os import system
+
+parser = OptionParser()
+parser.add_option("", "--prefix", type="string", dest="prefix", default=".",
+    help="The path where the software should get installed to. "
+         "By default it installs into the build directory.", metavar="PATH")
+(options, args) = parser.parse_args()
+
+print("Configuring BoostNumpy ...")
+print("    prefix=%s"%(options.prefix))
+
+system("rm -rf build")
+system("mkdir -p build")
+system("cd build && /usr/bin/env cmake -DCMAKE_INSTALL_PREFIX=\"%s\" .."%(options.prefix))
