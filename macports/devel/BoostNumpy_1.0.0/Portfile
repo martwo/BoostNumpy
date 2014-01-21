@@ -13,17 +13,10 @@ long_description    BoostNumpy provides an extension for boost::python to use \
                     ufunc'tions to Python.
 homepage            http://icecube.wisc.edu/~mwolf/BoostNumpy/
 
-fetch.type          svn
-git.url             http://code.icecube.wisc.edu/svn/sandbox/mwolf/tools/BoostNumpy/trunk
-svn.method          export
+master_sites        http://icecube.wisc.edu/~mwolf/tools/
+
+checksums           BoostNumpy-1.0.0.tar.gz md5 a4da74685eacb055e48995740b45e77e \
+                    rmd160 bc14e87a8e445baa9efdef56af2f0f934c324a98 \
+                    sha256 d117a085845d0ec1327f0d223024b0ddf3595b8de25dc2ee087b0fc26ec9b8e4
 
 build.cmd           cd build && ${build.cmd}
-destroot.cmd        cd build && ${destroot.cmd}
-
-#pre-build {
-#    cd ${worksrcpath}/build
-#}
-#
-#pre-destroot {
-#    cd ${worksrcpath}/build
-#}
