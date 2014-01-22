@@ -79,6 +79,12 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
     )
 
+    # Install the documentation into <PREFIX>/share/doc.
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
+        PATTERN ".svn" EXCLUDE
+    )
+
     message(STATUS "Project \"${PROJECT_NAME}\" configured.")
     message(STATUS "+    Now, type-in \"cd ${CMAKE_BINARY_DIR} && make && make install\"!")
     message(STATUS "+    \"${PROJECT_NAME}\" will be installed in ${CMAKE_INSTALL_PREFIX}.")
