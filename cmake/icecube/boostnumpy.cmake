@@ -25,7 +25,7 @@ else("${BOOSTNUMPY_INCLUDE_DIR}" STREQUAL "")
         CACHE STRING "The version of the detected BoostNumpy tool as a string." FORCE)
 
     set(BOOSTNUMPY_LIB_DIR ${BOOSTNUMPY_PREFIX}/lib/BoostNumpy-${BOOSTNUMPY_VERSION_STRING})
-    set(BOOSTNUMPY_DOC_DIR ${BOOSTNUMPY_PREFIX}/share/doc/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
+    set(BOOSTNUMPY_DOCS_DIR ${BOOSTNUMPY_PREFIX}/share/doc/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
         CACHE PATH "The path to the documentation direcroty of BoostNumpy." FORCE)
     set(BOOSTNUMPY_LIBRARIES boostnumpy)
 
