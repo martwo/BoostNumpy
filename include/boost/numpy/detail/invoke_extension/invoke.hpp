@@ -25,6 +25,7 @@
 #define BOOST_NUMPY_DETAIL_INVOKE_EXTENSION_INVOKE_HPP_INCLUDED
 
 #include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/repetition/enum_trailing_params.hpp>
 #include <boost/preprocessor/repetition/enum_trailing_binary_params.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
