@@ -6,13 +6,12 @@
  *     Martin Wolf <martin.wolf@icecube.wisc.edu>
  *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
  *
- * \file    boost/numpy/dstream/mapping/models/_NxS_to_S.hpp
+ * \file    boost/numpy/dstream/mapping/models/NxS_to_S.hpp
  * \version $Revision$
  * \date    $Date$
  * \author  Martin Wolf <martin.wolf@icecube.wisc.edu>
  *
- * \brief This file defines a mapping model template (and its specializations
- *        for the different numbers of input arrays) for functions that expact
+ * \brief This file defines a mapping model template for functions that expact
  *        only scalar data shaped input arrays and that are returning a scalar
  *        shaped output array.
  *
@@ -88,7 +87,7 @@ namespace model {
 template <
       int InArity
     , class OutT
-    , BOOST_PP_ENUM_BINARY_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)\
+    , BOOST_PP_ENUM_BINARY_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
 >
 struct NxS_to_S
   : base_mapping_model<
@@ -128,7 +127,7 @@ struct NxS_to_S
 
     //__________________________________________________________________________
     /**
-     * \brief Sets the iteration shape to the given std::vector<int> object
+     * \brief Sets the iteration shape to the given std::vector<intptr_t> object
      *     for an iteration where the first axis has n_axis_1_elements
      *     elements.
      */
@@ -141,7 +140,7 @@ struct NxS_to_S
 
     //__________________________________________________________________________
     /**
-     * \brief Function to sets the broadcasting rules for the output ndarray
+     * \brief Function to set the broadcasting rules for the output ndarray
      *     object to the given std::vector<int> object.
      */
     static void

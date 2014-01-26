@@ -45,7 +45,7 @@
 #include <boost/numpy/dstream/callable.hpp>
 #include <boost/numpy/dstream/defaults.hpp>
 #include <boost/numpy/dstream/detail/def_helper.hpp>
-#include <boost/numpy/dstream/mapping/models/_NxS_to_S.hpp>
+#include <boost/numpy/dstream/mapping/models/NxS_to_S.hpp>
 #include <boost/numpy/dstream/wiring/models/scalar_callable.hpp>
 #include <boost/numpy/dstream/out_arr_transforms/squeeze_first_axis_if_single_input_and_scalarize.hpp>
 

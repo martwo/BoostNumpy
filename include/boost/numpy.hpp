@@ -30,7 +30,7 @@ namespace numpy {
 /**
  *  @brief Initialize the Numpy C-API
  *
- *  This must be called before using anything in boost.numpy;
+ *  This must be called before using anything in boost::numpy;
  *  It should probably be the first line inside BOOST_PYTHON_MODULE.
  *
  *  @internal This just calls the Numpy C-API functions "import_array()"

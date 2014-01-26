@@ -99,13 +99,22 @@ struct dshape
 {};
 
 //------------------------------------------------------------------------------
-// Typedef the scalar data shape as scalar_dshape.
+// Typedef the scalar data shape (i.e. for a 1D input/output ndarray) as
+// scalar_dshape.
 template <class T>
 struct scalar_dshape
   : dshape<boost::mpl::vector<>, T>
 {};
 
 typedef scalar_dshape<void> void_dshape;
+
+//------------------------------------------------------------------------------
+// Typedef the 1-dimensional data shape (i.e. for a 2D input/output ndarray) as
+// dshape_1d.
+template <int N, class T>
+struct dshape_1d
+  : dshape<boost::mpl::vector< boost::mpl::int_<N> >, T>
+{};
 
 namespace utils {
 

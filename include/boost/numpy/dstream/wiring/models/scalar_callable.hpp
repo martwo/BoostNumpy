@@ -40,7 +40,7 @@
 #include <boost/numpy/detail/config.hpp>
 #include <boost/numpy/detail/callable_caller.hpp>
 #include <boost/numpy/dstream/wiring.hpp>
-#include <boost/numpy/dstream/mapping/models/_NxS_to_S.hpp>
+#include <boost/numpy/dstream/mapping/models/NxS_to_S.hpp>
 
 namespace boost {
 namespace numpy {
@@ -106,7 +106,6 @@ struct scalar_callable_selector
 #endif // !BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE_HPP_INCLUDED
 // EOF
 //==============================================================================
-// Partial template specializations for the model_NxS_to_S mapping models.
 #elif BOOST_PP_ITERATION_FLAGS() == 1
 
 #define N BOOST_PP_ITERATION()
@@ -269,8 +268,6 @@ struct scalar_callable_arity<N>
         }
     };
 };
-
-#undef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA_N
 
 #undef N
 

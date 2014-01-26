@@ -2,20 +2,16 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
+ * 2013 - 2014
  *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
  *
- * \file    boost/numpy/dstream/mapping/models/_NxS_to_X.hpp
+ * \file    boost/numpy/dstream/mapping/models/NxS_to_X.hpp
  * \version $Revision$
  * \date    $Date$
  * \author  Martin Wolf <martin.wolf@icecube.wisc.edu>
  *
- * \brief This file defines a mapping model template (and its specializations
- *        for the different numbers of input arrays and output data shapes) for
- *        functions that expact only scalar data shaped input arrays and that
- *        are returning a one-dimensional data shaped output array of arbitrary
- *        length.
+ * \brief This file defines a mapping model template for mapping N scalar input
+ *        values to a 1-dimensional output array with X elements.
  *
  *        This file is distributed under the Boost Software License,
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -24,27 +20,30 @@
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X_HPP_INCLUDED
 
-#include <stdint.h>
-
-#include <vector>
-
-#include <boost/preprocessor/arithmetic/add.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
-#include <boost/preprocessor/iteration/local.hpp>
+#include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
-#include <boost/preprocessor/repetition/enum_params.hpp>
-#include <boost/preprocessor/repetition/repeat_from_to.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
-#include <boost/numpy/pp.hpp>
+#include <boost/type_traits/is_same.hpp>
+
 #include <boost/numpy/limits.hpp>
-#include <boost/numpy/detail/iter.hpp>
 #include <boost/numpy/dstream/dshape.hpp>
 #include <boost/numpy/dstream/mapping.hpp>
+#include <boost/numpy/mpl/types.hpp>
+
+namespace boost {
+namespace numpy {
+namespace dstream {
+namespace mapping {
+namespace model {
+
+#define BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__INDSHAPE(z, n, data)       \
+    BOOST_PP_COMMA_IF(n) scalar_dshape< BOOST_PP_CAT(InT_, n) >
 
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__ITER_FLAGS
 #define BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__ITER_FLAGS                 \
-    boost::numpy::detail::iter::EXTERNAL_LOOP                                  \
-    | boost::numpy::detail::iter::DONT_NEGATE_STRIDES
+    boost::numpy::detail::iter::DONT_NEGATE_STRIDES
 #endif
 
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__ORDER
@@ -74,28 +73,23 @@
     boost::numpy::detail::iter_operand::READONLY
 #endif
 
-namespace boost {
-namespace numpy {
-namespace dstream {
-namespace mapping {
-namespace model {
-
 template <
-      int InArity
-    , class OutArrDShape
-    , BOOST_PP_ENUM_BINARY_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, class InArrDShape_, = BOOST_NUMPY_PP_MPL_VOID BOOST_PP_INTERCEPT)
+      int N
+    , int X
+    , class OutT
+    , BOOST_PP_ENUM_BINARY_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
 >
-struct _NxS_to_X
+struct NxS_to_X
   : base_mapping_model<
-          InArity
-        , OutArrDShape
-        , BOOST_PP_ENUM_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, InArrDShape_)
+          N
+        , dshape_1d<X, OutT>
+        , BOOST_PP_REPEAT(BOOST_NUMPY_LIMIT_INPUT_ARITY, BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__INDSHAPE, ~)
     >
 {
-    typedef boost::is_same<OutArrDShape, void_dshape> maps_to_void_t;
-    BOOST_STATIC_CONSTANT(bool, maps_to_void = maps_to_void_t::value);
-
-    typedef OutArrDShape out_arr_dshape_t;
+    // We assume, that this mapping model will never map to a void output. If
+    // a void output is needed that NxS_to_S mapping model should be used
+    // instead!
+    BOOST_STATIC_CONSTANT(bool, maps_to_void = false);
 
     //--------------------------------------------------------------------------
     // Declare the iterator configuration needed for this mapping model as
@@ -104,8 +98,12 @@ struct _NxS_to_X
     static order_t                            const order;
     static casting_t                          const casting;
     static intptr_t                           const buffersize;
-    BOOST_STATIC_CONSTANT(int, n_op = 1 + InArity);
+    BOOST_STATIC_CONSTANT(int, n_op = 1 + N);
     BOOST_STATIC_CONSTANT(int, n_iter_axes = 2);
+
+    //--------------------------------------------------------------------------
+    // Declare the strides between the values of each array operand.
+    static std::vector<int> const op_value_strides;
 
     //--------------------------------------------------------------------------
     // Declare the iter operand flags for the output array.
@@ -121,7 +119,7 @@ struct _NxS_to_X
 
     //__________________________________________________________________________
     /**
-     * \brief Sets the iteration shape to the given std::vector<int> object
+     * \brief Sets the iteration shape to the given std::vector<intptr_t> object
      *     for an iteration where the first axis has n_axis_1_elements
      *     elements.
      */
@@ -135,7 +133,7 @@ struct _NxS_to_X
 
     //__________________________________________________________________________
     /**
-     * \brief Function to sets the broadcasting rules for the output ndarray
+     * \brief Function to set the broadcasting rules for the output ndarray
      *     object to the given std::vector<int> object.
      */
     static void
@@ -182,78 +180,67 @@ struct _NxS_to_X
     }
 };
 
+#undef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__INDSHAPE
+
 //______________________________________________________________________________
 // Define the iterator configuration for this mapping model.
 #define BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS    \
     template <                                                                 \
-          int InArity                                                          \
-        , class OutArrDShape                                                   \
-        , BOOST_PP_ENUM_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, class InArrDShape_)\
+          int N                                                                \
+        , int X                                                                \
+        , class OutT                                                           \
+        , BOOST_PP_ENUM_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_)      \
     >
 
 #define BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC      \
-    <                                                                          \
-          InArity                                                              \
-        , OutArrDShape                                                         \
-        , BOOST_PP_ENUM_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, InArrDShape_)    \
+    < N                                                                        \
+    , X                                                                        \
+    , OutT                                                                     \
+    , BOOST_PP_ENUM_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, InT_)                \
     >
 
 //------------------------------------------------------------------------------
 BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 boost::numpy::detail::iter_flags_t const
-_NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
+NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 ::iter_flags = BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__ITER_FLAGS;
 //------------------------------------------------------------------------------
 BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 order_t const
-_NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
+NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 ::order = BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__ORDER;
 //------------------------------------------------------------------------------
 BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 casting_t const
-_NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
+NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 ::casting = BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__CASTING;
 //------------------------------------------------------------------------------
 BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 intptr_t const
-_NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
+NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 ::buffersize = BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__BUFFERSIZE;
+//------------------------------------------------------------------------------
+BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
+std::vector<int> const
+NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
+::op_value_strides = std::vector<int>(1 + N, X);
 //------------------------------------------------------------------------------
 // Define the iter operand flags for the output array.
 BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 boost::numpy::detail::iter_operand_flags_t const
-_NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
+NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 ::out_arr_iter_operand_flags = BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__OUT_ARR_ITER_OPERAND_FLAGS;
 //------------------------------------------------------------------------------
 // Define the (same) iter operand flags for all the input arrays.
 BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 template <int idx>
 boost::numpy::detail::iter_operand_flags_t const
-_NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
+NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 ::in_arr_iter_operand_flags<idx>
 ::value = BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__IN_ARR_ITER_OPERAND_FLAGS;
 
-#undef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 #undef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
-
-//______________________________________________________________________________
-// Define typedef's for N number of input arrays and for a (X,)-data-shaped
-// output array named _NxS_to_X where N and X are substituted with integer
-// values.
-#define BOOST_PP_DEF(z, N, X) \
-    typedef _NxS_to_X<                                                         \
-          N                                                                    \
-        , BOOST_PP_CAT(BOOST_PP_CAT(_,X),_dshape)                              \
-        BOOST_NUMPY_PP_COMMA_IF_LIST(N, scalar_dshape)                         \
-        BOOST_NUMPY_PP_COMMA_IF_LIST(BOOST_PP_SUB(BOOST_NUMPY_LIMIT_INPUT_ARITY, N), BOOST_NUMPY_PP_MPL_VOID)\
-    > BOOST_PP_CAT(BOOST_PP_CAT(BOOST_PP_CAT(_,N),xS_to_),X);
-
-#define BOOST_PP_LOCAL_LIMITS (1, BOOST_NUMPY_LIMIT_INPUT_ARITY)
-#define BOOST_PP_LOCAL_MACRO(X)                                                \
-    BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_ADD(BOOST_NUMPY_LIMIT_INPUT_ARITY, 1), BOOST_PP_DEF, X)
-#include BOOST_PP_LOCAL_ITERATE()
-
-#undef BOOST_PP_DEF
+#undef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 
 }// namespace model
 }// namespace mapping
