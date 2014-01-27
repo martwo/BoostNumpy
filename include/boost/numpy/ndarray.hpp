@@ -159,7 +159,7 @@ class ndarray : public python::object
 
     //__________________________________________________________________________
     /**
-     * @brief Return the shape of the array as an array of integers
+     * @brief Return the shape of the array as an array of intptr_t values
      *        (length == get_nd()).
      */
     inline
@@ -188,10 +188,10 @@ class ndarray : public python::object
      * @brief Return the size of the n'th dimension.
      */
     inline
-    int const
+    intptr_t const
     shape(int n) const
     {
-        return this->get_shape()[n];
+        return get_shape()[n];
     }
 
     //__________________________________________________________________________
