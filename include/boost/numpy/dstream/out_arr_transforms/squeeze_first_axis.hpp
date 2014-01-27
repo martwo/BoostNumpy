@@ -36,14 +36,24 @@ namespace numpy {
 namespace dstream {
 namespace out_arr_transforms {
 
-//==============================================================================
-template <int InArity, class MappingModel>
-struct squeeze_first_axis;
+namespace detail {
 
-// Partially specialize the class template for different input arity.
+template <int InArity, class MappingModel>
+struct squeeze_first_axis_base;
+
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/out_arr_transforms/squeeze_first_axis.hpp>))
 #include BOOST_PP_ITERATE()
+
+}// namespace detail
+
+template <class MappingModel>
+struct squeeze_first_axis
+  : detail::squeeze_first_axis_base<MappingModel::in_arity, MappingModel>
+{
+    typedef squeeze_first_axis<MappingModel>
+            type;
+};
 
 }/*namespace out_arr_transforms*/
 }/*namespace dstream*/
@@ -55,13 +65,11 @@ struct squeeze_first_axis;
 
 #define N BOOST_PP_ITERATION()
 
+// Partial specialization for input arity N.
 template <class MappingModel>
-struct squeeze_first_axis<N, MappingModel>
-  : out_arr_transform_base<N, MappingModel>
+struct squeeze_first_axis_base<N, MappingModel>
+  : out_arr_transform_base<MappingModel>
 {
-    typedef squeeze_first_axis<N, MappingModel>
-            type;
-
     inline static int
     apply(ndarray & out_arr, BOOST_PP_ENUM_PARAMS(N, ndarray const & in_arr_))
     {

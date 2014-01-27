@@ -35,15 +35,25 @@ namespace numpy {
 namespace dstream {
 namespace out_arr_transforms {
 
-//==============================================================================
-template <int InArity, class MappingModel>
-struct none;
+namespace detail {
 
-//------------------------------------------------------------------------------
-// Partial specialization of the template for different number of input arrays.
+template <int InArity, class MappingModel>
+struct none_base;
+
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/out_arr_transforms/none.hpp>))
 #include BOOST_PP_ITERATE()
+
+}// namespace detail
+
+//==============================================================================
+template <class MappingModel>
+struct none
+  : detail::none_base<MappingModel::in_arity, MappingModel>
+{
+    typedef none<MappingModel>
+            type;
+};
 
 }/*namespace out_arr_transforms*/
 }/*namespace dstream*/
@@ -55,13 +65,11 @@ struct none;
 
 #define N BOOST_PP_ITERATION()
 
+// Partial specialization of none_base for input arity N.
 template <class MappingModel>
-struct none<N, MappingModel>
-  : out_arr_transform_base<N, MappingModel>
+struct none_base<N, MappingModel>
+  : out_arr_transform_base<MappingModel>
 {
-    typedef none<N, MappingModel>
-            type;
-
     inline static int
     apply(ndarray & out_arr, BOOST_PP_ENUM_PARAMS(N, ndarray const & in_arr_))
     {

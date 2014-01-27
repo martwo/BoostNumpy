@@ -37,14 +37,24 @@ namespace numpy {
 namespace dstream {
 namespace out_arr_transforms {
 
-//==============================================================================
-template <int InArity, class MappingModel>
-struct scalarize;
+namespace detail {
 
-// Partially specialize the class template for different input arities.
+template <int InArity, class MappingModel>
+struct scalarize_base;
+
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/out_arr_transforms/scalarize.hpp>))
 #include BOOST_PP_ITERATE()
+
+}// namespace detail
+
+template <class MappingModel>
+struct scalarize
+  : detail::scalarize_base<MappingModel::in_arity, MappingModel>
+{
+    typedef scalarize<MappingModel>
+            type;
+};
 
 }/*namespace out_arr_transforms*/
 }/*namespace dstream*/
@@ -56,13 +66,11 @@ struct scalarize;
 
 #define N BOOST_PP_ITERATION()
 
+// Partial specialization for input arity N.
 template <class MappingModel>
-struct scalarize<N, MappingModel>
-  : out_arr_transform_base<N, MappingModel>
+struct scalarize_base<N, MappingModel>
+  : out_arr_transform_base<MappingModel>
 {
-    typedef scalarize<N, MappingModel>
-            type;
-
     inline static int
     apply(ndarray & out_arr, BOOST_PP_ENUM_PARAMS(N, ndarray const & in_arr_))
     {

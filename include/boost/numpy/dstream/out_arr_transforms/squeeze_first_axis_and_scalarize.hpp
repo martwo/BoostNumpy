@@ -40,14 +40,24 @@ namespace numpy {
 namespace dstream {
 namespace out_arr_transforms {
 
-//==============================================================================
-template <int InArity, class MappingModel>
-struct squeeze_first_axis_and_scalarize;
+namespace detail {
 
-// Partially specialize the class template for different input arities.
+template <int InArity, class MappingModel>
+struct squeeze_first_axis_and_scalarize_base;
+
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/out_arr_transforms/squeeze_first_axis_and_scalarize.hpp>))
 #include BOOST_PP_ITERATE()
+
+}// namespace detail
+
+template <class MappingModel>
+struct squeeze_first_axis_and_scalarize
+  : detail::squeeze_first_axis_and_scalarize_base<MappingModel::in_arity, MappingModel>
+{
+    typedef squeeze_first_axis_and_scalarize<MappingModel>
+            type;
+};
 
 }/*namespace out_arr_transforms*/
 }/*namespace dstream*/
@@ -59,19 +69,17 @@ struct squeeze_first_axis_and_scalarize;
 
 #define N BOOST_PP_ITERATION()
 
+// Partial specialization for input arity N.
 template <class MappingModel>
-struct squeeze_first_axis_and_scalarize<N, MappingModel>
-  : out_arr_transform_base<N, MappingModel>
+struct squeeze_first_axis_and_scalarize_base<N, MappingModel>
+  : out_arr_transform_base<MappingModel>
 {
-    typedef squeeze_first_axis_and_scalarize<N, MappingModel>
-            type;
-
     inline static int
     apply(ndarray & out_arr, BOOST_PP_ENUM_PARAMS(N, ndarray const & in_arr_))
     {
-        if(squeeze_first_axis<N, MappingModel>::apply(out_arr, BOOST_PP_ENUM_PARAMS(N, in_arr_)))
+        if(squeeze_first_axis<MappingModel>::apply(out_arr, BOOST_PP_ENUM_PARAMS(N, in_arr_)))
         {
-            scalarize<N, MappingModel>::apply(out_arr, BOOST_PP_ENUM_PARAMS(N, in_arr_));
+            scalarize<MappingModel>::apply(out_arr, BOOST_PP_ENUM_PARAMS(N, in_arr_));
             return 1;
         }
         return 0;

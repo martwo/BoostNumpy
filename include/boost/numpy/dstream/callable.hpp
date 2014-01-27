@@ -150,8 +150,7 @@ template<
       >
       class WiringModel
     , template <
-            int   _InArity
-          , class _MappingModel
+          class _MappingModel
       >
       class OutArrTransform
     , class ThreadAbility
@@ -163,7 +162,7 @@ struct callable
         , ThreadAbility::threads_allowed_t::value
         , MappingModel
         , typename WiringModel<MappingModel, Class>::type
-        , typename OutArrTransform<MappingModel::in_arity, MappingModel>::type
+        , typename OutArrTransform<MappingModel>::type
         , ThreadAbility
         >
 {
@@ -176,7 +175,7 @@ struct callable
             , ThreadAbility::threads_allowed_t::value
             , MappingModel
             , typename WiringModel<MappingModel, Class>::type
-            , typename OutArrTransform<MappingModel::in_arity, MappingModel>::type
+            , typename OutArrTransform<MappingModel>::type
             , ThreadAbility
             >
             callable_impl_t;

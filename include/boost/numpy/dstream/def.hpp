@@ -114,21 +114,15 @@ struct wiring_model_selector
 };
 
 //==============================================================================
-template <
-      int InArity
-    , class MappingModel
->
+template <class MappingModel>
 struct out_arr_transform_selector
   : out_arr_transforms::out_arr_transform_selector_type
 {
-    template <
-          int _InArity
-        , class _MappingModel
-    >
+    template <class _MappingModel>
     struct out_arr_transform
     {
         typedef out_arr_transforms::squeeze_first_axis_if_single_input_and_scalarize
-                < _InArity, _MappingModel >
+                < _MappingModel >
                 type;
     };
 };
@@ -199,7 +193,7 @@ struct default_selectors
     typedef wiring_model_selector<mapping_model_t, Class>
             wiring_model_selector_t;
 
-    typedef out_arr_transform_selector<mapping_model_t::in_arity, mapping_model_t>
+    typedef out_arr_transform_selector<mapping_model_t>
             out_arr_transform_selector_t;
 
     typedef default_thread_ability

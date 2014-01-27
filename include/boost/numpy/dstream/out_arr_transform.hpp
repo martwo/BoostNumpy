@@ -30,14 +30,11 @@ struct out_arr_transform_type
 struct out_arr_transform_selector_type
 {};
 
-template <
-      int InArity
-    , class MappingModel
->
+template <class MappingModel>
 struct out_arr_transform_base
   : out_arr_transform_type
 {
-    BOOST_STATIC_CONSTANT(int, in_arity = InArity);
+    BOOST_STATIC_CONSTANT(int, in_arity = MappingModel::in_arity);
 
     typedef MappingModel
             mapping_model_t;
