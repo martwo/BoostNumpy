@@ -61,7 +61,7 @@ namespace detail {
 /** The mapping_model_selector template selects the appropriate mapping model
  *  based on the given output and input argument types of the to-be-exposed C++
  *  function/method.
- *  By default the _NxS_to_S mapping model is used. In order to use other
+ *  By default the NxS_to_S mapping model is used. In order to use other
  *  mapping models, one has to specialize the mapping_model_selector template.
  */
 template <
@@ -73,11 +73,17 @@ struct mapping_model_selector;
 
 template <
       int in_arity
+    , class IOTypes
+>
+struct mapping_model_selector_from_io_types;
+
+template <
+      int in_arity
     , class Signature
     , class OutT
     , int sig_arg_offset
 >
-struct mapping_model_selector_from_signature_impl;
+struct io_types_from_signature_impl;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/def.hpp>, 1))
@@ -128,57 +134,66 @@ struct out_arr_transform_selector
 };
 
 //==============================================================================
+// The io_types_from_signature template dispatches the input and output types
+// of a given function signature.
+// The following static constants will be defined:
+//     int in_arity
+// The following typedefs will be defined:
+//     out_t
+//     in_t_0
+//     ...
+//     in_t_<in_arity - 1>
+//
 template <bool is_mfp, class Signature>
-struct mapping_model_selector_from_signature
-{
-    typedef typename boost::mpl::begin<Signature>::type::type
-            out_t;
+struct io_types_from_signature_base;
 
-    typedef mapping_model_selector_from_signature_impl
-            < boost::mpl::size<Signature>::value - 2
-            , Signature
-            , out_t
-            , 2
-            >
-            mapping_model_selector_from_signature_impl_t;
-
-    typedef typename mapping_model_selector_from_signature_impl_t::mapping_model_selector_t
-            mapping_model_selector_t;
-};
+// Specialization for member functions.
+template <class Signature>
+struct io_types_from_signature_base<true, Signature>
+  : io_types_from_signature_impl<
+          boost::mpl::size<Signature>::value - 2
+        , Signature
+        , typename boost::mpl::begin<Signature>::type::type
+        , 2
+    >
+{};
 
 // Specialization for standalone functions.
 template <class Signature>
-struct mapping_model_selector_from_signature<false, Signature>
-{
-    typedef typename boost::mpl::begin<Signature>::type::type
-            out_t;
+struct io_types_from_signature_base<false, Signature>
+  : io_types_from_signature_impl<
+          boost::mpl::size<Signature>::value - 1
+        , Signature
+        , typename boost::mpl::begin<Signature>::type::type
+        , 1
+    >
+{};
 
-    typedef mapping_model_selector_from_signature_impl
-            < boost::mpl::size<Signature>::value - 1
-            , Signature
-            , out_t
-            , 1
-            >
-            mapping_model_selector_from_signature_impl_t;
+template <class Class, class Signature>
+struct io_types_from_signature
+  : io_types_from_signature_base<
+          boost::mpl::not_< boost::is_same<Class, numpy::mpl::unspecified> >::value
+        , Signature
+    >
+{};
 
-    typedef typename mapping_model_selector_from_signature_impl_t::mapping_model_selector_t
-            mapping_model_selector_t;
-};
-
+//==============================================================================
 template <
       class Class
     , class Signature
+    , class IOTypes
 >
 struct default_selectors
 {
     // Choose the mapping model selector class by applying the function
     // signature.
-    typedef typename mapping_model_selector_from_signature
-                < boost::mpl::not_< boost::is_same<Class, numpy::mpl::unspecified> >::value
-                , Signature
+    typedef typename mapping_model_selector_from_io_types
+                < IOTypes::in_arity
+                , IOTypes
                 >::mapping_model_selector_t
             mapping_model_selector_t;
-    typedef typename mapping_model_selector_t::type
+
+    typedef typename mapping_model_selector_t::template select<IOTypes>::type
             mapping_model_t;
 
     typedef wiring_model_selector<mapping_model_t, Class>
@@ -196,6 +211,7 @@ template <
       class F
     , class KW
     , class Class
+    , class IOTypes
     , class MappingModelSelector
     , class WiringModelSelector
     , class OutArrTransformSelector
@@ -208,6 +224,7 @@ void create_and_add_callable_object(
     , KW const& kwargs
     , char const* doc
     , Class const*
+    , IOTypes const &
     , MappingModelSelector const &
     , WiringModelSelector const &
     , OutArrTransformSelector const &
@@ -216,7 +233,7 @@ void create_and_add_callable_object(
 {
     typedef callable<
                   Class
-                , typename MappingModelSelector::type
+                , typename MappingModelSelector::template select<IOTypes>::type
                 , WiringModelSelector::template wiring_model
                 , OutArrTransformSelector::template out_arr_transform
                 , typename ThreadAbilitySelector::type
@@ -259,7 +276,7 @@ void create_and_add_callable_object(
 //
 // When exposing a class method, either the scope, i.e. the class_
 // object needs to be supplied, or a boost::python::scope object of the class_
-// object needs to in existence when calling the classdef(...) function.
+// object needs to be in existence when calling the classdef(...) function.
 //______________________________________________________________________________
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (4, (0, 5, <boost/numpy/dstream/def.hpp>, 3))
@@ -280,35 +297,55 @@ template <
       class OutT
     , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_)
 >
-struct mapping_model_selector<N, OutT, BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, InT_)>
+struct mapping_model_selector<
+      N
+    , OutT
+    , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, InT_)
+>
   : mapping::mapping_model_selector_type
 {
-    typedef mapping::model::NxS_to_S<N, OutT BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, InT_)>
-            type;
+    template <class IOTypes>
+    struct select
+    {
+        typedef mapping::model::NxS_to_S<N, OutT BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, InT_)>
+                type;
+    };
 };
 
-#define BOOST_NUMPY_DSTREAM_DEF__InT(z, n, data) \
-    typedef typename boost::mpl::at<Signature, boost::mpl::long_<sig_arg_offset + n> >::type BOOST_PP_CAT(InT_,n);
+template <
+    class IOTypes
+>
+struct mapping_model_selector_from_io_types<
+      N
+    , IOTypes
+>
+{
+    typedef mapping_model_selector<N, typename IOTypes::out_t, BOOST_PP_ENUM_PARAMS_Z(1, N, typename IOTypes::in_t_)>
+            mapping_model_selector_t;
+};
+
+#define BOOST_NUMPY_DSTREAM_DEF__in_t(z, n, data) \
+    typedef typename boost::mpl::at<Signature, boost::mpl::long_<sig_arg_offset + n> >::type BOOST_PP_CAT(in_t_,n);
 
 template <
       class Signature
     , class OutT
     , int sig_arg_offset
 >
-struct mapping_model_selector_from_signature_impl<
+struct io_types_from_signature_impl<
       N
     , Signature
     , OutT
     , sig_arg_offset
 >
 {
-    BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF__InT, ~)
+    BOOST_STATIC_CONSTANT(int, in_arity = N);
 
-    typedef mapping_model_selector<N, OutT BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, InT_)>
-            mapping_model_selector_t;
+    typedef OutT out_t;
+    BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF__in_t, ~)
 };
 
-#undef BOOST_NUMPY_DSTREAM_DEF__InT
+#undef BOOST_NUMPY_DSTREAM_DEF__in_t
 
 #elif BOOST_PP_ITERATION_FLAGS() == 2
 
@@ -329,7 +366,10 @@ void make_def_with_signature(
     BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
 )
 {
-    typedef default_selectors<Class, Signature>
+    typedef io_types_from_signature<Class, Signature>
+            io_types;
+
+    typedef default_selectors<Class, Signature, io_types>
             default_selectors_t;
 
     typedef def_helper
@@ -346,6 +386,7 @@ void make_def_with_signature(
           sc, name, f, kwargs
         , helper.get_doc()
         , (Class*)(NULL)
+        , io_types()
         , helper.get_mapping_model_selector()
         , helper.get_wiring_model_selector()
         , helper.get_out_arr_transform_selector()

@@ -17,9 +17,12 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
+#if !defined(BOOST_PP_IS_ITERATING)
+
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X_HPP_INCLUDED
 
+#include <boost/preprocessor/iterate.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
@@ -128,7 +131,7 @@ struct NxS_to_X
     {
         itershape.resize(n_iter_axes);
         itershape[0] = n_axis_1_elements;
-        itershape[1] = out_arr_dshape_t::template shape<0>();
+        itershape[1] = X;
     }
 
     //__________________________________________________________________________
@@ -242,6 +245,27 @@ NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 #undef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 #undef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_PARAMS
 
+namespace detail {
+
+template <int in_arity, int X, class IOTypes>
+struct select_base;
+
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/mapping/models/NxS_to_X.hpp>, 1))
+#include BOOST_PP_ITERATE()
+
+}// namespace detail
+
+template <int X>
+struct NxS_to_
+  : mapping::mapping_model_selector_type
+{
+    template <class IOTypes>
+    struct select
+      : detail::select_base<IOTypes::in_arity, X, IOTypes>
+    {};
+};
+
 }// namespace model
 }// namespace mapping
 }// namespace dstream
@@ -249,3 +273,20 @@ NxS_to_X BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__GENERAL_TEMPLATE_SPEC
 }// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X_HPP_INCLUDED
+#else
+
+#define N BOOST_PP_ITERATION()
+
+// Specialization for input arity N.
+template <int X, class IOTypes>
+struct select_base<N, X, IOTypes>
+{
+    // IOTypes::out_t is a container type. If the container type is STL conform
+    // it must have the typedef ``value_type``.
+    typedef NxS_to_X<N, X, typename IOTypes::out_t::value_type, BOOST_PP_ENUM_PARAMS(N, typename IOTypes::in_t_)>
+            type;
+};
+
+#undef N
+
+#endif // !BOOST_PP_IS_ITERATING

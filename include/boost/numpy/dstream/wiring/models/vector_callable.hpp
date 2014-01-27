@@ -18,7 +18,8 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
-#if !BOOST_PP_IS_ITERATING
+#if !defined(BOOST_PP_IS_ITERATING)
+
 #ifndef BOOST_NUMPY_DSTREAM_WIRING_MODEL_VECTOR_CALLABLE_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_WIRING_MODEL_VECTOR_CALLABLE_HPP_INCLUDED
 
@@ -162,7 +163,7 @@ struct vector_callable_arity<N>
             callable_caller_t callable_caller(config.get_setting(0));
 
             // Get the requested length of the 1D output array.
-            intptr_t const X = MappingModel::out_arr_dshape::shape<0>();
+            intptr_t const X = MappingModel::out_arr_dshape::template shape<0>();
 
             //------------------------------------------------------------------
             // Do the iteration loop over the array.
@@ -181,7 +182,7 @@ struct vector_callable_arity<N>
                     // Note: We can't call python C-API functions here, because
                     //       we don't own the python GIL.
                     std::cerr << "The size of the inner loop is not a multiple "
-                                 "of " << X << "!"
+                                 "of " << X << "! It is " << size << "."
                               << std::endl;
                     error_flag = true;
                     return;
@@ -203,7 +204,8 @@ struct vector_callable_arity<N>
                     if(res_vec.size() != X)
                     {
                         std::cerr << "The length of the std::vector returned "
-                                     "from the callable is not " << X << "!"
+                                     "from the callable is not " << X << "! "
+                                     "It is " << res_vec.size() << "."
                                   << std::endl;
                         error_flag = true;
                         return;
