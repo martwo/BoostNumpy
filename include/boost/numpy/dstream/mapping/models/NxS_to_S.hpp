@@ -2,14 +2,13 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/dstream/mapping/models/NxS_to_S.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines a mapping model template for functions that expact
  *        only scalar data shaped input arrays and that are returning a scalar
@@ -42,6 +41,8 @@
 #include <boost/numpy/detail/iter.hpp>
 #include <boost/numpy/dstream/mapping.hpp>
 #include <boost/numpy/dstream/dshape.hpp>
+
+#include <boost/numpy/dstream/wiring/models/scalar_callable.hpp>
 
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_S__ITER_FLAGS
 #define BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_S__ITER_FLAGS                 \
@@ -96,6 +97,13 @@ struct NxS_to_S
         , BOOST_PP_REPEAT(BOOST_NUMPY_LIMIT_INPUT_ARITY, BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_S__INDSHAPE, ~)
     >
 {
+    // Define the default wiring model selector suitable for this mapping model.
+    struct default_wiring_model_selector
+    {
+        typedef wiring::model::scalar_callable
+                type;
+    };
+
     typedef boost::is_same<OutT, void> maps_to_void_t;
     BOOST_STATIC_CONSTANT(bool, maps_to_void = maps_to_void_t::value);
 

@@ -35,6 +35,8 @@
 #include <boost/numpy/dstream/mapping.hpp>
 #include <boost/numpy/mpl/types.hpp>
 
+#include <boost/numpy/dstream/wiring/models/vector_callable.hpp>
+
 namespace boost {
 namespace numpy {
 namespace dstream {
@@ -89,6 +91,13 @@ struct NxS_to_X
         , BOOST_PP_REPEAT(BOOST_NUMPY_LIMIT_INPUT_ARITY, BOOST_NUMPY_DSTREAM_MAPPING_MODEL_NXS_TO_X__INDSHAPE, ~)
     >
 {
+    // Define the default wiring model selector suitable for this mapping model.
+    struct default_wiring_model_selector
+    {
+        typedef wiring::model::vector_callable
+                type;
+    };
+
     // We assume, that this mapping model will never map to a void output. If
     // a void output is needed that NxS_to_S mapping model should be used
     // instead!

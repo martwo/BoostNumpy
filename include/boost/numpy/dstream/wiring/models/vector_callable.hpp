@@ -81,7 +81,7 @@ struct vector_callable
     {}
 };
 
-}/*namespace detail*/
+}// namespace detail
 
 struct vector_callable
   : wiring_model_selector_type

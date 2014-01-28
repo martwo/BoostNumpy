@@ -2,17 +2,18 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * @file    boost/numpy/dstream/def.hpp
  * @version $Revision$
  * @date    $Date$
- * @author  Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * @author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
- * @brief This file defines the boost::numpy::dstream::def function to expose a
- *        C++ function to python with numpy data stream support.
+ * @brief This file defines the boost::numpy::dstream::def and
+ *        boost::numpy::dstream::classdef functions to expose a
+ *        C++ function or member function to python with numpy data stream
+ *        support.
  *
  *        This file is distributed under the Boost Software License,
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -58,7 +59,6 @@ namespace dstream {
 namespace detail {
 
 //==============================================================================
-//FIXME: rename mapping_model_selector and co to default_*_selector.
 /** The mapping_model_selector template selects the appropriate mapping model
  *  based on the given output and input argument types of the to-be-exposed C++
  *  function/method.
@@ -70,13 +70,13 @@ template <
     , class OutT
     , BOOST_PP_ENUM_BINARY_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
 >
-struct mapping_model_selector;
+struct default_mapping_model_selector;
 
 template <
       int in_arity
     , class IOTypes
 >
-struct mapping_model_selector_from_io_types;
+struct default_mapping_model_selector_from_io_types;
 
 template <
       int in_arity
@@ -91,39 +91,49 @@ struct io_types_from_signature_impl;
 #include BOOST_PP_ITERATE()
 
 //==============================================================================
-/** The wiring_model_selector template selects the appropriate wiring model
- *  based on the given mapping model, the class, and the output type and input
- *  argument types of the to-be-exposed C++ function/method.
+/** The default_wiring_model_selector template selects the default wiring model
+ *  that was defined for the given mapping model.
+ *  Each mapping model has a default wiring model selector type, that is
+ *  selected by this template. If the type of the default wiring model selector
+ *  is boost::numpy::mpl::unspecified, the scalar_callable wiring model selector
+ *  will be choosen.
+ *  This template will only be used if the user did not specify a wiring model
+ *  selector.
+ *  It the user wants to define a default wiring model selector for a specific
+ *  class or mapping model, one can do so by specializing the
+ *  default_wiring_model_selector template.
  */
+template <class MappingModel>
+struct use_mapping_models_default_wiring_model_selector
+{
+    typedef typename boost::mpl::if_
+                < typename is_same<numpy::mpl::unspecified, typename MappingModel::default_wiring_model_selector::type>::type
+                , wiring::model::scalar_callable
+                , typename MappingModel::default_wiring_model_selector::type
+                >::type
+            type;
+};
+
 template <
       class MappingModel
     , class Class
 >
-struct wiring_model_selector
-  : wiring::wiring_model_selector_type
-{
-    template <
-          class _MappingModel
-        , class _Class
-    >
-    struct wiring_model
-    {
-        typedef wiring::model::detail::scalar_callable
-                < _MappingModel, _Class >
-                type;
-    };
-};
+struct default_wiring_model_selector
+  : use_mapping_models_default_wiring_model_selector<MappingModel>
+{};
 
 //==============================================================================
 template <class MappingModel>
-struct out_arr_transform_selector
+struct default_out_arr_transform_selector
   : out_arr_transforms::out_arr_transform_selector_type
 {
+    typedef default_out_arr_transform_selector<MappingModel>
+            type;
+
     template <class _MappingModel>
     struct out_arr_transform
     {
-        typedef out_arr_transforms::detail::squeeze_first_axis_if_single_input_and_scalarize
-                < _MappingModel >
+        typedef out_arr_transforms::detail::squeeze_first_axis_if_single_input_and_scalarize<_MappingModel>
                 type;
     };
 };
@@ -175,26 +185,30 @@ struct io_types_from_signature
 //==============================================================================
 template <
       class Class
-    , class Signature
     , class IOTypes
+    , class UserMappingModelSelector
 >
 struct default_selectors
 {
-    // Choose the mapping model selector class by applying the function
-    // signature.
-    typedef typename mapping_model_selector_from_io_types
-                < IOTypes::in_arity
-                , IOTypes
-                >::mapping_model_selector_t
+    // Choose the mapping model selector class: Either the user defined one, or
+    // the default one based on the IO types of the function.
+    typedef typename boost::mpl::if_
+                < typename is_same<UserMappingModelSelector, numpy::mpl::unspecified>::type
+                , typename default_mapping_model_selector_from_io_types
+                      < IOTypes::in_arity
+                      , IOTypes
+                      >::default_mapping_model_selector_t
+                , UserMappingModelSelector
+                >::type
             mapping_model_selector_t;
 
     typedef typename mapping_model_selector_t::template select<IOTypes>::type
             mapping_model_t;
 
-    typedef wiring_model_selector<mapping_model_t, Class>
+    typedef typename default_wiring_model_selector<mapping_model_t, Class>::type
             wiring_model_selector_t;
 
-    typedef out_arr_transform_selector<mapping_model_t>
+    typedef typename default_out_arr_transform_selector<mapping_model_t>::type
             out_arr_transform_selector_t;
 
     typedef default_thread_ability
@@ -254,7 +268,7 @@ void create_and_add_callable_object(
     (4, (0, 5, <boost/numpy/dstream/def.hpp>, 2))
 #include BOOST_PP_ITERATE()
 
-}/*namespace detail*/
+}// namespace detail
 
 // The def(...)/classdef(...) functions need at least 3 arguments:
 //   - the name of the python function,
@@ -292,7 +306,7 @@ template <
       class OutT
     , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_)
 >
-struct mapping_model_selector<
+struct default_mapping_model_selector<
       N
     , OutT
     , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, InT_)
@@ -310,13 +324,13 @@ struct mapping_model_selector<
 template <
     class IOTypes
 >
-struct mapping_model_selector_from_io_types<
+struct default_mapping_model_selector_from_io_types<
       N
     , IOTypes
 >
 {
-    typedef mapping_model_selector<N, typename IOTypes::out_t, BOOST_PP_ENUM_PARAMS_Z(1, N, typename IOTypes::in_t_)>
-            mapping_model_selector_t;
+    typedef default_mapping_model_selector<N, typename IOTypes::out_t, BOOST_PP_ENUM_PARAMS_Z(1, N, typename IOTypes::in_t_)>
+            default_mapping_model_selector_t;
 };
 
 #define BOOST_NUMPY_DSTREAM_DEF__in_t(z, n, data) \
@@ -348,23 +362,25 @@ template <
       class Class
     , class F
     , class KW
-    , class Signature
+    , class IOTypes
+    , class MappingModelSelector
     BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
 >
-void make_def_with_signature(
+void make_def_with_iotypes_and_mapping_model_selector(
       python::scope const& sc
     , char const* name
     , Class*
     , F f
     , KW const& kwargs
-    , Signature const &
+    , IOTypes const & io_types
+    , MappingModelSelector const &
     BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
 )
 {
-    typedef io_types_from_signature<Class, Signature>
-            io_types;
-
-    typedef default_selectors<Class, Signature, io_types>
+    // At this point we have a mapping model selector selected (either a default
+    // one or the user specified one). Now we select the default wiring model
+    // selector based on the fixed mapping model selector and its mapping model.
+    typedef default_selectors<Class, IOTypes, MappingModelSelector>
             default_selectors_t;
 
     typedef def_helper
@@ -381,11 +397,56 @@ void make_def_with_signature(
           sc, name, f, kwargs
         , helper.get_doc()
         , (Class*)(NULL)
-        , io_types()
+        , io_types
         , helper.get_mapping_model_selector()
         , helper.get_wiring_model_selector()
         , helper.get_out_arr_transform_selector()
         , helper.get_thread_ability_selector()
+    );
+}
+
+template <
+      class Class
+    , class F
+    , class KW
+    , class Signature
+    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
+>
+void make_def_with_signature(
+      python::scope const& sc
+    , char const* name
+    , Class*
+    , F f
+    , KW const& kwargs
+    , Signature const & sig
+    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
+)
+{
+    typedef io_types_from_signature<Class, Signature>
+            io_types_t;
+
+    typedef default_selectors<Class, io_types_t, numpy::mpl::unspecified>
+            default_selectors_t;
+
+    typedef def_helper
+                < typename default_selectors_t::mapping_model_selector_t
+                , typename default_selectors_t::wiring_model_selector_t
+                , typename default_selectors_t::out_arr_transform_selector_t
+                , typename default_selectors_t::thread_ability_selector_t
+                BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
+                >
+            def_helper_t;
+    def_helper_t helper(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
+
+    make_def_with_iotypes_and_mapping_model_selector(
+          sc
+        , name
+        , (Class*)NULL
+        , f
+        , kwargs
+        , io_types_t()
+        , helper.get_mapping_model_selector()
+        BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a)
     );
 }
 
