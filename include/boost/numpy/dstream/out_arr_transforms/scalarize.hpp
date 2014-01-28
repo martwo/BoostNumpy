@@ -2,16 +2,16 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@fysik.su.se>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/dstream/out_arr_transforms/scalarize.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@fysik.su.se>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
- * \brief This file defines an out_arr_transform template for scalarizing
- *        the output array of a data stream operation.
+ * \brief This file defines an output array transformation template for
+ *        scalarizing the output array of a data stream operation.
  *        It just calls ndarray.scalarize() on the output array. So if the
  *        output array is a null-dimensional array or an one-dimensional array
  *        with only one element, it will be transformed into a numpy scalar.
@@ -46,20 +46,31 @@ struct scalarize_base;
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/out_arr_transforms/scalarize.hpp>))
 #include BOOST_PP_ITERATE()
 
-}// namespace detail
-
 template <class MappingModel>
 struct scalarize
-  : detail::scalarize_base<MappingModel::in_arity, MappingModel>
+  : scalarize_base<MappingModel::in_arity, MappingModel>
 {
     typedef scalarize<MappingModel>
             type;
 };
 
-}/*namespace out_arr_transforms*/
-}/*namespace dstream*/
-}/*namespace numpy*/
-}/*namespace boost*/
+}// namespace detail
+
+struct scalarize
+  : out_arr_transform_selector_type
+{
+    template <class MappingModel>
+    struct out_arr_transform
+    {
+        typedef detail::scalarize<MappingModel>
+                type;
+    };
+};
+
+}// namespace out_arr_transforms
+}// namespace dstream
+}// namespace numpy
+}// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_OUT_ARR_TRANSFORMS_NONE_HPP_INCLUDED
 #else

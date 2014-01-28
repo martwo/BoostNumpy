@@ -535,6 +535,7 @@ is_any_scalar(python::object const & obj)
 }/*numpy*/
 }/*boost*/
 
+// Make boost::python::extract<ndarray>(py_obj_ptr) work.
 BOOST_NUMPY_OBJECT_MANAGER_TRAITS(boost::numpy::ndarray);
 
 #endif // !BOOST_NUMPY_NDARRAY_HPP_INCLUDED

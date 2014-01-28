@@ -107,7 +107,7 @@ struct wiring_model_selector
     >
     struct wiring_model
     {
-        typedef wiring::model::scalar_callable
+        typedef wiring::model::detail::scalar_callable
                 < _MappingModel, _Class >
                 type;
     };
@@ -121,7 +121,7 @@ struct out_arr_transform_selector
     template <class _MappingModel>
     struct out_arr_transform
     {
-        typedef out_arr_transforms::squeeze_first_axis_if_single_input_and_scalarize
+        typedef out_arr_transforms::detail::squeeze_first_axis_if_single_input_and_scalarize
                 < _MappingModel >
                 type;
     };

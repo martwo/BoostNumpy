@@ -57,14 +57,12 @@ template <unsigned in_arity> struct vector_callable_arity;
     (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/wiring/models/vector_callable.hpp>, 1))
 #include BOOST_PP_ITERATE()
 
-}/*namespace detail*/
-
 template <
     class MappingModel
   , class Class
 >
 struct vector_callable
-  : detail::vector_callable_arity<MappingModel::in_arity>::template vector_callable_impl<MappingModel, Class>
+  : vector_callable_arity<MappingModel::in_arity>::template vector_callable_impl<MappingModel, Class>
 {
     typedef vector_callable<MappingModel, Class>
             vector_callable_t;
@@ -83,7 +81,9 @@ struct vector_callable
     {}
 };
 
-struct vector_callable_selector
+}/*namespace detail*/
+
+struct vector_callable
   : wiring_model_selector_type
 {
     template <
@@ -92,7 +92,7 @@ struct vector_callable_selector
     >
     struct wiring_model
     {
-        typedef vector_callable<MappingModel, Class>
+        typedef detail::vector_callable<MappingModel, Class>
                 type;
     };
 };

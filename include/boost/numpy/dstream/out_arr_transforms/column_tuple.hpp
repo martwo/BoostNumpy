@@ -2,17 +2,18 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@fysik.su.se>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/dstream/out_arr_transforms/column_tuple.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@fysik.su.se>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines an output arrar transformation template for slicing
- *        a 2-dimensional output array into a tuple of arrays where each array
- *        represents one column of the original output array.
+ *        a multi-dimensional output array into a tuple of arrays where each
+ *        array represents one column of the original output array. The axis of
+ *        slicing can be specified as template parameter and defaults to 2.
  *
  *        This file is distributed under the Boost Software License,
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -43,38 +44,39 @@ namespace dstream {
 namespace out_arr_transforms {
 
 namespace detail {
-template <int InArity, class MappingModel>
+template <int InArity, class MappingModel, intptr_t Axis>
 struct column_tuple_base;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/out_arr_transforms/column_tuple.hpp>))
 #include BOOST_PP_ITERATE()
 
-}// namespace detail
-
-template <class MappingModel>
+template <class MappingModel, intptr_t Axis>
 struct column_tuple
-  : detail::column_tuple_base<MappingModel::in_arity, MappingModel>
+  : column_tuple_base<MappingModel::in_arity, MappingModel, Axis>
 {
-    typedef column_tuple<MappingModel>
+    typedef column_tuple<MappingModel, Axis>
             type;
 };
 
-struct column_tuple_selector
-  : out_arr_transforms::out_arr_transform_selector_type
+}// namespace detail
+
+template <intptr_t Axis = 2>
+struct column_tuple
+  : out_arr_transform_selector_type
 {
     template <class MappingModel>
     struct out_arr_transform
     {
-        typedef column_tuple<MappingModel>
+        typedef detail::column_tuple<MappingModel, Axis>
                 type;
     };
 };
 
-}/*namespace out_arr_transforms*/
-}/*namespace dstream*/
-}/*namespace numpy*/
-}/*namespace boost*/
+}// namespace out_arr_transforms
+}// namespace dstream
+}// namespace numpy
+}// namespace boost
 
 #endif // BOOST_NUMPY_DSTREAM_OUT_ARR_TRANSFORMS_COLUMN_TUPLE_HPP_INCLUDED
 #else
@@ -82,14 +84,14 @@ struct column_tuple_selector
 #define N BOOST_PP_ITERATION()
 
 // Partial specialization for input arity N.
-template <class MappingModel>
-struct column_tuple_base<N, MappingModel>
+template <class MappingModel, intptr_t Axis>
+struct column_tuple_base<N, MappingModel, Axis>
   : out_arr_transform_base<MappingModel>
 {
     inline static int
     apply(ndarray & out_arr, BOOST_PP_ENUM_PARAMS(N, ndarray const & in_arr_))
     {
-        intptr_t const axis = 2; // this could become an option.
+        intptr_t const axis = Axis;
 
         intptr_t const nd = out_arr.get_nd();
         if(! nd >= axis)

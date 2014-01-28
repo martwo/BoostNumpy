@@ -56,15 +56,12 @@ template <unsigned in_arity> struct scalar_callable_arity;
     (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/wiring/models/scalar_callable.hpp>, 1))
 #include BOOST_PP_ITERATE()
 
-}/*namespace detail*/
-
-//==============================================================================
 template <
     class MappingModel
   , class Class
 >
 struct scalar_callable
-  : detail::scalar_callable_arity<MappingModel::in_arity>::template scalar_callable_impl<MappingModel::maps_to_void, MappingModel, Class>
+  : scalar_callable_arity<MappingModel::in_arity>::template scalar_callable_impl<MappingModel::maps_to_void, MappingModel, Class>
 {
     typedef scalar_callable<MappingModel, Class>
             scalar_callable_t;
@@ -72,7 +69,7 @@ struct scalar_callable
     typedef scalar_callable_t
             type;
 
-    typedef typename detail::scalar_callable_arity<MappingModel::in_arity>::template scalar_callable_impl<MappingModel::maps_to_void, MappingModel, Class>
+    typedef typename scalar_callable_arity<MappingModel::in_arity>::template scalar_callable_impl<MappingModel::maps_to_void, MappingModel, Class>
             scalar_callable_impl_t;
 
     typedef typename scalar_callable_impl_t::base_wiring_model_t::wiring_model_config_t
@@ -83,7 +80,9 @@ struct scalar_callable
     {}
 };
 
-struct scalar_callable_selector
+}// namespace detail
+
+struct scalar_callable
   : wiring_model_selector_type
 {
     template <
@@ -92,7 +91,7 @@ struct scalar_callable_selector
     >
     struct wiring_model
     {
-        typedef scalar_callable<MappingModel, Class>
+        typedef detail::scalar_callable<MappingModel, Class>
                 type;
     };
 };

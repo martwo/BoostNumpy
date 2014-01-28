@@ -2,17 +2,17 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@fysik.su.se>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/dstream/out_arr_transforms/squeeze_first_axis.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@fysik.su.se>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
- * \brief This file defines an out_arr_transform template for squeezing the
- *     first axis of the output arrays if it contains only one element. This
- *     will reduce the dimension of the array by one.
+ * \brief This file defines an output array transformation template for
+ *     squeezing the first axis of the output arrays if it contains only one
+ *     element. This will reduce the dimension of the array by one.
  *     This operation will be done regardless of the shapes of the input arrays!
  *
  *     This file is distributed under the Boost Software License,
@@ -45,8 +45,6 @@ struct squeeze_first_axis_base;
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/out_arr_transforms/squeeze_first_axis.hpp>))
 #include BOOST_PP_ITERATE()
 
-}// namespace detail
-
 template <class MappingModel>
 struct squeeze_first_axis
   : detail::squeeze_first_axis_base<MappingModel::in_arity, MappingModel>
@@ -55,10 +53,23 @@ struct squeeze_first_axis
             type;
 };
 
-}/*namespace out_arr_transforms*/
-}/*namespace dstream*/
-}/*namespace numpy*/
-}/*namespace boost*/
+}// namespace detail
+
+struct squeeze_first_axis
+  : out_arr_transform_selector_type
+{
+    template <class MappingModel>
+    struct out_arr_transform
+    {
+        typedef detail::squeeze_first_axis<MappingModel>
+                type;
+    };
+};
+
+}// namespace out_arr_transforms
+}// namespace dstream
+}// namespace numpy
+}// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_OUT_ARR_TRANSFORMS_SQUEEZE_FIRST_AXIS_HPP_INCLUDED
 #else
@@ -78,11 +89,11 @@ struct squeeze_first_axis_base<N, MappingModel>
         {
             // There is only one element in the first axis, so we can
             // just reshape the array to exclude the first axis.
-            python::list shape;
+            python::list new_shape;
             for(int i=1; i<nd; ++i) {
-                shape.append(out_arr.shape(i));
+                new_shape.append(out_arr.shape(i));
             }
-            out_arr = out_arr.reshape(shape);
+            out_arr = out_arr.reshape(new_shape);
             return 1;
         }
         return 0;
