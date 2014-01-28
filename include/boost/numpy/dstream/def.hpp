@@ -58,6 +58,7 @@ namespace dstream {
 namespace detail {
 
 //==============================================================================
+//FIXME: rename mapping_model_selector and co to default_*_selector.
 /** The mapping_model_selector template selects the appropriate mapping model
  *  based on the given output and input argument types of the to-be-exposed C++
  *  function/method.
