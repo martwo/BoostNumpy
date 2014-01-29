@@ -23,6 +23,9 @@
 
 #include <boost/numpy/detail/prefix.hpp>
 
+// For user convenience, include also the ndarray boost::python::object class.
+#include <boost/numpy/ndarray.hpp>
+
 namespace boost {
 namespace numpy {
 
