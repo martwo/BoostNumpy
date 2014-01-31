@@ -2,16 +2,15 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  * 2010-2012
  *     Jim Bosch
  *
  * @file    boost/numpy/ndarray.cpp
  * @version $Revision$
  * @date    $Date$
- * @author  Martin Wolf <martin.wolf@icecube.wisc.edu>,
+ * @author  Martin Wolf <boostnumpy@martin-wolf.org>,
  *          Jim Bosch
  *
  * @brief This file implements the boost::numpy::ndarray object manager.
@@ -347,13 +346,6 @@ ndarray &
 ndarray::
 operator=(ndarray::object_cref rhs)
 {
-    if(! PyArray_Check(rhs.ptr()))
-    {
-        PyErr_SetString(PyExc_TypeError,
-            "ndarray::operator=: The rhs object is not a sub-type of "
-            "PyArray_Type!");
-        python::throw_error_already_set();
-    }
     python::object::operator=(rhs);
     return *this;
 }
@@ -364,7 +356,14 @@ ndarray::
 operator[](ndarray::object_cref obj) const
 {
     python::object item = python::api::getitem((python::object)*this, obj);
-    ndarray arr = item;
+    if(! PyArray_Check(item.ptr()))
+    {
+        PyErr_SetString(PyExc_TypeError,
+            "ndarray::operator[]: The item object is not a sub-type of "
+            "PyArray_Type!");
+        python::throw_error_already_set();
+    }
+    ndarray arr = from_object(item);
     return arr;
 }
 

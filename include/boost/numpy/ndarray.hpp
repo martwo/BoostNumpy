@@ -268,9 +268,13 @@ class ndarray : public python::object
 
     //__________________________________________________________________________
     /**
-     * \brief Copy assignment operator for a boost::python::object object.
-     *        This checks if the given object is indeed a sub-type of
-     *        PyArray_Type.
+     * @brief Copy assignment operator for a boost::python::object object.
+     *
+     * @note This does not ensure, that the given python object is of sub-type
+     *       PyArray_Type. It just calls the assignment operator of the base
+     *       class, i.e. boost::python::object which will just set the object
+     *       pointers and takes care of the Python reference count of the two
+     *       objects.
      */
     ndarray &
     operator=(object_cref rhs);
@@ -279,8 +283,10 @@ class ndarray : public python::object
     /**
      * @brief Calls __getitem__ with the given boost::python::object object as
      *        key.
-     *        The returned object is supposed to be a ndarray object. This
-     *        provides all possible kinds of array indexing supported by numpy.
+     *        The returned object is supposed to be a sub-type of PyArray_Type
+     *        what is also checked.
+     *        This provides all possible kinds of array indexing supported by
+     *        numpy.
      */
     ndarray
     operator[](object_cref obj) const;
