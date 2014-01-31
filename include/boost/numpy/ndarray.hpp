@@ -290,7 +290,27 @@ class ndarray : public python::object
      */
     ndarray
     operator[](object_cref obj) const;
+
+    // Allow implicit conversion from any C++ type to a boost::python::object.
+    // This allows to write code like:
+    //
+    //     ndarray v = arr[1];
+    //
+    // to get the second element of the ndarray object arr. In cases where arr
+    // is a 1-dimensional array, v will be an array_scalar.
+    template <typename T>
+    ndarray
+    operator[](T const & key) const;
 };
+
+template <typename T>
+ndarray
+ndarray::
+operator[](T const & key) const
+{
+    python::object obj(key);
+    return (*this)[obj];
+}
 
 //______________________________________________________________________________
 /**

@@ -356,14 +356,18 @@ ndarray::
 operator[](ndarray::object_cref obj) const
 {
     python::object item = python::api::getitem((python::object)*this, obj);
-    if(! PyArray_Check(item.ptr()))
+
+    if((! PyArray_Check(item.ptr())) &&
+       (! PyArray_CheckScalar(item.ptr()))
+      )
     {
         PyErr_SetString(PyExc_TypeError,
             "ndarray::operator[]: The item object is not a sub-type of "
             "PyArray_Type!");
         python::throw_error_already_set();
     }
-    ndarray arr = from_object(item);
+
+    ndarray arr = from_object(item, this->get_dtype());
     return arr;
 }
 
