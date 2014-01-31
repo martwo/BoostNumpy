@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <boost/python/refcount.hpp>
+#include <boost/python/object_protocol.hpp>
 
 #include <boost/numpy/numpy_c_api.hpp>
 #include <boost/numpy/object_manager_traits_impl.hpp>
@@ -339,6 +340,32 @@ has_shape(std::vector<intptr_t> const & shape) const
         }
     }
     return true;
+}
+
+//______________________________________________________________________________
+ndarray &
+ndarray::
+operator=(ndarray::object_cref rhs)
+{
+    if(! PyArray_Check(rhs.ptr()))
+    {
+        PyErr_SetString(PyExc_TypeError,
+            "ndarray::operator=: The rhs object is not a sub-type of "
+            "PyArray_Type!");
+        python::throw_error_already_set();
+    }
+    python::object::operator=(rhs);
+    return *this;
+}
+
+//______________________________________________________________________________
+ndarray
+ndarray::
+operator[](ndarray::object_cref obj) const
+{
+    python::object item = python::api::getitem((python::object)*this, obj);
+    ndarray arr = item;
+    return arr;
 }
 
 //______________________________________________________________________________

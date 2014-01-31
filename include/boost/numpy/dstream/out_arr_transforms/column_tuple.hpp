@@ -124,9 +124,10 @@ struct column_tuple_base<N, MappingModel, Axis>
             }
             slist.append(python::slice(i,i+1));
 
-            PyObject* pycolumn = PyObject_GetItem((PyObject*)out_arr.ptr(), (PyObject*)slist.ptr());
-            ndarray column = python::extract<ndarray>(pycolumn);
-            Py_DECREF(pycolumn);
+            ndarray column = out_arr[slist];
+            //PyObject* pycolumn = PyObject_GetItem((PyObject*)out_arr.ptr(), (PyObject*)slist.ptr());
+            //ndarray column = python::extract<ndarray>(pycolumn);
+            //Py_DECREF(pycolumn);
 
             // If axis is the last dimension, each element of the column will be
             // an array with one element. So we'll get rid of the last dimension

@@ -11,3 +11,4 @@ exposing C++ functions as numpy ufunc'tions to Python.
    :maxdepth: 3
 
    include
+   ndarray

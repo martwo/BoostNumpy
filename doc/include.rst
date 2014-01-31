@@ -30,3 +30,12 @@ In cases where it is necessary to include only the BoostNumpy header files that
 need to be included before the ``<boost/python.hpp>`` header file is included,
 one can do so by including the
 ``<boost/numpy/detail/pre_boost_python_hpp_includes.hpp>`` header file.
+
+Initialization of the numpy Python module
+-----------------------------------------
+
+Before boost::numpy can be used within our C++ project, the C-API of the numpy
+Python module needs to be initialized. This can be done using the
+``boost::numpy::initialize()`` function. The call to this function should
+probably be the first statement after the ``BOOST_PYTHON_MODULE()`` macro
+statement of your project.

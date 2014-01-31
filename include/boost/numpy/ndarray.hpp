@@ -28,9 +28,10 @@
 
 #include <vector>
 
-#include <boost/python.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_integral.hpp>
+
+#include <boost/numpy/detail/prefix.hpp>
 
 #include <boost/numpy/numpy_c_api.hpp>
 #include <boost/numpy/dtype.hpp>
@@ -85,10 +86,6 @@ class ndarray : public python::object
     BOOST_PYTHON_FORWARD_OBJECT_CONSTRUCTORS(ndarray, python::object);
 
     //__________________________________________________________________________
-    ndarray&
-    operator=(python::object const & rhs);
-
-    //__________________________________________________________________________
     /**
      * @brief Returns a view of the array with the given dtype.
      */
@@ -119,7 +116,7 @@ class ndarray : public python::object
      *       left untouched!
      */
     void
-    set_base(object const & base);
+    set_base(object_cref base);
 
     //__________________________________________________________________________
     /**
@@ -268,20 +265,26 @@ class ndarray : public python::object
      */
     bool
     has_shape(std::vector<intptr_t> const & shape) const;
-};
 
-//______________________________________________________________________________
-/**
- * \brief Copy assignment operator for a boost::python::object object.
- */
-inline
-ndarray &
-ndarray::
-operator=(python::object const & rhs)
-{
-    python::object::operator=(rhs);
-    return *this;
-}
+    //__________________________________________________________________________
+    /**
+     * \brief Copy assignment operator for a boost::python::object object.
+     *        This checks if the given object is indeed a sub-type of
+     *        PyArray_Type.
+     */
+    ndarray &
+    operator=(object_cref rhs);
+
+    //__________________________________________________________________________
+    /**
+     * @brief Calls __getitem__ with the given boost::python::object object as
+     *        key.
+     *        The returned object is supposed to be a ndarray object. This
+     *        provides all possible kinds of array indexing supported by numpy.
+     */
+    ndarray
+    operator[](object_cref obj) const;
+};
 
 //______________________________________________________________________________
 /**
@@ -309,6 +312,7 @@ ndarray empty(python::tuple const & shape, dtype const & dt);
 ndarray array(python::object const & obj);
 ndarray array(python::object const & obj, dtype const & dt);
 
+//==============================================================================
 namespace detail {
 
 //______________________________________________________________________________
@@ -349,6 +353,7 @@ from_data_impl(
     bool                   writeable);
 
 }/*detail*/
+//==============================================================================
 
 //______________________________________________________________________________
 /**
