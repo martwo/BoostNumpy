@@ -28,8 +28,12 @@
 
 #include <vector>
 
+#include <boost/mpl/and.hpp>
+#include <boost/mpl/not.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <boost/type_traits/is_base_of.hpp>
 #include <boost/type_traits/is_integral.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include <boost/numpy/detail/prefix.hpp>
 
@@ -276,41 +280,56 @@ class ndarray : public python::object
      *       pointers and takes care of the Python reference count of the two
      *       objects.
      */
+    inline
     ndarray &
     operator=(object_cref rhs);
 
     //__________________________________________________________________________
     /**
-     * @brief Calls __getitem__ with the given boost::python::object object as
-     *        key.
-     *        The returned object is supposed to be a sub-type of PyArray_Type
-     *        what is also checked.
-     *        This provides all possible kinds of array indexing supported by
-     *        numpy.
+     * @brief Calls __getitem__ with the given object as key. The key can be of
+     *        any type, that is convertible to the boost::python::object type or
+     *        that is derived from boost::python::object.
+     *        The returned object should either be of type boost::python::object
+     *        or boost::numpy::ndarray. In the former case the
+     *        returned object could be an array scalar or a ndarray.
+     *
+     *        get_item provides all possible kinds of array indexing supported
+     *        by numpy.
      */
-    ndarray
-    operator[](object_cref obj) const;
+    //--- R = boost::python::object, T = derived from boost::python::object
+    template <typename R, typename T>
+    typename enable_if< boost::mpl::and_< is_same<R, python::object>, is_base_of<python::object, T> >, python::object>::type
+    get_item(T const & obj) const;
 
-    // Allow implicit conversion from any C++ type to a boost::python::object.
-    // This allows to write code like:
-    //
-    //     ndarray v = arr[1];
-    //
-    // to get the second element of the ndarray object arr. In cases where arr
-    // is a 1-dimensional array, v will be an array_scalar.
+    //--- R = boost::python::object, T = not derived from boost::python::object
+    template <typename R, typename T>
+    typename enable_if< boost::mpl::and_< is_same<R, python::object>, boost::mpl::not_< is_base_of<python::object, T> > >, python::object>::type
+    get_item(T const & obj) const;
+
+    //--- R = ndarray, T = derived from boost::python::object
+    template <typename R, typename T>
+    typename enable_if< boost::mpl::and_< is_same<R, ndarray>, is_base_of<python::object, T> >, ndarray>::type
+    get_item(T const & obj) const;
+
+    //--- R = ndarray, T = not derived from boost::python::object
+    template <typename R, typename T>
+    typename enable_if< boost::mpl::and_< is_same<R, ndarray>, boost::mpl::not_< is_base_of<python::object, T> > >, ndarray>::type
+    get_item(T const & obj) const;
+
+    //__________________________________________________________________________
+    /**
+     * @brief Access operator for retrieving an item from the ndarray.
+     *        The returned object is always of type ndarray.
+     */
     template <typename T>
+    inline
     ndarray
-    operator[](T const & key) const;
-};
+    operator[](T const & obj) const;
 
-template <typename T>
-ndarray
-ndarray::
-operator[](T const & key) const
-{
-    python::object obj(key);
-    return (*this)[obj];
-}
+  protected:
+    python::object
+    get_bpo_item(python::object const & obj) const;
+};
 
 //______________________________________________________________________________
 /**
@@ -549,6 +568,65 @@ ndarray::flags
 operator&(ndarray::flags a, ndarray::flags b)
 {
     return ndarray::flags(int(a) & int(b));
+}
+
+//______________________________________________________________________________
+template <typename R, typename T>
+typename enable_if< boost::mpl::and_< is_same<R, python::object>, is_base_of<python::object, T> >, python::object>::type
+ndarray::
+get_item(T const & obj) const
+{
+    return this->get_bpo_item(obj);
+}
+
+template <typename R, typename T>
+typename enable_if< boost::mpl::and_< is_same<R, python::object>, boost::mpl::not_< is_base_of<python::object, T> > >, python::object>::type
+ndarray::
+get_item(T const & obj) const
+{
+    python::object bpo(obj);
+    return this->get_bpo_item(bpo);
+}
+
+template <typename R, typename T>
+typename enable_if< boost::mpl::and_< is_same<R, ndarray>, is_base_of<python::object, T> >, ndarray>::type
+ndarray::
+get_item(T const & obj) const
+{
+    python::object item = this->get_bpo_item(obj);
+    ndarray arr = from_object(item, this->get_dtype());
+    return arr;
+}
+
+template <typename R, typename T>
+typename enable_if< boost::mpl::and_< is_same<R, ndarray>, boost::mpl::not_< is_base_of<python::object, T> > >, ndarray>::type
+ndarray::
+get_item(T const & obj) const
+{
+    python::object bpo(obj);
+    python::object item = this->get_bpo_item(bpo);
+    ndarray arr = from_object(item, this->get_dtype());
+    return arr;
+}
+
+//______________________________________________________________________________
+template <typename T>
+inline
+ndarray
+ndarray::
+operator[](T const & obj) const
+{
+    return this->get_item<ndarray, T>(obj);
+}
+
+//______________________________________________________________________________
+inline
+ndarray &
+ndarray::
+operator=(ndarray::object_cref rhs)
+{
+    python::object::operator=(rhs);
+    return *this;
 }
 
 //______________________________________________________________________________

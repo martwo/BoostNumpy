@@ -342,33 +342,21 @@ has_shape(std::vector<intptr_t> const & shape) const
 }
 
 //______________________________________________________________________________
-ndarray &
+python::object
 ndarray::
-operator=(ndarray::object_cref rhs)
-{
-    python::object::operator=(rhs);
-    return *this;
-}
-
-//______________________________________________________________________________
-ndarray
-ndarray::
-operator[](ndarray::object_cref obj) const
+get_bpo_item(python::object const & obj) const
 {
     python::object item = python::api::getitem((python::object)*this, obj);
-
     if((! PyArray_Check(item.ptr())) &&
        (! PyArray_CheckScalar(item.ptr()))
       )
     {
         PyErr_SetString(PyExc_TypeError,
             "ndarray::operator[]: The item object is not a sub-type of "
-            "PyArray_Type!");
+            "PyGenericArrType_Type or PyArray_Type!");
         python::throw_error_already_set();
     }
-
-    ndarray arr = from_object(item, this->get_dtype());
-    return arr;
+    return item;
 }
 
 //______________________________________________________________________________
