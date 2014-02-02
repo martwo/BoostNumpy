@@ -291,9 +291,37 @@ void create_and_add_callable_object(
     (4, (0, 5, <boost/numpy/dstream/def.hpp>, 3))
 #include BOOST_PP_ITERATE()
 
-}/*namespace dstream*/
-}/*namespace numpy*/
-}/*namespace boost*/
+namespace detail {
+
+template <
+      unsigned Arity
+    , class F
+    , class KW
+    , BOOST_PP_ENUM_BINARY_PARAMS_Z(1, 5, class A, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
+>
+class method_visitor;
+
+template <
+      unsigned Arity
+    , class F
+    , class KW
+    , BOOST_PP_ENUM_BINARY_PARAMS_Z(1, 5, class A, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
+>
+class staticmethod_visitor;
+
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (0, 5, <boost/numpy/dstream/def.hpp>, 4))
+#include BOOST_PP_ITERATE()
+
+}// namespace detail
+
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (0, 5, <boost/numpy/dstream/def.hpp>, 5))
+#include BOOST_PP_ITERATE()
+
+}// namespace dstream
+}// namespace numpy
+}// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_DEF_HPP_INCLUDED
 #else
@@ -568,6 +596,189 @@ classdef(
     python::scope const sc;
 
     classdef(sc, name, f, kwargs BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
+}
+
+#elif BOOST_PP_ITERATION_FLAGS() == 4
+
+template <
+      class F
+    , class KW
+    , BOOST_PP_ENUM_PARAMS_Z(1, 5, class A)
+>
+class method_visitor<
+      N
+    , F
+    , KW
+    , BOOST_PP_ENUM_PARAMS_Z(1, 5, A)
+>
+  : public python::def_visitor< method_visitor<N, F, KW, BOOST_PP_ENUM_PARAMS_Z(1, 5, A)> >
+{
+  public:
+    method_visitor(
+          char const * name
+        , F f
+        , KW const & kwargs
+        BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
+    )
+      : m_name(name)
+      , m_f(f)
+      , m_kwargs(kwargs)
+      #define BOOST_NUMPY_DSTREAM_DEF_m_a(z, n, data) \
+              , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
+      BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF_m_a, ~)
+      #undef BOOST_NUMPY_DSTREAM_DEF_m_a
+    {}
+
+  private:
+    friend class python::def_visitor_access;
+
+    template <class Class>
+    void visit(Class& cls) const
+    {
+        dstream::classdef(
+              cls
+            , m_name
+            , m_f
+            , m_kwargs
+            BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, m_a)
+        );
+    }
+
+    char const * m_name;
+    F m_f;
+    KW const & m_kwargs;
+    #define BOOST_NUMPY_DSTREAM_DEF_m_a(z, n, data) \
+            BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
+    BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF_m_a, ~)
+    #undef BOOST_NUMPY_DSTREAM_DEF_m_a
+};
+
+template <
+      class F
+    , class KW
+    , BOOST_PP_ENUM_PARAMS_Z(1, 5, class A)
+>
+class staticmethod_visitor<
+      N
+    , F
+    , KW
+    , BOOST_PP_ENUM_PARAMS_Z(1, 5, A)
+>
+  : public python::def_visitor< staticmethod_visitor<N, F, KW, BOOST_PP_ENUM_PARAMS_Z(1, 5, A)> >
+{
+  public:
+    staticmethod_visitor(
+          char const * name
+        , F f
+        , KW const & kwargs
+        BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
+    )
+      : m_name(name)
+      , m_f(f)
+      , m_kwargs(kwargs)
+      #define BOOST_NUMPY_DSTREAM_DEF_m_a(z, n, data) \
+              , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
+      BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF_m_a, ~)
+      #undef BOOST_NUMPY_DSTREAM_DEF_m_a
+    {}
+
+  private:
+    friend class python::def_visitor_access;
+
+    template <class Class>
+    void visit(Class& cls) const
+    {
+        dstream::def(
+              cls
+            , m_name
+            , m_f
+            , m_kwargs
+            BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, m_a)
+        );
+        cls.staticmethod(m_name);
+    }
+
+    char const * m_name;
+    F m_f;
+    KW const & m_kwargs;
+    #define BOOST_NUMPY_DSTREAM_DEF_m_a(z, n, data) \
+            BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
+    BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF_m_a, ~)
+    #undef BOOST_NUMPY_DSTREAM_DEF_m_a
+};
+
+#elif BOOST_PP_ITERATION_FLAGS() == 5
+
+template <
+      class F
+    , class KW
+    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
+>
+detail::method_visitor<
+      N
+    , F
+    , KW
+    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
+>
+method(
+      char const * name
+    , F f
+    , KW const & kwargs
+    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
+)
+{
+    typedef detail::method_visitor<
+                  N
+                , F
+                , KW
+                BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
+            >
+            method_visitor_t;
+
+    method_visitor_t visitor(
+          name
+        , f
+        , kwargs
+        BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a)
+    );
+
+    return visitor;
+}
+
+template <
+      class F
+    , class KW
+    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
+>
+detail::staticmethod_visitor<
+      N
+    , F
+    , KW
+    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
+>
+staticmethod(
+      char const * name
+    , F f
+    , KW const & kwargs
+    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
+)
+{
+    typedef detail::staticmethod_visitor<
+                  N
+                , F
+                , KW
+                BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
+            >
+            staticmethod_visitor_t;
+
+    staticmethod_visitor_t visitor(
+          name
+        , f
+        , kwargs
+        BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a)
+    );
+
+    return visitor;
 }
 
 #endif // BOOST_PP_ITERATION_FLAGS
