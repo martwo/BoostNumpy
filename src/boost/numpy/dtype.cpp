@@ -2,16 +2,15 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  * 2010-2012
  *     Jim Bosch
  *
  * @file boost/numpy/dtype.cpp
  * @version $Revision$
  * @date $Date$
- * @author Martin Wolf <martin.wolf@icecube.wisc.edu>,
+ * @author Martin Wolf <boostnumpy@martin-wolf.org>,
  *         Jim Bosch
  * @brief This file implements the boost::numpy::dtype object manager.
  *
@@ -193,7 +192,7 @@ struct boost_numpy_array_scalar_converter
     void *
     convertible(PyObject * obj)
     {
-        if(obj->ob_type == get_pytype())
+        if(PyObject_TypeCheck(obj, const_cast<PyTypeObject*>(get_pytype())))
         {
             return obj;
         }

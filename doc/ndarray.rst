@@ -5,10 +5,7 @@
 The ndarray class
 =================
 
-Include statement::
-
-    #include <boost/numpy/ndarray.hpp>
-
 The ``boost::numpy::ndarray`` class is derived from the
-``boost::python::object`` class and handles a ``PyArray_Type`` Python object,
-i.e. a numpy ndarray object.
+``boost::python::object`` class and manages a Python object of type
+``PyArray_Type``., i.e. a numpy ndarray object.
+

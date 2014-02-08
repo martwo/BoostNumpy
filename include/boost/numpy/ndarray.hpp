@@ -160,7 +160,7 @@ class ndarray : public python::object
 
     //__________________________________________________________________________
     /**
-     * @brief Return the shape of the array as an array of intptr_t values
+     * @brief Return the shape of the array as a C array of intptr_t values
      *        (length == get_nd()).
      */
     inline
@@ -171,19 +171,23 @@ class ndarray : public python::object
     }
 
     //__________________________________________________________________________
-    /*
+    /**
+     * @brief Returns the shape of the array as a std::vector<intptr_t> object
+     *        with a length equal to get_nd().
+     */
+    inline
     std::vector<intptr_t>
-    get_shape() const
+    get_shape_vector() const
     {
         int const nd = this->get_nd();
         intptr_t const * shape = this->get_shape();
-        std::vector<intptr_t> shape_vec;
+        std::vector<intptr_t> shape_vec(nd);
         for(int i=0; i<nd; ++i) {
-            shape_vec.push_back(shape[i]);
+            shape_vec[i] = shape[i];
         }
         return shape_vec;
     }
-    */
+
     //__________________________________________________________________________
     /**
      * @brief Return the size of the n'th dimension.
@@ -253,6 +257,9 @@ class ndarray : public python::object
     //--------------------------------------------------------------------------
     ndarray
     reshape(python::list const & shape) const;
+    //--------------------------------------------------------------------------
+    ndarray
+    reshape(std::vector<intptr_t> const & shape) const;
 
     //__________________________________________________________________________
     /**

@@ -2,14 +2,13 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
- * @file boost/numpy.hpp
+ * @file boost/numpy/numpy_c_api.hpp
  * @version $Revision$
  * @date $Date$
- * @author Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * @author Martin Wolf <boostnumpy@martin-wolf.org>
  * @brief This file includes the numpy C API for usage by boost::numpy.
  *
  *        This file is distributed under the Boost Software License,

@@ -301,6 +301,19 @@ reshape(python::list const & shape) const
 }
 
 //______________________________________________________________________________
+ndarray
+ndarray::
+reshape(std::vector<intptr_t> const & shape) const
+{
+    python::list shape_list;
+    for(size_t i=0; i<shape.size(); ++i)
+    {
+        shape_list.append(shape[i]);
+    }
+    return reshape(shape_list);
+}
+
+//______________________________________________________________________________
 python::object
 ndarray::
 scalarize() const

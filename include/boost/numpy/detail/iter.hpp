@@ -2,14 +2,13 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * @file    boost/numpy/detail/iter.hpp
  * @version $Revision$
  * @date    $Date$
- * @author  Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * @author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * @brief This file defines the boost::numpy::detail::iter class providing
  *        a multi-operand iterator for boost::numpy::ndarray objects. It
@@ -125,7 +124,7 @@ class iter
      *
      * \param n_iter_axes The number of axes that will be iterated.
      */
-    #define BOOST_PP_ITERATION_PARAMS_1 (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/detail/iter.hpp>, 1))
+    #define BOOST_PP_ITERATION_PARAMS_1 (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/detail/iter.hpp>, 1))
     #include BOOST_PP_ITERATE()
 
     //__________________________________________________________________________
@@ -309,9 +308,9 @@ operator&(iter::flags_t a, iter::flags_t b)
     return (iter_flags_t(a) & iter_flags_t(b));
 }
 
-}/*detail*/
-}/*numpy*/
-}/*boost*/
+}// namespace detail
+}// namespace numpy
+}// namespace boost
 
 #endif // !BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
 
