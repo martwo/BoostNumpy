@@ -71,9 +71,9 @@ struct iter_operand
 
     ndarray const &      ndarray_;
     iter_operand_flags_t flags_;
-    int *                broadcasting_rules_;
+    int const * const    broadcasting_rules_;
 
-    iter_operand(ndarray const & arr, iter_operand_flags_t f, int * bcr)
+    iter_operand(ndarray const & arr, iter_operand_flags_t f, int const * const bcr)
       : ndarray_(arr),
         flags_(f),
         broadcasting_rules_(bcr)

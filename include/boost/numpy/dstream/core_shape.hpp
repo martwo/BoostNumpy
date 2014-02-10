@@ -67,12 +67,12 @@ struct core_shape_base
 
     //__________________________________________________________________________
     /**
-     * \brief Extracts the idx'th key of the core shape MPL vector.
+     * \brief Extracts the idx'th id of the core shape description MPL vector.
      */
     inline
     static
     int
-    key(int idx)
+    id(int idx)
     {
         return as_std_vector()[idx];
     }
