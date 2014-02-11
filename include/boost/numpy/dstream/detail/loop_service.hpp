@@ -85,13 +85,13 @@ struct loop_service_arity<N>
 {
     BOOST_STATIC_CONSTANT(int, arity = N);
 
-    template <BOOST_PP_ENUM_PARAMS_Z(1, N, class InArrCoreShape)>
+    template <BOOST_PP_ENUM_PARAMS_Z(1, N, class InArrDef)>
     class loop_service
     {
       public:
         #define BOOST_NUMPY_DEF(z, n, data) \
             BOOST_PP_COMMA_IF(n) BOOST_PP_CAT(_in_arr_service_,n) ( BOOST_PP_CAT(in_arr_service_,n) )
-        loop_service( BOOST_PP_ENUM_BINARY_PARAMS_Z(1, N, input_array_service<InArrCoreShape, > & in_arr_service_) )
+        loop_service( BOOST_PP_ENUM_BINARY_PARAMS_Z(1, N, input_array_service< InArrDef, > & in_arr_service_) )
           : BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
         {
@@ -135,7 +135,7 @@ struct loop_service_arity<N>
          *     0 will be returned.
          */
         intptr_t
-        get_len_of_core_dim(int const id)
+        get_len_of_core_dim(int const id) const
         {
             return boost::numpy::detail::max(
                 BOOST_PP_ENUM_BINARY_PARAMS_Z(1, N, _in_arr_service_, .get_len_of_core_dim(id) BOOST_PP_INTERCEPT)
@@ -145,7 +145,7 @@ struct loop_service_arity<N>
       protected:
         std::vector<intptr_t> _loop_shape;
         #define BOOST_NUMPY_DEF(z, n, data) \
-            input_array_service< BOOST_PP_CAT(InArrCoreShape,n) > & BOOST_PP_CAT(_in_arr_service_,n) ;
+            input_array_service< BOOST_PP_CAT(InArrDef,n) > & BOOST_PP_CAT(_in_arr_service_,n) ;
         BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
     };

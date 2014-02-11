@@ -33,11 +33,15 @@ namespace numpy {
 namespace dstream {
 namespace detail {
 
-template <class CoreShape>
+template <class ArrayDefinition>
 class input_array_service
 {
   public:
-    typedef CoreShape core_shape_t;
+    typedef ArrayDefinition
+            array_definition_t;
+
+    typedef typename array_definition_t::core_shape_type
+            core_shape_t;
 
     input_array_service(ndarray const & arr)
       : arr_(arr)
@@ -66,6 +70,7 @@ class input_array_service
         std::copy(arr_shape_.end() - core_shape_t::nd::value, arr_shape_.end(), arr_core_shape_.begin());
     }
 
+    inline
     ndarray const &
     get_arr() const
     {
