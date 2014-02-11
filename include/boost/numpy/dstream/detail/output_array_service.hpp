@@ -84,6 +84,8 @@ class output_array_service
             }
         }
 
+        // Create the output array object. Either from the provided bp::object
+        // or a new one.
         if(out_obj != python::object())
         {
             // An output array was already provided by the user. Check its
@@ -106,6 +108,15 @@ class output_array_service
             dtype const dt = dtype::get_builtin< value_type >();
             arr_ = zeros(arr_shape_, dt);
         }
+
+        // Set the broadcasting rules for the output array. By construction all
+        // axes are already present, so no broadcasting (i.e. -1 axes) need to
+        // be done.
+        arr_bcr_.resize(loop_nd);
+        for(int loop_axis=0; loop_axis<loop_nd; ++loop_axis)
+        {
+            arr_bcr_[loop_axis] = loop_axis;
+        }
     }
 
     inline
@@ -113,6 +124,12 @@ class output_array_service
     get_arr() const
     {
         return arr_;
+    }
+
+    int const * const
+    get_arr_bcr_data() const
+    {
+        return &(arr_bcr_.front());
     }
 
     inline
@@ -133,6 +150,7 @@ class output_array_service
     loop_service_t const & loop_service_;
     ndarray arr_;
     std::vector<intptr_t> arr_shape_;
+    std::vector<int> arr_bcr_;
 };
 
 }// namespace detail

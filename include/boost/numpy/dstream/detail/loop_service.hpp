@@ -127,6 +127,12 @@ struct loop_service_arity<N>
             return _loop_shape;
         }
 
+        intptr_t const * const
+        get_loop_shape_data() const
+        {
+            return &(_loop_shape.front());
+        }
+
         /**
          * \brief Returns the maximum length of the core dimension that has the
          *     given id. All input arrays are searched and the maximum number

@@ -71,9 +71,9 @@ struct iter_operand
 
     ndarray const &      ndarray_;
     iter_operand_flags_t flags_;
-    int const * const    broadcasting_rules_;
+    int *                broadcasting_rules_;
 
-    iter_operand(ndarray const & arr, iter_operand_flags_t f, int const * const bcr)
+    iter_operand(ndarray const & arr, iter_operand_flags_t f, int * bcr)
       : ndarray_(arr),
         flags_(f),
         broadcasting_rules_(bcr)
@@ -321,12 +321,12 @@ operator&(iter::flags_t a, iter::flags_t b)
 #define N BOOST_PP_ITERATION()
 
 iter(
-      iter_flags_t iter_flags
-    , order_t      order
-    , casting_t    casting
-    , int          n_iter_axes
-    , intptr_t *   itershape
-    , intptr_t     buffersize
+      iter_flags_t     iter_flags
+    , order_t          order
+    , casting_t        casting
+    , int              n_iter_axes
+    , intptr_t * itershape
+    , intptr_t         buffersize
     , BOOST_PP_ENUM_PARAMS(N, iter_operand const & op_)
 );
 
@@ -355,12 +355,12 @@ iter(
 
 iter::
 iter(
-      iter_flags_t iter_flags
-    , order_t      order
-    , casting_t    casting
-    , int          n_iter_axes
-    , intptr_t *   itershape
-    , intptr_t     buffersize
+      iter_flags_t     iter_flags
+    , order_t          order
+    , casting_t        casting
+    , int              n_iter_axes
+    , intptr_t * itershape
+    , intptr_t         buffersize
     , BOOST_PP_ENUM_PARAMS(N, iter_operand const & op_)
 )
 {
