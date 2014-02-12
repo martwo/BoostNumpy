@@ -2,7 +2,7 @@
  * $Id$
  *
  * Copyright (C)
- * 2013 - $Date$
+ * 2014 - $Date$
  *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/dstream/detail/output_array_service.hpp
@@ -21,12 +21,15 @@
 #define BOOST_NUMPY_DSTREAM_DETAIL_OUTPUT_ARRAY_SERVICE_HPP_INCLUDED
 
 #include <algorithm>
+#include <sstream>
+#include <vector>
 
 #include <boost/assert.hpp>
 #include <boost/python/object_fwd.hpp>
 
 #include <boost/numpy/dtype.hpp>
 #include <boost/numpy/ndarray.hpp>
+#include <boost/numpy/detail/utils.hpp>
 
 namespace boost {
 namespace numpy {
@@ -78,7 +81,7 @@ class output_array_service
             {
                 // The core dimension id refers to a core dimension of one of
                 // the input arrays. Ask the loop service about its length.
-                intptr_t len = loop_service_.get_len_of_core_dim(id);
+                intptr_t len = loop_service_.get_core_dim_len(id);
                 BOOST_ASSERT(len > 0);
                 arr_shape_[loop_nd+i] = len;
             }
@@ -93,11 +96,10 @@ class output_array_service
             ndarray arr = from_object(out_obj, flags);
             if(! arr.has_shape(arr_shape_))
             {
-                // TODO: Make a pretty print of arr_shape_ for better error
-                //       indication.
-                PyErr_SetString(PyExc_ValueError,
-                    "The provided output array does not have the required "
-                    "shape!");
+                std::stringstream msg;
+                msg << "The provided output array does not have the required "
+                    << "shape " << numpy::detail::pprint_shape(arr_shape_) << "!";
+                PyErr_SetString(PyExc_ValueError, msg.str().c_str());
                 python::throw_error_already_set();
             }
             arr_ = arr;
@@ -124,6 +126,12 @@ class output_array_service
     get_arr() const
     {
         return arr_;
+    }
+
+    int *
+    get_arr_bcr_data()
+    {
+        return &(arr_bcr_.front());
     }
 
     int const * const

@@ -2,16 +2,15 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  * 2010-2012
  *     Jim Bosch
  *
  * @file    boost/numpy/ndarray.hpp
  * @version $Revision$
  * @date    $Date$
- * @author  Martin Wolf <martin.wolf@icecube.wisc.edu>,
+ * @author  Martin Wolf <boostnumpy@martin-wolf.org>,
  *          Jim Bosch
  *
  * @brief This file defines the boost::numpy::ndarray object manager and some
@@ -648,8 +647,8 @@ is_any_scalar(python::object const & obj)
     return PyArray_IsAnyScalar(obj.ptr());
 }
 
-}/*numpy*/
-}/*boost*/
+}// namespace numpy
+}// namespace boost
 
 // Make boost::python::extract<ndarray>(py_obj_ptr) work.
 BOOST_NUMPY_OBJECT_MANAGER_TRAITS(boost::numpy::ndarray);

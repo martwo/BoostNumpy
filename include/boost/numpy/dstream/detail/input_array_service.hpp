@@ -24,8 +24,6 @@
 
 #include <vector>
 
-#include <boost/assert.hpp>
-
 #include <boost/numpy/ndarray.hpp>
 
 namespace boost {
@@ -44,7 +42,8 @@ class input_array_service
             core_shape_t;
 
     input_array_service(ndarray const & arr)
-      : arr_(arr)
+      : arr_core_shape_ids_(core_shape_t::as_std_vector())
+      , arr_(arr)
       , arr_shape_(arr.get_shape_vector())
     {
         // Prepend ones to the shape while the shape dimensionality is less than
@@ -68,6 +67,19 @@ class input_array_service
         // Extract the core shape of the input array.
         arr_core_shape_.resize(core_shape_t::nd::value);
         std::copy(arr_shape_.end() - core_shape_t::nd::value, arr_shape_.end(), arr_core_shape_.begin());
+
+        // Validate that the input array's fixed sized, i.e. with dimension
+        // id values greater than 0, core dimensions have the correct lengths.
+        for(int i=0; i<core_shape_t::nd::value; ++i)
+        {
+            if(arr_core_shape_ids_[i] > 0 && arr_core_shape_[i] != arr_core_shape_ids_[i])
+            {
+                PyErr_SetString(PyExc_ValueError,
+                    "One of the fixed sized array dimensions has the wrong "
+                    "length!");
+                python::throw_error_already_set();
+            }
+        }
     }
 
     inline
@@ -143,10 +155,22 @@ class input_array_service
         }
     }
 
+    int *
+    get_arr_bcr_data()
+    {
+        return &(arr_bcr_.front());
+    }
+
     int const * const
     get_arr_bcr_data() const
     {
         return &(arr_bcr_.front());
+    }
+
+    std::vector<int> const &
+    get_arr_core_shape_ids() const
+    {
+        return arr_core_shape_ids_;
     }
 
     /**
@@ -157,16 +181,14 @@ class input_array_service
      *     be returned.
      */
     intptr_t
-    get_len_of_core_dim(int const id) const
+    get_core_dim_len(int const id) const
     {
         // TODO: This loop can be unrolled using MPL. The maximal possible core
         //       dimensionality is BOOST_MPL_LIMIT_VECTOR_SIZE.
-        std::vector<int> const core_shape_desc = core_shape_t::as_std_vector();
-        BOOST_ASSERT(core_shape_desc.size() == arr_core_shape_.size());
         intptr_t len = 0;
         for(int i=0; i<core_shape_t::nd::value; ++i)
         {
-            if(core_shape_desc[i] == id && len < arr_core_shape_[i])
+            if(arr_core_shape_ids_[i] == id && len < arr_core_shape_[i])
             {
                 len = arr_core_shape_[i];
             }
@@ -175,6 +197,7 @@ class input_array_service
     }
 
   protected:
+    std::vector<int> const arr_core_shape_ids_;
     ndarray arr_;
     std::vector<intptr_t> arr_shape_;
     std::vector<intptr_t> arr_core_shape_;

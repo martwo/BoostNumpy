@@ -24,14 +24,18 @@
 #define BOOST_NUMPY_DSTREAM_DETAIL_LOOP_SERVICE_HPP_INCLUDED
 
 #include <algorithm>
+#include <set>
+#include <sstream>
 #include <vector>
 
 #include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/iterate.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 
+#include <boost/numpy/detail/max.hpp>
 #include <boost/numpy/dstream/detail/input_array_service.hpp>
 
 namespace boost {
@@ -111,6 +115,48 @@ struct loop_service_arity<N>
                 BOOST_PP_CAT(_in_arr_service_,n) .set_arr_bcr(get_loop_nd());
             BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
             #undef BOOST_NUMPY_DEF
+
+            // Check if the lengths of all the core dimensions of the all the
+            // input arrays are compatible to each other.
+            // 1. Get a unique set of all used dimension ids.
+            std::set<int> ids;
+            #define BOOST_NUMPY_DEF(z, n, data) \
+                std::vector<int> const & BOOST_PP_CAT(in_arr_core_shape_ids_,n) = BOOST_PP_CAT(in_arr_service_,n).get_arr_core_shape_ids();\
+                ids.insert( BOOST_PP_CAT(in_arr_core_shape_ids_,n).begin(), BOOST_PP_CAT(in_arr_core_shape_ids_,n).end());
+            BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+            #undef BOOST_NUMPY_DEF
+            // 2. Loop through the dimension ids and for each id, collect the
+            //    list of dimension lengths of all input arrays.
+            std::set<int>::const_iterator it;
+            std::set<int>::const_iterator const ids_end = ids.end();
+            for(it=ids.begin(); it!=ids_end; ++it)
+            {
+                int const id = *it;
+                if(id <= 0)
+                {
+                    #define BOOST_NUMPY_DEF(z, n, data) \
+                        intptr_t const BOOST_PP_CAT(len_,n) = BOOST_PP_CAT(_in_arr_service_,n).get_core_dim_len(id);
+                    BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
+                    // 3. Get the maximum of all dimension lengths.
+                    intptr_t const max_len = numpy::detail::max(BOOST_PP_ENUM_PARAMS_Z(1, N, len_));
+                    // 4. Compare if all dimension length are equal to this
+                    //    maximal value or are of size 0 (i.e. not defined for
+                    //    an array), or 1 (i.e. broadcast-able).
+                    #define BOOST_NUMPY_DEF(z, n, data) \
+                        BOOST_PP_IF(n, &&, ) (BOOST_PP_CAT(len_,n) == max_len || BOOST_PP_CAT(len_,n) == 0 || BOOST_PP_CAT(len_,n) == 1)
+                    if( ! ( BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~) ) )
+                    #undef BOOST_NUMPY_DEF
+                    {
+                        std::stringstream msg;
+                        msg << "One of the variable sized array dimensions has "
+                            << "the wrong length! It must be of length 1 or "
+                            << max_len << "!";
+                        PyErr_SetString(PyExc_ValueError, msg.str().c_str());
+                        python::throw_error_already_set();
+                    }
+                }
+            }
         }
 
         inline
@@ -127,6 +173,12 @@ struct loop_service_arity<N>
             return _loop_shape;
         }
 
+        intptr_t *
+        get_loop_shape_data()
+        {
+            return &(_loop_shape.front());
+        }
+
         intptr_t const * const
         get_loop_shape_data() const
         {
@@ -141,10 +193,10 @@ struct loop_service_arity<N>
          *     0 will be returned.
          */
         intptr_t
-        get_len_of_core_dim(int const id) const
+        get_core_dim_len(int const id) const
         {
             return boost::numpy::detail::max(
-                BOOST_PP_ENUM_BINARY_PARAMS_Z(1, N, _in_arr_service_, .get_len_of_core_dim(id) BOOST_PP_INTERCEPT)
+                BOOST_PP_ENUM_BINARY_PARAMS_Z(1, N, _in_arr_service_, .get_core_dim_len(id) BOOST_PP_INTERCEPT)
             );
         }
 
