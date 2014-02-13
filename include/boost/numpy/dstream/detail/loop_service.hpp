@@ -157,6 +157,10 @@ struct loop_service_arity<N>
                     }
                 }
             }
+
+            // TODO: Check if the loop dimension length of all the input arrays
+            //       are compatible to each other. This is just to prevend an
+            //       cryptic iterator error message to the user.
         }
 
         inline

@@ -213,6 +213,18 @@ class iter
 
     //__________________________________________________________________________
     /**
+     * \brief Returns the size in bytes of an item (i.e. an element) of the
+     *     iterator's i'th operand array.
+     */
+    inline
+    intptr_t
+    get_item_size(int i)
+    {
+        return descr_ptr_array_ptr_[i]->elsize;
+    }
+
+    //__________________________________________________________________________
+    /**
      * \brief Returns the total number of elements that needs to be iterated
      *     over.
      */
@@ -235,6 +247,22 @@ class iter
     get_stride(size_t i) const
     {
         return inner_loop_stride_array_ptr_[i];
+    }
+
+    //__________________________________________________________________________
+    /**
+     * \brief Adds inner_loop_stride_array_ptr_[I] to the data pointer of the
+     *     iterator's I'th operand. It does this for all operands.
+     */
+    inline
+    void
+    add_inner_loop_strides_to_data_ptrs()
+    {
+        int const nop = get_nop();
+        for(int iop=0; iop<nop; ++iop)
+        {
+            data_ptr_array_ptr_[iop] += inner_loop_stride_array_ptr_[iop];
+        }
     }
 
     //__________________________________________________________________________
@@ -292,6 +320,12 @@ class iter
      *     loop for the current iteration.
      */
     npy_intp* inner_loop_size_ptr_;
+
+    /**
+     * \brief The pointer to the nop PyArray_Descr pointers pointing to the
+     *     description objects for all iterator operands.
+     */
+    PyArray_Descr** descr_ptr_array_ptr_;
 };
 
 inline

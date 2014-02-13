@@ -102,6 +102,7 @@ gather_iteration_pointers()
     data_ptr_array_ptr_          = NpyIter_GetDataPtrArray(npyiter_);
     inner_loop_stride_array_ptr_ = NpyIter_GetInnerStrideArray(npyiter_);
     inner_loop_size_ptr_         = NpyIter_GetInnerLoopSizePtr(npyiter_);
+    descr_ptr_array_ptr_         = NpyIter_GetDescrArray(npyiter_);
 }
 
 //______________________________________________________________________________
