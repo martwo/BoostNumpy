@@ -24,7 +24,10 @@
 #ifndef BOOST_NUMPY_DSTREAM_DEF_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_DEF_HPP_INCLUDED
 
+#include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/arithmetic/sub.hpp>
+#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_trailing_params.hpp>
@@ -46,7 +49,8 @@
 #include <boost/numpy/dstream/callable.hpp>
 #include <boost/numpy/dstream/defaults.hpp>
 #include <boost/numpy/dstream/detail/def_helper.hpp>
-#include <boost/numpy/dstream/mapping.hpp>
+#include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape.hpp>
+#include <boost/numpy/dstream/mapping/converter/return_type_to_out_mapping.hpp>
 #include <boost/numpy/dstream/mapping/models/NxS_to_S.hpp>
 #include <boost/numpy/dstream/wiring/models/scalar_callable.hpp>
 #include <boost/numpy/dstream/out_arr_transforms/squeeze_first_axis_if_single_input_and_scalarize.hpp>
@@ -350,6 +354,16 @@ struct default_mapping_model_selector<
         // IOTypes::out_t type.
         typedef typename mapping::converter::detail::return_type_to_out_mapping<typename IOTypes::out_t>::type
                 out_mapping_t;
+        // TODO: Construct a boost::numpy::dstream::mapping::in type based on
+        //       the IOTypes::in_t_0 ..
+        #define BOOST_PP_LOCAL_MACRO(n) \
+            typedef typename mapping::converter::detail::arg_type_to_core_shape<typename IOTypes:: BOOST_PP_CAT(in_t_,n) >::type BOOST_PP_CAT(in_core_shape_t_,n);
+        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N, 1))
+        #include BOOST_PP_LOCAL_ITERATE()
+        typedef mapping::in<N>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, N, in_core_shape_t_) >
+                in_mapping_t;
+        typedef mapping::definition<out_mapping_t, in_mapping_t>
+                type0;
 
         typedef mapping::model::NxS_to_S<N, OutT BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, InT_)>
                 type;

@@ -30,15 +30,11 @@
 
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/if.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/type_traits/is_scalar.hpp>
-#include <boost/type_traits/remove_reference.hpp>
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/pp.hpp>
-#include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
-#include <boost/numpy/dstream/detail/core_shape.hpp>
+#include <boost/numpy/mpl/unspecified.hpp>
 
 namespace boost {
 namespace numpy {
@@ -118,7 +114,7 @@ template <
       class OutMapping
     , class InMapping
 >
-struct mapping
+struct definition
 {
     typedef OutMapping out;
     typedef InMapping in;
@@ -131,44 +127,6 @@ struct mapping
             maps_to_void_t;
     BOOST_STATIC_CONSTANT(bool, maps_to_void = maps_to_void_t::value);
 };
-
-namespace converter {
-
-template <class T, class Enable=void>
-struct return_type_to_out_mapping
-{
-    // By default, specify no output.
-    typedef out<0>::core_shapes<>
-            type;
-};
-
-namespace detail {
-
-template <class T>
-struct return_type_to_out_mapping
-{
-    typedef typename boost::mpl::if_<
-              typename is_same<T, void>::type
-            , out<0>::core_shapes<>
-
-            , typename boost::mpl::if_<
-                typename is_scalar<typename remove_reference<T>::type>::type
-              , out<1>::core_shapes< numpy::dstream::detail::core_shape::nd<0>::shape<> >
-
-              , typename boost::mpl::if_<
-                  typename numpy::mpl::is_std_vector_of_scalar<T>::type
-                , out<1>::core_shapes< numpy::dstream::detail::core_shape::nd<1>::shape<-1> >
-
-                , typename numpy::dstream::mapping::converter::return_type_to_out_mapping<T>::type
-                >::type
-              >::type
-            >::type
-            type;
-};
-
-}// namespace detail
-
-}// namespace converter
 
 }// namespace mapping
 }// namespace dstream

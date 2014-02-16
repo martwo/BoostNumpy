@@ -12,3 +12,4 @@ exposing C++ functions as numpy ufunc'tions to Python.
 
    include
    ndarray
+   dstream/index
