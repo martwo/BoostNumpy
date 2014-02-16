@@ -28,8 +28,6 @@
 #include <boost/preprocessor/seq/cat.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
-#include <boost/numpy/types.hpp>
-
 //______________________________________________________________________________
 #define BOOST_NUMPY_PP_OB <
 #define BOOST_NUMPY_PP_CB >

@@ -49,7 +49,7 @@
 
 #include <boost/python/make_function.hpp>
 
-#include <boost/numpy/mpl/types.hpp>
+#include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/pp.hpp>
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/ndarray.hpp>

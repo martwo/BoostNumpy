@@ -38,7 +38,7 @@
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/pp.hpp>
 #include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
-#include <boost/numpy/dstream/core_shape.hpp>
+#include <boost/numpy/dstream/mapping/core_shape.hpp>
 
 namespace boost {
 namespace numpy {

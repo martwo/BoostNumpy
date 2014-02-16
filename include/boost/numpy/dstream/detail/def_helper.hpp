@@ -27,7 +27,7 @@
 #include <boost/python/detail/mpl_lambda.hpp>
 #include <boost/python/detail/def_helper.hpp>
 
-#include <boost/numpy/mpl/types.hpp>
+#include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/dstream/mapping.hpp>
 #include <boost/numpy/dstream/wiring.hpp>
 #include <boost/numpy/dstream/out_arr_transform.hpp>

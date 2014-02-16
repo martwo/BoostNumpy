@@ -2,14 +2,13 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/types.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines the boost::numpy types which are usually just
  *        typedefs of existing numpy types in order to allow a uniform type name
@@ -42,7 +41,7 @@ typedef enum {
     UNSAFE_CASTING    = NPY_UNSAFE_CASTING
 } casting_t;
 
-}/*namespace numpy*/
-}/*namespace boost*/
+}// namespace numpy
+}// namespace boost
 
 #endif// !BOOST_NUMPY_TYPES_HPP_INCLUDED

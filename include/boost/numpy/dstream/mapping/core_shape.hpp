@@ -105,7 +105,7 @@ struct nd<0>
 };
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (3, (1, BOOST_MPL_LIMIT_VECTOR_SIZE, <boost/numpy/dstream/core_shape.hpp>))
+    (3, (1, BOOST_MPL_LIMIT_VECTOR_SIZE, <boost/numpy/dstream/mapping/core_shape.hpp>))
 #include BOOST_PP_ITERATE()
 
 }// namespace core_shape

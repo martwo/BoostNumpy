@@ -30,7 +30,7 @@
 
 #include <boost/numpy/pp.hpp>
 #include <boost/numpy/limits.hpp>
-#include <boost/numpy/mpl/types.hpp>
+#include <boost/numpy/mpl/unspecified.hpp>
 
 namespace boost {
 namespace numpy {

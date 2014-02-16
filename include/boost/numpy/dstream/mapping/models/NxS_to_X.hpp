@@ -33,7 +33,7 @@
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/dstream/dshape.hpp>
 #include <boost/numpy/dstream/mapping.hpp>
-#include <boost/numpy/mpl/types.hpp>
+#include <boost/numpy/mpl/unspecified.hpp>
 
 #include <boost/numpy/dstream/wiring/models/vector_callable.hpp>
 

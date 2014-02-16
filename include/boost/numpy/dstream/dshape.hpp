@@ -36,7 +36,6 @@
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/dstream/limits.hpp>
 #include <boost/numpy/mpl/as_std_vector.hpp>
-#include <boost/numpy/mpl/types.hpp>
 
 namespace boost {
 namespace numpy {

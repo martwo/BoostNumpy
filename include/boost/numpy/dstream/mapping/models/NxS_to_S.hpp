@@ -37,7 +37,7 @@
 
 #include <boost/numpy/pp.hpp>
 #include <boost/numpy/limits.hpp>
-#include <boost/numpy/mpl/types.hpp>
+#include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/detail/iter.hpp>
 #include <boost/numpy/dstream/mapping.hpp>
 #include <boost/numpy/dstream/dshape.hpp>

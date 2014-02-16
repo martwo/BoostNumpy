@@ -28,7 +28,7 @@
 
 #include <boost/numpy/pp.hpp>
 #include <boost/numpy/limits.hpp>
-#include <boost/numpy/mpl/types.hpp>
+#include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/detail/config.hpp>
 #include <boost/numpy/detail/callable_ptr.hpp>
 

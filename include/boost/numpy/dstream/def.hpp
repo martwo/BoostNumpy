@@ -42,7 +42,7 @@
 #include <boost/numpy/detail/prefix.hpp>
 
 #include <boost/numpy/limits.hpp>
-#include <boost/numpy/mpl/types.hpp>
+#include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/dstream/callable.hpp>
 #include <boost/numpy/dstream/defaults.hpp>
 #include <boost/numpy/dstream/detail/def_helper.hpp>
