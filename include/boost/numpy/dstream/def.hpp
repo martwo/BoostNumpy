@@ -46,6 +46,7 @@
 #include <boost/numpy/dstream/callable.hpp>
 #include <boost/numpy/dstream/defaults.hpp>
 #include <boost/numpy/dstream/detail/def_helper.hpp>
+#include <boost/numpy/dstream/mapping.hpp>
 #include <boost/numpy/dstream/mapping/models/NxS_to_S.hpp>
 #include <boost/numpy/dstream/wiring/models/scalar_callable.hpp>
 #include <boost/numpy/dstream/out_arr_transforms/squeeze_first_axis_if_single_input_and_scalarize.hpp>
@@ -242,6 +243,7 @@ void create_and_add_callable_object(
 {
     typedef callable<
                   Class
+                //, IOTypes
                 , typename MappingModelSelector::template select<IOTypes>::type
                 , WiringModelSelector::template wiring_model
                 , OutArrTransformSelector::template out_arr_transform
@@ -344,6 +346,11 @@ struct default_mapping_model_selector<
     template <class IOTypes>
     struct select
     {
+        // Construct a boost::numpy::dstream::mapping::out type based on the
+        // IOTypes::out_t type.
+        typedef typename mapping::converter::detail::return_type_to_out_mapping<typename IOTypes::out_t>::type
+                out_mapping_t;
+
         typedef mapping::model::NxS_to_S<N, OutT BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, InT_)>
                 type;
     };

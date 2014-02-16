@@ -143,10 +143,12 @@ struct callable_arity;
  */
 template<
       class Class
+    //, class IOTypes
     , class MappingModel
     , template <
             class _MappingModel
           , class _Class
+          //, class _IOTypes
       >
       class WiringModel
     , template <
@@ -161,7 +163,7 @@ struct callable
         , MappingModel::maps_to_void
         , ThreadAbility::threads_allowed_t::value
         , MappingModel
-        , typename WiringModel<MappingModel, Class>::type
+        , typename WiringModel<MappingModel, Class/*, F*/>::type
         , typename OutArrTransform<MappingModel>::type
         , ThreadAbility
         >
@@ -174,7 +176,7 @@ struct callable
             , MappingModel::maps_to_void
             , ThreadAbility::threads_allowed_t::value
             , MappingModel
-            , typename WiringModel<MappingModel, Class>::type
+            , typename WiringModel<MappingModel, Class/*, F*/>::type
             , typename OutArrTransform<MappingModel>::type
             , ThreadAbility
             >

@@ -267,7 +267,7 @@ struct select_base;
 
 template <int X>
 struct NxS_to_
-  : mapping::mapping_model_selector_type
+  : mapping_model_selector_type
 {
     template <class IOTypes>
     struct select

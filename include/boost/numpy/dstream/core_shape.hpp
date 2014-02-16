@@ -4,16 +4,16 @@
  * Copyright (C)
  * 2014 - $Date$
  *     Martin Wolf <boostnumpy@martin-wolf.org>
- *
+ *TODO: move file to sub-directory mapping.
  * \file    boost/numpy/dstream/core_shape.hpp
  * \version $Revision$
  * \date    $Date$
  * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines the
- *        boost::numpy::dstream::core_shape_nd<ND>::core_shape template that
- *        provides a description of the core shape of dimensionality ND for an
- *        array. The maximal number of core dimensions is given by
+ *        boost::numpy::dstream::mapping::core_shape::nd<ND>::shape template
+ *        that provides a description of the core shape of dimensionality ND for
+ *        an array. The maximal number of core dimensions is given by
  *        BOOST_MPL_LIMIT_VECTOR_SIZE.
  *
  *        This file is distributed under the Boost Software License,
@@ -40,14 +40,16 @@
 namespace boost {
 namespace numpy {
 namespace dstream {
+namespace mapping {
+namespace core_shape {
 
 namespace detail {
 
-struct core_shape_type {};
+struct shape_type {};
 
 template <class ShapeVec>
-struct core_shape_base
-  : core_shape_type
+struct shape_base
+  : shape_type
 {
     typedef ShapeVec shape_vec_t;
     typedef boost::mpl::size<shape_vec_t> nd;
@@ -93,16 +95,16 @@ struct core_shape_base
  *     be broadcasted to the length of the other dimensions with the same key.
  */
 template <int ND>
-struct core_shape_nd;
+struct nd {};
 
 template <>
-struct core_shape_nd<0>
+struct nd<0>
 {
     template <class Key = numpy::mpl::unspecified>
-    struct core_shape
-      : detail::core_shape_base< boost::mpl::vector<> >
+    struct shape
+      : detail::shape_base< boost::mpl::vector<> >
     {
-        typedef core_shape<>
+        typedef shape<>
                 type;
     };
 };
@@ -111,6 +113,8 @@ struct core_shape_nd<0>
     (3, (1, BOOST_MPL_LIMIT_VECTOR_SIZE, <boost/numpy/dstream/core_shape.hpp>))
 #include BOOST_PP_ITERATE()
 
+}// namespace core_shape
+}// namespace mapping
 }// namespace dstream
 }// namespace numpy
 }// namespace boost
@@ -121,15 +125,15 @@ struct core_shape_nd<0>
 #define N BOOST_PP_ITERATION()
 
 template <>
-struct core_shape_nd<N>
+struct nd<N>
 {
     #define BOOST_NUMPY_DEF(z, n, data) \
         BOOST_PP_COMMA_IF(n) boost::mpl::int_< BOOST_PP_CAT(Key,n) >
     template <BOOST_PP_ENUM_PARAMS_Z(1, N, int Key)>
-    struct core_shape
-      : detail::core_shape_base< boost::mpl::vector< BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~) > >
+    struct shape
+      : detail::shape_base< boost::mpl::vector< BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~) > >
     {
-        typedef core_shape<BOOST_PP_ENUM_PARAMS_Z(1, N, Key)>
+        typedef shape<BOOST_PP_ENUM_PARAMS_Z(1, N, Key)>
                 type;
     };
     #undef BOOST_NUMPY_DEF

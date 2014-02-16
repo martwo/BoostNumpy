@@ -62,11 +62,12 @@ class output_array_service
       : loop_service_(loop_service)
       , arr_(from_object(python::object()))
     {
-        // Generate the shape of the array based on its core shape and the
-        // information from the loop service.
+        // Generate the shape and the core shape of the array based on its core
+        // shape description and the information from the loop service.
         std::vector<intptr_t> const loop_shape = loop_service_.get_loop_shape();
         int const loop_nd = loop_shape.size();
         arr_shape_.resize(loop_nd + core_shape_t::nd::value);
+        arr_core_shape_.resize(core_shape_t::nd::value);
         std::copy(loop_shape.begin(), loop_shape.end(), arr_shape_.begin());
         for(int i=0; i<core_shape_t::nd::value; ++i)
         {
@@ -76,6 +77,7 @@ class output_array_service
             {
                 // The core dimension is a fixed size dimension of size id.
                 arr_shape_[loop_nd+i] = id;
+                arr_core_shape_[i] = id;
             }
             else
             {
@@ -84,6 +86,7 @@ class output_array_service
                 intptr_t len = loop_service_.get_core_dim_len(id);
                 BOOST_ASSERT(len > 0);
                 arr_shape_[loop_nd+i] = len;
+                arr_core_shape_[i] = len;
             }
         }
 
@@ -149,6 +152,13 @@ class output_array_service
 
     inline
     std::vector<intptr_t>
+    get_arr_core_shape() const
+    {
+        return arr_core_shape_;
+    }
+
+    inline
+    std::vector<intptr_t>
     get_arr_shape() const
     {
         return arr_shape_;
@@ -158,6 +168,7 @@ class output_array_service
     loop_service_t const & loop_service_;
     ndarray arr_;
     std::vector<intptr_t> arr_shape_;
+    std::vector<intptr_t> arr_core_shape_;
     std::vector<int> arr_bcr_;
 };
 

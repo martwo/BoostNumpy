@@ -2,14 +2,13 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/dstream/mapping.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines templates for data stream mapping functionalty.
  *
@@ -17,18 +16,29 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
+#if !defined(BOOST_PP_IS_ITERATING)
+
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_MAPPING_HPP_INCLUDED
 
 #include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/iterate.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/arithmetic/sub.hpp>
 #include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 
+#include <boost/mpl/bool.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/type_traits/is_scalar.hpp>
+#include <boost/type_traits/remove_reference.hpp>
+
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/pp.hpp>
+#include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
+#include <boost/numpy/dstream/core_shape.hpp>
 
 namespace boost {
 namespace numpy {
@@ -76,9 +86,138 @@ struct base_mapping_model
     //--------------------------------------------------------------------------
 };
 
-}/*namespace mapping*/
-}/*namespace dstream*/
-}/*namespace numpy*/
-}/*namespace boost*/
+// Usage:
+// namespace bndsm = boost::numpy::dstream::mapping;
+// bndsm::out<2>::core_shapes< bndsm::core_shape::nd<0>::shape<>, bndsm::core_shape::nd<1>::shape<-1> >
+
+template <int OutArity>
+struct out;
+
+template <>
+struct out<0>
+{
+    template < class Dummy = numpy::mpl::unspecified >
+    struct core_shapes
+    {
+        BOOST_STATIC_CONSTANT(int, arity = 0);
+    };
+};
+
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (1, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/mapping.hpp>, 1))
+#include BOOST_PP_ITERATE()
+
+template <int InArity>
+struct in;
+
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/mapping.hpp>, 2))
+#include BOOST_PP_ITERATE()
+
+template <
+      class OutMapping
+    , class InMapping
+>
+struct mapping
+{
+    typedef OutMapping out;
+    typedef InMapping in;
+
+    typedef typename boost::mpl::if_c<
+              out::arity
+            , boost::mpl::false_
+            , boost::mpl::true_
+            >::type
+            maps_to_void_t;
+    BOOST_STATIC_CONSTANT(bool, maps_to_void = maps_to_void_t::value);
+};
+
+namespace converter {
+
+template <class T, class Enable=void>
+struct return_type_to_out_mapping
+{
+    // By default, specify no output.
+    typedef out<0>::core_shapes<>
+            type;
+};
+
+namespace detail {
+
+template <class T>
+struct return_type_to_out_mapping
+{
+    typedef typename boost::mpl::if_<
+              typename is_same<T, void>::type
+            , out<0>::core_shapes<>
+
+            , typename boost::mpl::if_<
+                typename is_scalar<typename remove_reference<T>::type>::type
+              , out<1>::core_shapes< core_shape::nd<0>::shape<> >
+
+              , typename boost::mpl::if_<
+                  typename numpy::mpl::is_std_vector_of_scalar<T>::type
+                , out<1>::core_shapes< core_shape::nd<1>::shape<-1> >
+
+                , typename numpy::dstream::mapping::converter::return_type_to_out_mapping<T>::type
+                >::type
+              >::type
+            >::type
+            type;
+};
+
+}// namespace detail
+
+}// namespace converter
+
+}// namespace mapping
+}// namespace dstream
+}// namespace numpy
+}// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_MAPPING_HPP_INCLUDED
+#else
+
+#define N BOOST_PP_ITERATION()
+
+#if BOOST_PP_ITERATION_FLAGS() == 1
+
+template <>
+struct out<N>
+{
+    template < BOOST_PP_ENUM_PARAMS_Z(1, N, class CoreShape) >
+    struct core_shapes
+    {
+        BOOST_STATIC_CONSTANT(int, arity = N);
+
+        // List all the core shape types as core_shape_tI.
+        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N, 1))
+        #define BOOST_PP_LOCAL_MACRO(n)                                        \
+            typedef typename BOOST_PP_CAT(CoreShape, n)::type BOOST_PP_CAT(core_shape_t,n);
+        #include BOOST_PP_LOCAL_ITERATE()
+    };
+};
+
+#elif BOOST_PP_ITERATION_FLAGS() == 2
+
+template <>
+struct in<N>
+{
+    template < BOOST_PP_ENUM_PARAMS_Z(1, N, class CoreShape) >
+    struct core_shapes
+    {
+        BOOST_STATIC_CONSTANT(int, arity = N);
+
+        // List all the core shape types as core_shape_tI.
+        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N, 1))
+        #define BOOST_PP_LOCAL_MACRO(n)                                        \
+            typedef typename BOOST_PP_CAT(CoreShape, n)::type BOOST_PP_CAT(core_shape_t,n);
+        #include BOOST_PP_LOCAL_ITERATE()
+    };
+};
+
+#endif // BOOST_PP_ITERATION_FLAGS
+
+#undef N
+
+#endif // BOOST_PP_IS_ITERATING
