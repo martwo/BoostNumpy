@@ -12,3 +12,4 @@ argument and core shape types, respectively. Converters are MPL functions.
    :maxdepth: 3
 
    return_type_to_out_mapping
+   arg_type_to_core_shape
