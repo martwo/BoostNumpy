@@ -38,7 +38,7 @@
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/pp.hpp>
 #include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
-#include <boost/numpy/dstream/mapping/core_shape.hpp>
+#include <boost/numpy/dstream/detail/core_shape.hpp>
 
 namespace boost {
 namespace numpy {
@@ -87,8 +87,8 @@ struct base_mapping_model
 };
 
 // Usage:
-// namespace bndsm = boost::numpy::dstream::mapping;
-// bndsm::out<2>::core_shapes< bndsm::core_shape::nd<0>::shape<>, bndsm::core_shape::nd<1>::shape<-1> >
+// namespace bnds = boost::numpy::dstream;
+// bnds::mapping::out<2>::core_shapes< bnds::detail::core_shape::nd<0>::shape<>, bnds::detail::core_shape::nd<1>::shape<-1> >
 
 template <int OutArity>
 struct out;
@@ -153,11 +153,11 @@ struct return_type_to_out_mapping
 
             , typename boost::mpl::if_<
                 typename is_scalar<typename remove_reference<T>::type>::type
-              , out<1>::core_shapes< core_shape::nd<0>::shape<> >
+              , out<1>::core_shapes< numpy::dstream::detail::core_shape::nd<0>::shape<> >
 
               , typename boost::mpl::if_<
                   typename numpy::mpl::is_std_vector_of_scalar<T>::type
-                , out<1>::core_shapes< core_shape::nd<1>::shape<-1> >
+                , out<1>::core_shapes< numpy::dstream::detail::core_shape::nd<1>::shape<-1> >
 
                 , typename numpy::dstream::mapping::converter::return_type_to_out_mapping<T>::type
                 >::type

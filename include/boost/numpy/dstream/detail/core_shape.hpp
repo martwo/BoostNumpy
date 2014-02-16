@@ -5,13 +5,13 @@
  * 2014 - $Date$
  *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
- * \file    boost/numpy/dstream/mapping/core_shape.hpp
+ * \file    boost/numpy/dstream/detail/core_shape.hpp
  * \version $Revision$
  * \date    $Date$
  * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines the
- *        boost::numpy::dstream::mapping::core_shape::nd<ND>::shape template
+ *        boost::numpy::dstream::detail::core_shape::nd<ND>::shape template
  *        that provides a description of the core shape of dimensionality ND for
  *        an array. The maximal number of core dimensions is given by
  *        BOOST_MPL_LIMIT_VECTOR_SIZE.
@@ -40,7 +40,7 @@
 namespace boost {
 namespace numpy {
 namespace dstream {
-namespace mapping {
+namespace detail {
 namespace core_shape {
 
 namespace detail {
@@ -105,11 +105,11 @@ struct nd<0>
 };
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (3, (1, BOOST_MPL_LIMIT_VECTOR_SIZE, <boost/numpy/dstream/mapping/core_shape.hpp>))
+    (3, (1, BOOST_MPL_LIMIT_VECTOR_SIZE, <boost/numpy/dstream/detail/core_shape.hpp>))
 #include BOOST_PP_ITERATE()
 
 }// namespace core_shape
-}// namespace mapping
+}// namespace detail
 }// namespace dstream
 }// namespace numpy
 }// namespace boost
