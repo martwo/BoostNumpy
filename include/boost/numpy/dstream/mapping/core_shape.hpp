@@ -4,8 +4,8 @@
  * Copyright (C)
  * 2014 - $Date$
  *     Martin Wolf <boostnumpy@martin-wolf.org>
- *TODO: move file to sub-directory mapping.
- * \file    boost/numpy/dstream/core_shape.hpp
+ *
+ * \file    boost/numpy/dstream/mapping/core_shape.hpp
  * \version $Revision$
  * \date    $Date$
  * \author  Martin Wolf <boostnumpy@martin-wolf.org>
@@ -47,6 +47,13 @@ namespace detail {
 
 struct shape_type {};
 
+// The shape_vec_t type is a boost::mpl::vector of boost::mpl::int_ types,
+// specifying the shape of the core dimensions of the ndarray.
+// By convention, positive values specify fixed length
+// dimensions. Negative values specify variable sized dimensions. The
+// negative value specifies the key of that dimensions. Dimensions with the
+// same key must have the same length or must have a size of one, so it can
+// be broadcasted to the length of the other dimensions with the same key.
 template <class ShapeVec>
 struct shape_base
   : shape_type
@@ -82,18 +89,6 @@ struct shape_base
 
 }// namespace detail
 
-/**
- * \brief The boost::numpy::dstream::core_shape_nd<ND>::core_shape
- *     template provides a type for a particular core shape of a ndarray.
- *
- * \internal The shape_vec_t type of its base class is a boost::mpl::vector of
- *     boost::mpl::int_ types, specifying the shape of the core dimensions of
- *     the ndarray. By convention, positive values specify fixed length
- *     dimensions. Negative values specify variable sized dimensions. The
- *     negative value specifies the key of that dimensions. Dimensions with the
- *     same key must have the same length or must have a size of one, so it can
- *     be broadcasted to the length of the other dimensions with the same key.
- */
 template <int ND>
 struct nd {};
 
