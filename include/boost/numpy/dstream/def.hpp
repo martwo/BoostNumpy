@@ -360,9 +360,9 @@ struct default_mapping_model_selector<
             typedef typename mapping::converter::detail::arg_type_to_core_shape<typename IOTypes:: BOOST_PP_CAT(in_t_,n) >::type BOOST_PP_CAT(in_core_shape_t_,n);
         #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N, 1))
         #include BOOST_PP_LOCAL_ITERATE()
-        typedef mapping::in<N>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, N, in_core_shape_t_) >
+        typedef mapping::detail::in<N>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, N, in_core_shape_t_) >
                 in_mapping_t;
-        typedef mapping::definition<out_mapping_t, in_mapping_t>
+        typedef mapping::detail::definition<out_mapping_t, in_mapping_t>
                 type0;
 
         typedef mapping::model::NxS_to_S<N, OutT BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, InT_)>

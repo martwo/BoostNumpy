@@ -21,8 +21,6 @@
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_ARG_TYPE_TO_CORE_SHAPE_FWD_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_ARG_TYPE_TO_CORE_SHAPE_FWD_HPP_INCLUDED
 
-#include <boost/numpy/dstream/detail/core_shape.hpp>
-
 namespace boost {
 namespace numpy {
 namespace dstream {

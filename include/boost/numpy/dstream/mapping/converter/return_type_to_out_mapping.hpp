@@ -27,8 +27,9 @@
 #include <boost/type_traits/remove_reference.hpp>
 
 #include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
-#include <boost/numpy/dstream/detail/core_shape.hpp>
-#include <boost/numpy/dstream/mapping.hpp>
+#include <boost/numpy/dstream/dim.hpp>
+#include <boost/numpy/dstream/mapping/detail/out.hpp>
+#include <boost/numpy/dstream/mapping/detail/core_shape.hpp>
 
 namespace boost {
 namespace numpy {
@@ -59,7 +60,7 @@ template <class T, class Enable=void>
 struct void_to_out_mapping
   : return_type_to_out_mapping_type
 {
-    typedef out<0>::core_shapes<>
+    typedef mapping::detail::out<0>::core_shapes<>
             type;
 };
 
@@ -67,7 +68,7 @@ template <class T, class Enable=void>
 struct scalar_to_out_mapping
   : return_type_to_out_mapping_type
 {
-    typedef out<1>::core_shapes< numpy::dstream::detail::core_shape::nd<0>::shape<> >
+    typedef mapping::detail::out<1>::core_shapes< mapping::detail::core_shape<0>::shape<> >
             type;
 };
 
@@ -75,7 +76,7 @@ template <class T, class Enable=void>
 struct std_vector_of_scalar_to_out_mapping
   : return_type_to_out_mapping_type
 {
-    typedef out<1>::core_shapes< numpy::dstream::detail::core_shape::nd<1>::shape< numpy::dstream::detail::core_shape::dim::I > >
+    typedef mapping::detail::out<1>::core_shapes< mapping::detail::core_shape<1>::shape< dim::I > >
             type;
 };
 

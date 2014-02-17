@@ -25,7 +25,8 @@
 #include <boost/type_traits/is_scalar.hpp>
 
 #include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
-#include <boost/numpy/dstream/detail/core_shape.hpp>
+#include <boost/numpy/dstream/dim.hpp>
+#include <boost/numpy/dstream/mapping/detail/core_shape.hpp>
 
 namespace boost {
 namespace numpy {
@@ -56,7 +57,7 @@ template <class T, class Enable=void>
 struct scalar_to_core_shape
   : arg_type_to_core_shape_type
 {
-    typedef numpy::dstream::detail::core_shape::nd<0>::shape<>
+    typedef mapping::detail::core_shape<0>::shape<>
             type;
 };
 
@@ -64,7 +65,7 @@ template <class T, class Enable=void>
 struct std_vector_of_scalar_to_core_shape
   : arg_type_to_core_shape_type
 {
-    typedef numpy::dstream::detail::core_shape::nd<1>::shape< numpy::dstream::detail::core_shape::dim::I >
+    typedef mapping::detail::core_shape<1>::shape< dim::I >
             type;
 };
 

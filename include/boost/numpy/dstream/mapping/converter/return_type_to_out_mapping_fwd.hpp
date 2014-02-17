@@ -21,9 +21,6 @@
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_RETURN_TYPE_TO_OUT_MAPPING_FWD_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_RETURN_TYPE_TO_OUT_MAPPING_FWD_HPP_INCLUDED
 
-#include <boost/numpy/dstream/mapping.hpp>
-#include <boost/numpy/dstream/detail/core_shape.hpp>
-
 namespace boost {
 namespace numpy {
 namespace dstream {

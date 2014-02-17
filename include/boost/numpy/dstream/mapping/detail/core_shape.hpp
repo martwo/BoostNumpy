@@ -11,7 +11,7 @@
  * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines the
- *        boost::numpy::dstream::detail::core_shape::nd<ND>::shape template
+ *        boost::numpy::dstream::mapping::detail::core_shape<ND>::shape template
  *        that provides a description of the core shape of dimensionality ND for
  *        an array. The maximal number of core dimensions is given by
  *        BOOST_MPL_LIMIT_VECTOR_SIZE.
@@ -22,8 +22,8 @@
  */
 #if !defined(BOOST_PP_IS_ITERATING)
 
-#ifndef BOOST_NUMPY_DSTREAM_CORE_SHAPE_HPP_INCLUDED
-#define BOOST_NUMPY_DSTREAM_CORE_SHAPE_HPP_INCLUDED
+#ifndef BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_CORE_SHAPE_HPP_INCLUDED
+#define BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_CORE_SHAPE_HPP_INCLUDED
 
 #include <boost/preprocessor/iterate.hpp>
 #include <boost/preprocessor/iteration/local.hpp>
@@ -48,44 +48,12 @@
 #include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/mpl/as_std_vector.hpp>
 
+#include <boost/numpy/dstream/mapping/detail/definition.hpp>
+
 namespace boost {
 namespace numpy {
 namespace dstream {
-namespace detail {
-namespace core_shape {
-
-// Define core shape dimension names with pre-defined dimension ids.
-namespace dim {
-
-BOOST_STATIC_CONSTANT(int, A = -1);
-BOOST_STATIC_CONSTANT(int, B = -2);
-BOOST_STATIC_CONSTANT(int, C = -3);
-BOOST_STATIC_CONSTANT(int, D = -4);
-BOOST_STATIC_CONSTANT(int, E = -5);
-BOOST_STATIC_CONSTANT(int, F = -6);
-BOOST_STATIC_CONSTANT(int, G = -7);
-BOOST_STATIC_CONSTANT(int, H = -8);
-BOOST_STATIC_CONSTANT(int, I = -9);
-BOOST_STATIC_CONSTANT(int, J = -10);
-BOOST_STATIC_CONSTANT(int, K = -11);
-BOOST_STATIC_CONSTANT(int, L = -12);
-BOOST_STATIC_CONSTANT(int, M = -13);
-BOOST_STATIC_CONSTANT(int, N = -14);
-BOOST_STATIC_CONSTANT(int, O = -15);
-BOOST_STATIC_CONSTANT(int, P = -16);
-BOOST_STATIC_CONSTANT(int, Q = -17);
-BOOST_STATIC_CONSTANT(int, R = -18);
-BOOST_STATIC_CONSTANT(int, S = -19);
-BOOST_STATIC_CONSTANT(int, T = -20);
-BOOST_STATIC_CONSTANT(int, U = -21);
-BOOST_STATIC_CONSTANT(int, V = -22);
-BOOST_STATIC_CONSTANT(int, W = -23);
-BOOST_STATIC_CONSTANT(int, X = -24);
-BOOST_STATIC_CONSTANT(int, Y = -25);
-BOOST_STATIC_CONSTANT(int, Z = -26);
-
-}// namespace dim
-
+namespace mapping {
 namespace detail {
 
 struct core_shape_type
@@ -181,16 +149,14 @@ template <int LEN>
 struct core_shape_tuple;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/detail/core_shape.hpp>, 1))
+    (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 1))
 #include BOOST_PP_ITERATE()
 
-}// namespace detail
-
 template <int ND>
-struct nd {};
+struct core_shape {};
 
 template <>
-struct nd<0>
+struct core_shape<0>
 {
     template <class Key = numpy::mpl::unspecified>
     struct shape
@@ -202,20 +168,20 @@ struct nd<0>
 };
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (1, BOOST_NUMPY_LIMIT_CORE_SHAPE_ND, <boost/numpy/dstream/detail/core_shape.hpp>, 2))
+    (4, (1, BOOST_NUMPY_LIMIT_CORE_SHAPE_ND, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 2))
 #include BOOST_PP_ITERATE()
 
 // Construct a core_shape_tuple of length 2 out of two core_shape types.
 template <class CoreShapeLHS, class CoreShapeRHS>
 typename boost::lazy_enable_if<
-    boost::mpl::and_<detail::is_core_shape<CoreShapeLHS>
-                   , detail::is_core_shape<CoreShapeRHS> >
-  , detail::core_shape_tuple<2>::core_shapes<CoreShapeLHS, CoreShapeRHS>
+    boost::mpl::and_<is_core_shape<CoreShapeLHS>
+                   , is_core_shape<CoreShapeRHS> >
+  , core_shape_tuple<2>::core_shapes<CoreShapeLHS, CoreShapeRHS>
 >::type
 operator,(CoreShapeLHS const &, CoreShapeRHS const &)
 {
     std::cout << "Creating cshape_tuple<2> type" << std::endl;
-    return detail::core_shape_tuple<2>::core_shapes<CoreShapeLHS, CoreShapeRHS>();
+    return core_shape_tuple<2>::core_shapes<CoreShapeLHS, CoreShapeRHS>();
 }
 
 template <int LEN>
@@ -223,29 +189,30 @@ struct make_core_shape_tuple;
 
 // Construct core_shape_tuples of length 3 and above.
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (3, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/detail/core_shape.hpp>, 3))
+    (4, (3, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 3))
 #include BOOST_PP_ITERATE()
 
 // Construct a mapping definition from two core_shape_tuple types.
 template <class InCoreShapeTuple, class OutCoreShapeTuple>
-typename boost::enable_if<
-    boost::mpl::and_< detail::is_core_shape_tuple<InCoreShapeTuple>
-                    , detail::is_core_shape_tuple<OutCoreShapeTuple>
+typename boost::lazy_enable_if<
+    boost::mpl::and_< is_core_shape_tuple<InCoreShapeTuple>
+                    , is_core_shape_tuple<OutCoreShapeTuple>
     >
-    //, void//mapping::make_definition<OutCoreShapeTuple, InCoreShapeTuple>
+  , make_definition<OutCoreShapeTuple, InCoreShapeTuple>
 >::type
 operator>>(InCoreShapeTuple const &, OutCoreShapeTuple const &)
 {
-    //return typename mapping::make_definition<OutCoreShapeTuple, InCoreShapeTuple>::type();
+    std::cout << "Creating definition type" << std::endl;
+    return typename make_definition<OutCoreShapeTuple, InCoreShapeTuple>::type();
 }
 
-}// namespace core_shape
 }// namespace detail
+}// namespace mapping
 }// namespace dstream
 }// namespace numpy
 }// namespace boost
 
-#endif // !BOOST_NUMPY_DSTREAM_CORE_SHAPE_HPP_INCLUDED
+#endif // !BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_CORE_SHAPE_HPP_INCLUDED
 #else
 
 #define N BOOST_PP_ITERATION()
@@ -274,13 +241,13 @@ struct core_shape_tuple<N>
 #elif BOOST_PP_ITERATION_FLAGS() == 2
 
 template <>
-struct nd<N>
+struct core_shape<N>
 {
     #define BOOST_NUMPY_DEF(z, n, data) \
         BOOST_PP_COMMA_IF(n) boost::mpl::int_< BOOST_PP_CAT(Key,n) >
     template <BOOST_PP_ENUM_PARAMS_Z(1, N, int Key)>
     struct shape
-      : detail::core_shape_base< boost::mpl::vector< BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~) > >
+      : core_shape_base< boost::mpl::vector< BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~) > >
     {
         typedef shape<BOOST_PP_ENUM_PARAMS_Z(1, N, Key)>
                 type;
@@ -296,18 +263,18 @@ struct make_core_shape_tuple<N>
     template <class CoreShapeTuple, class CoreShape>
     struct impl
     {
-        typedef detail::core_shape_tuple<N>::core_shapes<BOOST_PP_ENUM_PARAMS_Z(1, BOOST_PP_SUB(N,1), typename CoreShapeTuple::core_shape_type_), CoreShape>
+        typedef core_shape_tuple<N>::core_shapes<BOOST_PP_ENUM_PARAMS_Z(1, BOOST_PP_SUB(N,1), typename CoreShapeTuple::core_shape_type_), CoreShape>
                 type;
     };
 };
 
-// Construct a cshape_tuple of length N out of a core shape tuple type of length
-// N-1 and one core shape type.
+// Construct a core_shape_tuple of length N out of a core shape tuple type of
+// length N-1 and one core shape type.
 template <class CoreShapeTuple, class CoreShape>
 typename boost::lazy_enable_if<
-    boost::mpl::and_<detail::is_core_shape_tuple<CoreShapeTuple>
-                   , detail::is_len_of<CoreShapeTuple, BOOST_PP_SUB(N,1)>
-                   , detail::is_core_shape<CoreShape> >
+    boost::mpl::and_<is_core_shape_tuple<CoreShapeTuple>
+                   , is_len_of<CoreShapeTuple, BOOST_PP_SUB(N,1)>
+                   , is_core_shape<CoreShape> >
   , make_core_shape_tuple<N>::impl<CoreShapeTuple,CoreShape>
 >::type
 operator,(CoreShapeTuple const &, CoreShape const &)
