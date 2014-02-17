@@ -35,6 +35,7 @@
 #include <boost/numpy/mpl/unspecified.hpp>
 
 #include <boost/numpy/dstream/dim.hpp>
+#include <boost/numpy/dstream/mapping/detail/definition.hpp>
 #include <boost/numpy/dstream/mapping/detail/core_shape.hpp>
 
 namespace boost {

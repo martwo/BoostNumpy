@@ -24,6 +24,7 @@
 
 #include <boost/numpy/dstream/mapping/detail/in.hpp>
 #include <boost/numpy/dstream/mapping/detail/out.hpp>
+#include <boost/numpy/dstream/mapping/detail/core_shape.hpp>
 
 namespace boost {
 namespace numpy {
@@ -59,6 +60,20 @@ struct make_definition
     typedef definition<out_mapping_t, in_mapping_t>
             type;
 };
+
+// Construct a mapping definition from two core_shape_tuple types.
+template <class InCoreShapeTuple, class OutCoreShapeTuple>
+typename boost::lazy_enable_if<
+    boost::mpl::and_< is_core_shape_tuple<InCoreShapeTuple>
+                    , is_core_shape_tuple<OutCoreShapeTuple>
+    >
+  , make_definition<OutCoreShapeTuple, InCoreShapeTuple>
+>::type
+operator>>(InCoreShapeTuple const &, OutCoreShapeTuple const &)
+{
+    std::cout << "Creating definition type" << std::endl;
+    return typename make_definition<OutCoreShapeTuple, InCoreShapeTuple>::type();
+}
 
 }// namespace detail
 }// namespace mapping

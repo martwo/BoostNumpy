@@ -48,8 +48,6 @@
 #include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/mpl/as_std_vector.hpp>
 
-#include <boost/numpy/dstream/mapping/detail/definition.hpp>
-
 namespace boost {
 namespace numpy {
 namespace dstream {
@@ -191,20 +189,6 @@ struct make_core_shape_tuple;
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (4, (3, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 3))
 #include BOOST_PP_ITERATE()
-
-// Construct a mapping definition from two core_shape_tuple types.
-template <class InCoreShapeTuple, class OutCoreShapeTuple>
-typename boost::lazy_enable_if<
-    boost::mpl::and_< is_core_shape_tuple<InCoreShapeTuple>
-                    , is_core_shape_tuple<OutCoreShapeTuple>
-    >
-  , make_definition<OutCoreShapeTuple, InCoreShapeTuple>
->::type
-operator>>(InCoreShapeTuple const &, OutCoreShapeTuple const &)
-{
-    std::cout << "Creating definition type" << std::endl;
-    return typename make_definition<OutCoreShapeTuple, InCoreShapeTuple>::type();
-}
 
 }// namespace detail
 }// namespace mapping
