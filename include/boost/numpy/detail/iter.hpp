@@ -24,6 +24,7 @@
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
 #if !BOOST_PP_IS_ITERATING
+
 #ifndef BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
 #define BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
 
@@ -189,8 +190,6 @@ class iter
      * \brief Returns the pointer to the data of the i-th operand for the
      *     current iteration. If the EXTERNAL_LOOP flag was set for the iterator
      *     each pointer points to the first element of the inner most loop.
-     *     Note: The index 0 denotes the output operand, and 1 the first input
-     *     operand, 2 the second input operand and so forth.
      */
     inline
     char*
@@ -240,11 +239,12 @@ class iter
 
     //__________________________________________________________________________
     /**
-     * \brief Returns the stride for the i'th iterator operand.
+     * \brief Returns the inner loop stride (in bytes) of the i'th iterator
+     *     operand.
      */
     inline
     intptr_t
-    get_stride(size_t i) const
+    get_inner_loop_stride(size_t i) const
     {
         return inner_loop_stride_array_ptr_[i];
     }

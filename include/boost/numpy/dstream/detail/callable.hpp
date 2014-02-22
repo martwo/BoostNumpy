@@ -50,9 +50,7 @@ template <
     , class FSignature
     , class MappingDefinition
     , template <
-            class _MappingDefinition
-          , class _F
-          , class _FTypes
+         class _MappingDefinition
       >
       class WiringModel
     , class ThreadAbility
@@ -62,15 +60,16 @@ struct callable_base_select
     typedef typename numpy::mpl::types_from_fctptr_signature<F, FSignature>::type
             f_types_t;
 
-    typedef WiringModel<MappingDefinition, F, f_types_t>
+    typedef WiringModel<MappingDefinition>
             wiring_model_t;
 
     typedef typename callable_outin_arity<MappingDefinition::out::arity, MappingDefinition::in::arity>::template impl<
                   f_types_t::is_mfp
                 , MappingDefinition::maps_to_void
                 , ThreadAbility::threads_allowed_t::value
-                , MappingDefinition
+                , F
                 , f_types_t
+                , MappingDefinition
                 , wiring_model_t
                 , ThreadAbility
             >
@@ -82,9 +81,7 @@ template <
     , class FSignature
     , class MappingDefinition
     , template <
-            class _MappingDefinition
-          , class _F
-          , class _FTypes
+          class _MappingDefinition
       >
       class WiringModel
     , class ThreadAbility
@@ -94,6 +91,10 @@ struct callable
 {
     typedef typename callable_base_select<F, FSignature, MappingDefinition, WiringModel, ThreadAbility>::type
             base_t;
+
+    callable(F f)
+      : base_t(f)
+    {}
 };
 
 
@@ -113,7 +114,7 @@ struct callable
 
 #elif BOOST_PP_ITERATION_DEPTH() == 2
 
-#define O BOOST_PP_RELATIVE_ITERATION(1) //BOOST_PP_FRAME_ITERATION(1)
+#define O BOOST_PP_RELATIVE_ITERATION(1)
 #define I BOOST_PP_ITERATION()
 
 template <>
@@ -123,8 +124,9 @@ struct callable_outin_arity<O,I>
           bool is_member_function
         , bool has_void_return
         , bool allows_threads
-        , class MappingDefinition
+        , class F
         , class FTypes
+        , class MappingDefinition
         , class WiringModel
         , class ThreadAbility
     >
@@ -133,8 +135,8 @@ struct callable_outin_arity<O,I>
     //--------------------------------------------------------------------------
     // Partial specialization for member function with void-return and threads
     // allowed.
-    template <class MappingDefinition, class FTypes, class WiringModel, class ThreadAbility>
-    struct impl<true, true, true, MappingDefinition, FTypes, WiringModel, ThreadAbility>
+    template <class MappingDefinition, class F, class FTypes, class WiringModel, class ThreadAbility>
+    struct impl<true, true, true, F, FTypes, MappingDefinition, WiringModel, ThreadAbility>
     {
         typedef boost::mpl::vector<
                   python::object
@@ -145,6 +147,18 @@ struct callable_outin_arity<O,I>
                 >
                 signature_t;
 
+        typedef boost::numpy::detail::callable_caller<
+                  I
+                , typename FTypes::class_t
+                , void
+                , BOOST_PP_ENUM_PARAMS_Z(1, I, FTypes::in_t)
+                >
+                f_caller_t;
+
+        impl(F f)
+          : m_f(f)
+        {}
+
         python::object
         operator()(
               typename FTypes::class_t & self
@@ -154,8 +168,12 @@ struct callable_outin_arity<O,I>
         )
         {
             std::cout << I << std::endl;
+
+            // Invoke WiringModel::iterate<F, FTypes, FCaller>(m_f, iter, core_shapes)
             return python::object();
         }
+
+        F m_f;
     };
 };
 

@@ -214,7 +214,7 @@ struct vector_callable_arity<N>
                     // Fill the output array with the result vector values.
                     for(intptr_t x=0; x<X; ++x)
                     {
-                        *reinterpret_cast<typename MappingModel::out_arr_dshape::value_type *>(iter.get_data(0) + x*iter.get_stride(0)) = res_vec[x];
+                        *reinterpret_cast<typename MappingModel::out_arr_dshape::value_type *>(iter.get_data(0) + x*iter.get_item_size(0)) = res_vec[x];
                     }
 
                     // Move on to the next value set.

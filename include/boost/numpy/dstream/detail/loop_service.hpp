@@ -32,6 +32,7 @@
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 
@@ -96,7 +97,8 @@ struct loop_service_arity<N>
         #define BOOST_NUMPY_DEF(z, n, data) \
             BOOST_PP_COMMA_IF(n) BOOST_PP_CAT(_in_arr_service_,n) ( BOOST_PP_CAT(in_arr_service_,n) )
         loop_service( BOOST_PP_ENUM_BINARY_PARAMS_Z(1, N, input_array_service< InArrDef, > & in_arr_service_) )
-          : BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+          : _is_virtual_loop(false)
+          , BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
         {
             // Calculate the loop shape. It's just the biggest loop shape of all
@@ -110,13 +112,26 @@ struct loop_service_arity<N>
             ).get_arr_loop_shape();
             #undef BOOST_NUMPY_DEF
 
+            // Make sure, that the loop shape as at least 1 dimension with one
+            // iteration.
+            if(_loop_shape.size() == 0)
+            {
+                std::cout << "Do a virtual loop" << std::endl;
+                _is_virtual_loop = true;
+                _loop_shape.push_back(1);
+                #define BOOST_PP_LOCAL_MACRO(n) \
+                    BOOST_PP_CAT(in_arr_service_,n).prepend_loop_dimension();
+                #define BOOST_PP_LOCAL_LIMITS (0, N-1)
+                #include BOOST_PP_LOCAL_ITERATE()
+            }
+
             // Set the broadcasting rules for all input arrays.
             #define BOOST_NUMPY_DEF(z, n, data) \
                 BOOST_PP_CAT(_in_arr_service_,n) .set_arr_bcr(get_loop_nd());
             BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
             #undef BOOST_NUMPY_DEF
 
-            // Check if the lengths of all the core dimensions of the all the
+            // Check if the lengths of all the core dimensions of all the
             // input arrays are compatible to each other.
             // 1. Get a unique set of all used dimension ids.
             std::set<int> ids;
@@ -204,8 +219,16 @@ struct loop_service_arity<N>
             );
         }
 
+        inline
+        bool
+        is_virtual_loop() const
+        {
+            return _is_virtual_loop;
+        }
+
       protected:
         std::vector<intptr_t> _loop_shape;
+        bool _is_virtual_loop;
         #define BOOST_NUMPY_DEF(z, n, data) \
             input_array_service< BOOST_PP_CAT(InArrDef,n) > & BOOST_PP_CAT(_in_arr_service_,n) ;
         BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)

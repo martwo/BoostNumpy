@@ -37,8 +37,8 @@ namespace dstream {
 namespace detail {
 
 template <
-      class ArrayDefinition
-    , class LoopService
+      class LoopService
+    , class ArrayDefinition
 >
 class output_array_service
 {
@@ -66,9 +66,15 @@ class output_array_service
         // shape description and the information from the loop service.
         std::vector<intptr_t> const loop_shape = loop_service_.get_loop_shape();
         int const loop_nd = loop_shape.size();
-        arr_shape_.resize(loop_nd + core_shape_t::nd::value);
+        // If the loop is a virtual one, the loop dimensionality and the loop
+        // shape is artificially one bigger. But arr_shape_ should represent the
+        // real array shape.
+        unsigned const virtual_loop_nd = (loop_service_.is_virtual_loop() ? 1 : 0);
+
+        arr_shape_.resize(loop_nd-virtual_loop_nd + core_shape_t::nd::value);
+        std::copy(loop_shape.begin()+virtual_loop_nd, loop_shape.end(), arr_shape_.begin());
+
         arr_core_shape_.resize(core_shape_t::nd::value);
-        std::copy(loop_shape.begin(), loop_shape.end(), arr_shape_.begin());
         for(int i=0; i<core_shape_t::nd::value; ++i)
         {
             // Get core dimension id of the i'th core dimension.
@@ -76,7 +82,7 @@ class output_array_service
             if(id > 0)
             {
                 // The core dimension is a fixed size dimension of size id.
-                arr_shape_[loop_nd+i] = id;
+                arr_shape_[loop_nd-virtual_loop_nd+i] = id;
                 arr_core_shape_[i] = id;
             }
             else
@@ -85,14 +91,14 @@ class output_array_service
                 // the input arrays. Ask the loop service about its length.
                 intptr_t len = loop_service_.get_core_dim_len(id);
                 BOOST_ASSERT(len > 0);
-                arr_shape_[loop_nd+i] = len;
+                arr_shape_[loop_nd-virtual_loop_nd+i] = len;
                 arr_core_shape_[i] = len;
             }
         }
 
         // Create the output array object. Either from the provided bp::object
         // or a new one.
-        if(out_obj != python::object())
+        if(out_obj.ptr() != Py_None)
         {
             // An output array was already provided by the user. Check its
             // correct shape.
@@ -101,7 +107,8 @@ class output_array_service
             {
                 std::stringstream msg;
                 msg << "The provided output array does not have the required "
-                    << "shape " << numpy::detail::pprint_shape(arr_shape_) << "!";
+                    << "shape " << numpy::detail::pprint_shape(arr_shape_)
+                    << "!";
                 PyErr_SetString(PyExc_ValueError, msg.str().c_str());
                 python::throw_error_already_set();
             }
@@ -120,7 +127,7 @@ class output_array_service
         arr_bcr_.resize(loop_nd);
         for(int loop_axis=0; loop_axis<loop_nd; ++loop_axis)
         {
-            arr_bcr_[loop_axis] = loop_axis;
+            arr_bcr_[loop_axis] = loop_axis - virtual_loop_nd;
         }
     }
 

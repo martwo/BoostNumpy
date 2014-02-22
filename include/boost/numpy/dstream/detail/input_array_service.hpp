@@ -22,6 +22,7 @@
 
 #include <iostream>
 
+#include <sstream>
 #include <vector>
 
 #include <boost/numpy/ndarray.hpp>
@@ -68,18 +69,32 @@ class input_array_service
         arr_core_shape_.resize(core_shape_t::nd::value);
         std::copy(arr_shape_.end() - core_shape_t::nd::value, arr_shape_.end(), arr_core_shape_.begin());
 
-        // Validate that the input array's fixed sized, i.e. with dimension
-        // id values greater than 0, core dimensions have the correct lengths.
+        // Validate that the input array's fixed sized core dimensions, i.e. with
+        // dimension id values greater than 0, have the correct lengths.
         for(int i=0; i<core_shape_t::nd::value; ++i)
         {
             if(arr_core_shape_ids_[i] > 0 && arr_core_shape_[i] != arr_core_shape_ids_[i])
             {
-                PyErr_SetString(PyExc_ValueError,
-                    "One of the fixed sized array dimensions has the wrong "
-                    "length!");
+                std::stringstream msg;
+                msg << "The "<< (i+1) <<"th fixed sized array dimension has "
+                    << "the wrong length! Is " << arr_core_shape_[i] << ", "
+                    << "but must be " << arr_core_shape_ids_[i] << "!";
+                PyErr_SetString(PyExc_ValueError, msg.str().c_str());
                 python::throw_error_already_set();
             }
         }
+    }
+
+    /**
+     * \brief Prepends a loop dimension with one iteration.
+     */
+    inline
+    void
+    prepend_loop_dimension()
+    {
+        arr_shape_.insert(arr_shape_.begin(), 1);
+        arr_ = arr_.reshape(arr_shape_);
+        ++arr_loop_nd_;
     }
 
     inline
