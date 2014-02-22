@@ -33,6 +33,7 @@
 #include <boost/preprocessor/repetition/enum_trailing_params.hpp>
 #include <boost/preprocessor/repetition/enum_trailing_binary_params.hpp>
 
+#include <boost/mpl/int.hpp>
 #include <boost/mpl/next.hpp>
 #include <boost/mpl/size.hpp>
 
@@ -63,7 +64,7 @@ struct caller_base_select
 {
     // Note: arity includes the class type if Callable::f_t is a member function
     //       pointer.
-    BOOST_STATIC_CONSTANT(unsigned, arity = mpl::size<typename Callable::f_signature_t>::value - 1);
+    BOOST_STATIC_CONSTANT(unsigned, arity = boost::mpl::size<typename Callable::signature_t>::value - 1);
 
     typedef typename caller_arity<arity>::template impl<Callable>
             type;
@@ -127,7 +128,7 @@ struct caller_arity<N>
         {
             call_policies_t call_policies;
 
-            typedef typename mpl::begin<Callable::f_signature_t>::type
+            typedef typename boost::mpl::begin<typename Callable::signature_t>::type
                     first;
             //typedef typename first::type result_t;
             typedef typename python::detail::select_result_converter<call_policies_t, python::object>::type
@@ -140,12 +141,12 @@ struct caller_arity<N>
             argument_package_t inner_args(args_);
 
             #define BOOST_NUMPY_NEXT(init, name, n)                            \
-                typedef BOOST_PP_IF(n,typename mpl::next< BOOST_PP_CAT(name,BOOST_PP_DEC(n)) >::type, init) name##n;
+                typedef BOOST_PP_IF(n,typename boost::mpl::next< BOOST_PP_CAT(name,BOOST_PP_DEC(n)) >::type, init) name##n;
 
             #define BOOST_NUMPY_ARG_CONVERTER(n)                               \
-                BOOST_NUMPY_NEXT(typename mpl::next<first>::type, arg_iter,n)  \
+                BOOST_NUMPY_NEXT(typename boost::mpl::next<first>::type, arg_iter,n) \
                 typedef python::arg_from_python<BOOST_DEDUCED_TYPENAME BOOST_PP_CAT(arg_iter,n)::type> BOOST_PP_CAT(c_t,n); \
-                BOOST_PP_CAT(c_t,n) BOOST_PP_CAT(c,n)(python::detail::get(mpl::int_<n>(), inner_args)); \
+                BOOST_PP_CAT(c_t,n) BOOST_PP_CAT(c,n)(python::detail::get(boost::mpl::int_<n>(), inner_args)); \
                 if(!BOOST_PP_CAT(c,n).convertible()) {                         \
                     return 0;                                                  \
                 }

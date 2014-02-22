@@ -47,7 +47,7 @@ struct out<0>
     template < class Dummy = numpy::mpl::unspecified >
     struct core_shapes
     {
-        BOOST_STATIC_CONSTANT(int, arity = 0);
+        BOOST_STATIC_CONSTANT(unsigned, arity = 0);
     };
 };
 
@@ -74,7 +74,7 @@ struct out<N>
     template < BOOST_PP_ENUM_PARAMS_Z(1, N, class CoreShape) >
     struct core_shapes
     {
-        BOOST_STATIC_CONSTANT(int, arity = N);
+        BOOST_STATIC_CONSTANT(unsigned, arity = N);
 
         // List all the core shape types as core_shape_tI.
         #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N, 1))

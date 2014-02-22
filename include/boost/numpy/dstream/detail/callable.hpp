@@ -22,17 +22,28 @@
 #ifndef BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_HPP_INCLUDED
 
+#include <boost/preprocessor/iteration/iterate.hpp>
+#include <boost/preprocessor/facilities/intercept.hpp>
+#include <boost/preprocessor/repetition/enum_params.hpp>
+
 #include <boost/mpl/if.hpp>
 
-#include <boost/numpy/mpl/outin_types_from_fctptr_signature.hpp>
+#include <boost/python/object.hpp>
+
+#include <boost/numpy/limits.hpp>
+#include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
 
 namespace boost {
 namespace numpy {
 namespace dstream {
 namespace detail {
 
-template <unsigned InArity>
-struct callable_inarity;
+template <unsigned OutArity, unsigned InArity>
+struct callable_outin_arity;
+
+// Do a 2D file iteration with output and input arity as loop variables.
+#define BOOST_PP_ITERATION_PARAMS_1 (3, (1, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/detail/callable.hpp>))
+#include BOOST_PP_ITERATE()
 
 template <
       class F
@@ -40,25 +51,30 @@ template <
     , class MappingDefinition
     , template <
             class _MappingDefinition
-          , class _Class
-          , class _OutInTypes
+          , class _F
+          , class _FTypes
       >
       class WiringModel
     , class ThreadAbility
 >
 struct callable_base_select
 {
-    typedef typename numpy::mpl::outin_types_from_fctptr_signature<F, FSignature>::type
-            outin_types_t;
+    typedef typename numpy::mpl::types_from_fctptr_signature<F, FSignature>::type
+            f_types_t;
 
-    typedef typename outin_types_t::class_t
-            class_t;
-
-    typedef WiringModel<MappingDefinition, class_t, outin_types_t>
+    typedef WiringModel<MappingDefinition, F, f_types_t>
             wiring_model_t;
 
-    // FIXME Construct callable_base type
-    //typedef type;
+    typedef typename callable_outin_arity<MappingDefinition::out::arity, MappingDefinition::in::arity>::template impl<
+                  f_types_t::is_mfp
+                , MappingDefinition::maps_to_void
+                , ThreadAbility::threads_allowed_t::value
+                , MappingDefinition
+                , f_types_t
+                , wiring_model_t
+                , ThreadAbility
+            >
+            type;
 };
 
 template <
@@ -67,16 +83,16 @@ template <
     , class MappingDefinition
     , template <
             class _MappingDefinition
-          , class _Class
-          , class _OutInTypes
+          , class _F
+          , class _FTypes
       >
       class WiringModel
     , class ThreadAbility
 >
 struct callable
-  : callable_base_select<F, MappingDefinition, WiringModel, ThreadAbility>::type
+  : callable_base_select<F, FSignature, MappingDefinition, WiringModel, ThreadAbility>::type
 {
-    typedef callable_base_select<F, FSignature, MappingDefinition, WiringModel, ThreadAbility>::type
+    typedef typename callable_base_select<F, FSignature, MappingDefinition, WiringModel, ThreadAbility>::type
             base_t;
 };
 
@@ -88,5 +104,64 @@ struct callable
 
 #endif // ! BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_HPP_INCLUDED
 #else
+
+#if BOOST_PP_ITERATION_DEPTH() == 1
+
+// Loop over the InArity.
+#define BOOST_PP_ITERATION_PARAMS_2 (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/detail/callable.hpp>))
+#include BOOST_PP_ITERATE()
+
+#elif BOOST_PP_ITERATION_DEPTH() == 2
+
+#define O BOOST_PP_RELATIVE_ITERATION(1) //BOOST_PP_FRAME_ITERATION(1)
+#define I BOOST_PP_ITERATION()
+
+template <>
+struct callable_outin_arity<O,I>
+{
+    template <
+          bool is_member_function
+        , bool has_void_return
+        , bool allows_threads
+        , class MappingDefinition
+        , class FTypes
+        , class WiringModel
+        , class ThreadAbility
+    >
+    struct impl;
+
+    //--------------------------------------------------------------------------
+    // Partial specialization for member function with void-return and threads
+    // allowed.
+    template <class MappingDefinition, class FTypes, class WiringModel, class ThreadAbility>
+    struct impl<true, true, true, MappingDefinition, FTypes, WiringModel, ThreadAbility>
+    {
+        typedef boost::mpl::vector<
+                  python::object
+                , typename FTypes::class_t &
+                , BOOST_PP_ENUM_PARAMS_Z(1, I, python::object const & BOOST_PP_INTERCEPT)
+                , python::object &
+                , unsigned
+                >
+                signature_t;
+
+        python::object
+        operator()(
+              typename FTypes::class_t & self
+            , BOOST_PP_ENUM_PARAMS_Z(1, I, python::object const & a)
+            , python::object & out
+            , unsigned nthreads
+        )
+        {
+            std::cout << I << std::endl;
+            return python::object();
+        }
+    };
+};
+
+#undef I
+#undef O
+
+#endif // BOOST_PP_ITERATION_DEPTH
 
 #endif // BOOST_PP_IS_ITERATING

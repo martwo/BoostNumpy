@@ -39,6 +39,7 @@
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/long.hpp>
+#include <boost/mpl/not.hpp>
 #include <boost/mpl/size.hpp>
 
 #include <boost/type_traits/is_member_function_pointer.hpp>
@@ -82,7 +83,7 @@ struct types_from_fctptr_signature_impl_select
             >::type
             sig_arg_offset;
 
-    typedef types_from_fctptr_signature_base_impl<
+    typedef types_from_fctptr_signature_impl<
                   boost::mpl::size<Signature>::value - sig_arg_offset::value
                 , class_t
                 , Signature
@@ -97,7 +98,7 @@ template <class F, class Signature>
 struct types_from_fctptr_signature
   : detail::types_from_fctptr_signature_impl_select<F, Signature>::type
 {
-    typedef detail::types_from_fctptr_signature_impl_select<F, Signature>::type
+    typedef typename detail::types_from_fctptr_signature_impl_select<F, Signature>::type
             type;
 };
 
@@ -128,6 +129,10 @@ struct types_from_fctptr_signature_impl<
             out_t;
 
     typedef Class class_t;
+
+    typedef typename boost::mpl::not_< is_same<class_t, numpy::mpl::unspecified> >::type
+            is_mfp_t;
+    BOOST_STATIC_CONSTANT(bool, is_mfp = is_mfp_t::value);
 
     // Define in_t# sub-types.
     #define BOOST_PP_LOCAL_MACRO(n) \
