@@ -45,15 +45,15 @@
 #include <boost/numpy/detail/prefix.hpp>
 
 #include <boost/numpy/limits.hpp>
+#include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/dstream/callable.hpp>
 #include <boost/numpy/dstream/defaults.hpp>
 #include <boost/numpy/dstream/detail/def_helper.hpp>
 #include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape.hpp>
 #include <boost/numpy/dstream/mapping/converter/return_type_to_out_mapping.hpp>
-#include <boost/numpy/dstream/mapping/models/NxS_to_S.hpp>
+#include <boost/numpy/dstream/wiring/default_wiring_model_selector_fwd.hpp>
 #include <boost/numpy/dstream/wiring/models/scalar_callable.hpp>
-#include <boost/numpy/dstream/out_arr_transforms/squeeze_first_axis_if_single_input_and_scalarize.hpp>
 
 #include <boost/python/signature.hpp>
 #include <boost/python/object/add_to_namespace.hpp>
@@ -64,128 +64,17 @@ namespace dstream {
 namespace detail {
 
 //==============================================================================
-/** The mapping_model_selector template selects the appropriate mapping model
- *  based on the given output and input argument types of the to-be-exposed C++
- *  function/method.
- *  By default the NxS_to_S mapping model is used. In order to use other
- *  mapping models, one has to specialize the mapping_model_selector template.
+/** The default_mapping_definition_selector template provides a select template
+ *  to construct the appropriate mapping definition based on the to-be-exposed
+ *  function's output and input types. It uses the mapping converters for
+ *  converting the output and input types to output and input mapping types.
  */
-template <
-      unsigned InArity
-    , class OutT
-    , BOOST_PP_ENUM_BINARY_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
->
-struct default_mapping_model_selector;
-
-template <
-      int in_arity
-    , class IOTypes
->
-struct default_mapping_model_selector_from_io_types;
-
-template <
-      int in_arity
-    , class Signature
-    , class OutT
-    , int sig_arg_offset
->
-struct io_types_from_signature_impl;
+template <unsigned InArity>
+struct default_mapping_definition_selector;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/def.hpp>, 1))
 #include BOOST_PP_ITERATE()
-
-//==============================================================================
-/** The default_wiring_model_selector template selects the default wiring model
- *  that was defined for the given mapping model.
- *  Each mapping model has a default wiring model selector type, that is
- *  selected by this template. If the type of the default wiring model selector
- *  is boost::numpy::mpl::unspecified, the scalar_callable wiring model selector
- *  will be choosen.
- *  This template will only be used if the user did not specify a wiring model
- *  selector.
- *  It the user wants to define a default wiring model selector for a specific
- *  class or mapping model, one can do so by specializing the
- *  default_wiring_model_selector template.
- */
-template <class MappingModel>
-struct use_mapping_models_default_wiring_model_selector
-{
-    typedef typename boost::mpl::if_
-                < typename is_same<numpy::mpl::unspecified, typename MappingModel::default_wiring_model_selector::type>::type
-                , wiring::model::scalar_callable
-                , typename MappingModel::default_wiring_model_selector::type
-                >::type
-            type;
-};
-
-template <
-      class MappingModel
-    , class Class
->
-struct default_wiring_model_selector
-  : use_mapping_models_default_wiring_model_selector<MappingModel>
-{};
-
-//==============================================================================
-template <class MappingModel>
-struct default_out_arr_transform_selector
-  : out_arr_transforms::out_arr_transform_selector_type
-{
-    typedef default_out_arr_transform_selector<MappingModel>
-            type;
-
-    template <class _MappingModel>
-    struct out_arr_transform
-    {
-        typedef out_arr_transforms::detail::squeeze_first_axis_if_single_input_and_scalarize<_MappingModel>
-                type;
-    };
-};
-
-//==============================================================================
-// The io_types_from_signature template dispatches the input and output types
-// of a given function signature.
-// The following static constants will be defined:
-//     int in_arity
-// The following typedefs will be defined:
-//     out_t
-//     in_t_0
-//     ...
-//     in_t_<in_arity - 1>
-//
-template <bool is_mfp, class Signature>
-struct io_types_from_signature_base;
-
-// Specialization for member functions.
-template <class Signature>
-struct io_types_from_signature_base<true, Signature>
-  : io_types_from_signature_impl<
-          boost::mpl::size<Signature>::value - 2
-        , Signature
-        , typename boost::mpl::begin<Signature>::type::type
-        , 2
-    >
-{};
-
-// Specialization for standalone functions.
-template <class Signature>
-struct io_types_from_signature_base<false, Signature>
-  : io_types_from_signature_impl<
-          boost::mpl::size<Signature>::value - 1
-        , Signature
-        , typename boost::mpl::begin<Signature>::type::type
-        , 1
-    >
-{};
-
-template <class Class, class Signature>
-struct io_types_from_signature
-  : io_types_from_signature_base<
-          boost::mpl::not_< boost::is_same<Class, numpy::mpl::unspecified> >::value
-        , Signature
-    >
-{};
 
 //==============================================================================
 template <
@@ -336,74 +225,33 @@ class staticmethod_visitor;
 
 #if BOOST_PP_ITERATION_FLAGS() == 1
 
-template <
-      class OutT
-    , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, class InT_)
->
-struct default_mapping_model_selector<
-      N
-    , OutT
-    , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_LIMIT_INPUT_ARITY, InT_)
->
-  : mapping::mapping_model_selector_type
+#define IN_ARITY BOOST_PP_ITERATION()
+
+template <>
+struct default_mapping_definition_selector<IN_ARITY>
+  : mapping::mapping_definition_selector_type
 {
-    template <class IOTypes>
+    template <class FTypes>
     struct select
     {
-        // Construct a boost::numpy::dstream::mapping::out type based on the
-        // IOTypes::out_t type.
-        typedef typename mapping::converter::detail::return_type_to_out_mapping<typename IOTypes::out_t>::type
+        // Construct a boost::numpy::dstream::mapping::detail::out type based on
+        // the FTypes::out_t type.
+        typedef typename mapping::converter::detail::return_type_to_out_mapping<typename FTypes::out_t>::type
                 out_mapping_t;
-        // TODO: Construct a boost::numpy::dstream::mapping::in type based on
-        //       the IOTypes::in_t_0 ..
-        #define BOOST_PP_LOCAL_MACRO(n) \
-            typedef typename mapping::converter::detail::arg_type_to_core_shape<typename IOTypes:: BOOST_PP_CAT(in_t_,n) >::type BOOST_PP_CAT(in_core_shape_t_,n);
-        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N, 1))
-        #include BOOST_PP_LOCAL_ITERATE()
-        typedef mapping::detail::in<N>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, N, in_core_shape_t_) >
-                in_mapping_t;
-        typedef mapping::detail::definition<out_mapping_t, in_mapping_t>
-                type0;
 
-        typedef mapping::model::NxS_to_S<N, OutT BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, InT_)>
+        #define BOOST_PP_LOCAL_MACRO(n) \
+            typedef typename mapping::converter::detail::arg_type_to_core_shape<typename FTypes:: BOOST_PP_CAT(in_t,n) >::type BOOST_PP_CAT(in_core_shape_t,n);
+        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY, 1))
+        #include BOOST_PP_LOCAL_ITERATE()
+        typedef mapping::detail::in<IN_ARITY>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_core_shape_t) >
+                in_mapping_t;
+
+        typedef mapping::detail::definition<out_mapping_t, in_mapping_t>
                 type;
     };
 };
 
-template <
-    class IOTypes
->
-struct default_mapping_model_selector_from_io_types<
-      N
-    , IOTypes
->
-{
-    typedef default_mapping_model_selector<N, typename IOTypes::out_t, BOOST_PP_ENUM_PARAMS_Z(1, N, typename IOTypes::in_t_)>
-            default_mapping_model_selector_t;
-};
-
-#define BOOST_NUMPY_DSTREAM_DEF__in_t(z, n, data) \
-    typedef typename boost::mpl::at<Signature, boost::mpl::long_<sig_arg_offset + n> >::type BOOST_PP_CAT(in_t_,n);
-
-template <
-      class Signature
-    , class OutT
-    , int sig_arg_offset
->
-struct io_types_from_signature_impl<
-      N
-    , Signature
-    , OutT
-    , sig_arg_offset
->
-{
-    BOOST_STATIC_CONSTANT(int, in_arity = N);
-
-    typedef OutT out_t;
-    BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF__in_t, ~)
-};
-
-#undef BOOST_NUMPY_DSTREAM_DEF__in_t
+#undef IN_ARITY
 
 #elif BOOST_PP_ITERATION_FLAGS() == 2
 

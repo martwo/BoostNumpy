@@ -32,6 +32,7 @@
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
+#include <boost/numpy/dstream/detail/callable_call.hpp>
 
 namespace boost {
 namespace numpy {
@@ -41,8 +42,8 @@ namespace detail {
 template <unsigned OutArity, unsigned InArity>
 struct callable_outin_arity;
 
-// Do a 2D file iteration with output and input arity as loop variables.
-#define BOOST_PP_ITERATION_PARAMS_1 (3, (1, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/detail/callable.hpp>))
+#define BOOST_PP_ITERATION_PARAMS_1 \
+    (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/detail/callable.hpp>))
 #include BOOST_PP_ITERATE()
 
 template <
@@ -63,7 +64,7 @@ struct callable_base_select
     typedef WiringModel<MappingDefinition>
             wiring_model_t;
 
-    typedef typename callable_outin_arity<MappingDefinition::out::arity, MappingDefinition::in::arity>::template impl<
+    typedef typename callable_in_arity<MappingDefinition::in::arity>::template impl<
                   f_types_t::is_mfp
                 , MappingDefinition::maps_to_void
                 , ThreadAbility::threads_allowed_t::value
@@ -97,7 +98,6 @@ struct callable
     {}
 };
 
-
 }// namespace detail
 }// namespace dstream
 }// namespace numpy
@@ -106,19 +106,10 @@ struct callable
 #endif // ! BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_HPP_INCLUDED
 #else
 
-#if BOOST_PP_ITERATION_DEPTH() == 1
-
-// Loop over the InArity.
-#define BOOST_PP_ITERATION_PARAMS_2 (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/detail/callable.hpp>))
-#include BOOST_PP_ITERATE()
-
-#elif BOOST_PP_ITERATION_DEPTH() == 2
-
-#define O BOOST_PP_RELATIVE_ITERATION(1)
-#define I BOOST_PP_ITERATION()
+#define IN_ARITY BOOST_PP_ITERATION()
 
 template <>
-struct callable_outin_arity<O,I>
+struct callable_in_arity<IN_ARITY>
 {
     template <
           bool is_member_function
@@ -133,6 +124,55 @@ struct callable_outin_arity<O,I>
     struct impl;
 
     //--------------------------------------------------------------------------
+    // Partial specialization for member function with non-void-return and
+    // threads allowed.
+    template <class MappingDefinition, class F, class FTypes, class WiringModel, class ThreadAbility>
+    struct impl<true, false, true, F, FTypes, MappingDefinition, WiringModel, ThreadAbility>
+    {
+        typedef boost::mpl::vector<
+                  python::object
+                , typename FTypes::class_type &
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
+                , python::object &
+                , unsigned
+                >
+                signature_t;
+
+        typedef boost::numpy::detail::callable_caller<
+                  IN_ARITY
+                , typename FTypes::class_type
+                , typename FTypes::return_type
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, FTypes::arg_type)
+                >
+                f_caller_t;
+
+        impl(F f) : m_f(f) {}
+
+        python::object
+        operator()(
+              typename FTypes::class_type & self
+            , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
+            , python::object & out_obj
+            , unsigned nthreads
+        )
+        {
+            f_caller_t f_caller(m_f);
+
+            typedef typename callable_call<FTypes, f_caller_t, MappingDefinition, WiringModel, ThreadAbility>::type
+                    callable_call_t;
+
+            return callable_call_t::call(
+                  f_caller
+                , self
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_obj)
+                , out_obj
+                , nthreads);
+        }
+
+        F m_f;
+    };
+
+    //--------------------------------------------------------------------------
     // Partial specialization for member function with void-return and threads
     // allowed.
     template <class MappingDefinition, class F, class FTypes, class WiringModel, class ThreadAbility>
@@ -140,46 +180,50 @@ struct callable_outin_arity<O,I>
     {
         typedef boost::mpl::vector<
                   python::object
-                , typename FTypes::class_t &
-                , BOOST_PP_ENUM_PARAMS_Z(1, I, python::object const & BOOST_PP_INTERCEPT)
-                , python::object &
+                , typename FTypes::class_type &
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
                 , unsigned
                 >
                 signature_t;
 
         typedef boost::numpy::detail::callable_caller<
-                  I
-                , typename FTypes::class_t
+                  IN_ARITY
+                , typename FTypes::class_type
                 , void
-                , BOOST_PP_ENUM_PARAMS_Z(1, I, FTypes::in_t)
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, FTypes::arg_type)
                 >
                 f_caller_t;
 
-        impl(F f)
-          : m_f(f)
-        {}
+        impl(F f) : m_f(f) {}
 
         python::object
         operator()(
-              typename FTypes::class_t & self
-            , BOOST_PP_ENUM_PARAMS_Z(1, I, python::object const & a)
-            , python::object & out
+              typename FTypes::class_type & self
+            , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
             , unsigned nthreads
         )
         {
-            std::cout << I << std::endl;
+            f_caller_t f_caller(m_f);
 
-            // Invoke WiringModel::iterate<F, FTypes, FCaller>(m_f, iter, core_shapes)
-            return python::object();
+            python::object out_obj;
+
+            typedef typename callable_call<FTypes, f_caller_t, MappingDefinition, WiringModel, ThreadAbility>::type
+                    callable_call_t;
+
+            return callable_call_t::call(
+                  f_caller
+                , self
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_obj)
+                , out_obj
+                , nthreads);
         }
 
         F m_f;
     };
+
+    // TODO: Add all the other specializations.
 };
 
-#undef I
-#undef O
-
-#endif // BOOST_PP_ITERATION_DEPTH
+#undef IN_ARITY
 
 #endif // BOOST_PP_IS_ITERATING

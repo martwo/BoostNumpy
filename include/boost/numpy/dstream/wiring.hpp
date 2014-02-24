@@ -2,14 +2,13 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/dstream/wiring.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines templates for data stream wiring functionalty.
  *

@@ -50,23 +50,23 @@ typedef npy_uint32 iter_operand_flags_t;
 
 struct iter_operand
 {
-    enum flags_t
+    struct flags
     {
-          NONE         = 0x0
-        , READWRITE    = NPY_ITER_READWRITE
-        , READONLY     = NPY_ITER_READONLY
-        , WRITEONLY    = NPY_ITER_WRITEONLY
-        , COPY         = NPY_ITER_COPY
-        , UPDATEIFCOPY = NPY_ITER_UPDATEIFCOPY
-        , NBO          = NPY_ITER_NBO
-        , ALIGNED      = NPY_ITER_ALIGNED
-        , CONTIG       = NPY_ITER_CONTIG
-        , ALLOCATE     = NPY_ITER_ALLOCATE
-        , NO_SUBTYPE   = NPY_ITER_NO_SUBTYPE
-        , NO_BROADCAST = NPY_ITER_NO_BROADCAST
+        typedef boost::mpl::integral_c<iter_operand_flags_t, 0>                     NONE;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_READWRITE>    READWRITE;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_READONLY>     READONLY;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_WRITEONLY>    WRITEONLY;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_COPY>         COPY;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_UPDATEIFCOPY> UPDATEIFCOPY;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_NBO>          NBO;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_ALIGNED>      ALIGNED;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_CONTIG>       CONTIG;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_ALLOCATE>     ALLOCATE;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_NO_SUBTYPE>   NO_SUBTYPE;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_NO_BROADCAST> NO_BROADCAST;
         #if NPY_FEATURE_VERSION >= 0x00000007
-        , ARRAYMASK     = NPY_ITER_ARRAYMASK
-        , WRITEMASKED   = NPY_ITER_WRITEMASKED
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_ARRAYMASK>    ARRAYMASK;
+        typedef boost::mpl::integral_c<iter_operand_flags_t, NPY_ITER_WRITEMASKED>  WRITEMASKED;
         #endif
     };
 
@@ -81,42 +81,28 @@ struct iter_operand
     {}
 };
 
-inline
-iter_operand_flags_t
-operator|(iter_operand::flags_t a, iter_operand::flags_t b)
-{
-    return (iter_operand_flags_t(a) | iter_operand_flags_t(b));
-}
-
-inline
-iter_operand_flags_t
-operator&(iter_operand::flags_t a, iter_operand::flags_t b)
-{
-    return (iter_operand_flags_t(a) & iter_operand_flags_t(b));
-}
-
 //==============================================================================
 typedef npy_uint32 iter_flags_t;
 
 class iter
 {
   public:
-    enum flags_t
+    struct flags
     {
-          NONE                = 0x0
-        , C_INDEX             = NPY_ITER_C_INDEX
-        , F_INDEX             = NPY_ITER_F_INDEX
-        , MULTI_INDEX         = NPY_ITER_MULTI_INDEX
-        , EXTERNAL_LOOP       = NPY_ITER_EXTERNAL_LOOP
-        , DONT_NEGATE_STRIDES = NPY_ITER_DONT_NEGATE_STRIDES
-        , COMMON_DTYPE        = NPY_ITER_COMMON_DTYPE
-        , REFS_OK             = NPY_ITER_REFS_OK
-        , ZEROSIZE_OK         = NPY_ITER_ZEROSIZE_OK
-        , REDUCE_OK           = NPY_ITER_REDUCE_OK
-        , RANGED              = NPY_ITER_RANGED
-        , BUFFERED            = NPY_ITER_BUFFERED
-        , GROWINNER           = NPY_ITER_GROWINNER
-        , DELAY_BUFALLOC      = NPY_ITER_DELAY_BUFALLOC
+        typedef boost::mpl::integral_c<iter_flags_t, 0>                            NONE;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_C_INDEX>             C_INDEX;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_F_INDEX>             F_INDEX;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_MULTI_INDEX>         MULTI_INDEX;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_EXTERNAL_LOOP>       EXTERNAL_LOOP;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_DONT_NEGATE_STRIDES> DONT_NEGATE_STRIDES;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_COMMON_DTYPE>        COMMON_DTYPE;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_REFS_OK>             REFS_OK;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_ZEROSIZE_OK>         ZEROSIZE_OK;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_REDUCE_OK>           REDUCE_OK;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_RANGED>              RANGED;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_BUFFERED>            BUFFERED;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_GROWINNER>           GROWINNER;
+        typedef boost::mpl::integral_c<iter_flags_t, NPY_ITER_DELAY_BUFALLOC>      DELAY_BUFALLOC;
     };
 
     //__________________________________________________________________________
@@ -125,7 +111,8 @@ class iter
      *
      * \param n_iter_axes The number of axes that will be iterated.
      */
-    #define BOOST_PP_ITERATION_PARAMS_1 (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/detail/iter.hpp>, 1))
+    #define BOOST_PP_ITERATION_PARAMS_1 \
+        (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/detail/iter.hpp>, 1))
     #include BOOST_PP_ITERATE()
 
     //__________________________________________________________________________
@@ -328,20 +315,6 @@ class iter
     PyArray_Descr** descr_ptr_array_ptr_;
 };
 
-inline
-iter_flags_t
-operator|(iter::flags_t a, iter::flags_t b)
-{
-    return (iter_flags_t(a) | iter_flags_t(b));
-}
-
-inline
-iter_flags_t
-operator&(iter::flags_t a, iter::flags_t b)
-{
-    return (iter_flags_t(a) & iter_flags_t(b));
-}
-
 }// namespace detail
 }// namespace numpy
 }// namespace boost
@@ -355,12 +328,12 @@ operator&(iter::flags_t a, iter::flags_t b)
 #define N BOOST_PP_ITERATION()
 
 iter(
-      iter_flags_t     iter_flags
-    , order_t          order
-    , casting_t        casting
-    , int              n_iter_axes
-    , intptr_t * itershape
-    , intptr_t         buffersize
+      iter_flags_t iter_flags
+    , order_t      order
+    , casting_t    casting
+    , int          n_iter_axes
+    , intptr_t *   itershape
+    , intptr_t     buffersize
     , BOOST_PP_ENUM_PARAMS(N, iter_operand const & op_)
 );
 
@@ -389,12 +362,12 @@ iter(
 
 iter::
 iter(
-      iter_flags_t     iter_flags
-    , order_t          order
-    , casting_t        casting
-    , int              n_iter_axes
-    , intptr_t * itershape
-    , intptr_t         buffersize
+      iter_flags_t iter_flags
+    , order_t      order
+    , casting_t    casting
+    , int          n_iter_axes
+    , intptr_t *   itershape
+    , intptr_t     buffersize
     , BOOST_PP_ENUM_PARAMS(N, iter_operand const & op_)
 )
 {

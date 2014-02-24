@@ -16,11 +16,20 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
+#if !defined(BOOST_PP_IS_ITERATING)
+
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_DEFINITION_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_DEFINITION_HPP_INCLUDED
 
+#include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/arithmetic/sub.hpp>
+#include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/iteration/local.hpp>
+#include <boost/preprocessor/punctuation/comma_if.hpp>
+
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/if.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include <boost/numpy/dstream/mapping/detail/in.hpp>
 #include <boost/numpy/dstream/mapping/detail/out.hpp>
@@ -75,6 +84,63 @@ operator>>(InCoreShapeTuple const &, OutCoreShapeTuple const &)
     return typename make_definition<OutCoreShapeTuple, InCoreShapeTuple>::type();
 }
 
+template <unsigned arity, class Mapping>
+struct all_mapping_arrays_are_scalars_arity;
+
+template <class Mapping>
+struct all_mapping_arrays_are_scalars_arity<0, Mapping>
+{
+    typedef boost::mpl::bool_<true>
+            type;
+};
+
+template <class OutMapping, unsigned Idx>
+struct mapping_array_select;
+
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/mapping/detail/definition.hpp>, 1))
+#include BOOST_PP_ITERATE()
+
+template <class InMapping>
+struct in_mapping
+{
+    struct all_arrays_are_scalars
+    {
+        typedef typename all_mapping_arrays_are_scalars_arity<InMapping::arity, InMapping>::type
+                type;
+    };
+};
+
+template <class OutMapping>
+struct out_mapping
+{
+    template <unsigned n>
+    struct arity_is
+    {
+        typedef typename boost::mpl::equal_to< boost::mpl::int_<OutMapping::arity>, boost::mpl::int_<n> >::type
+                type;
+    };
+
+    struct all_arrays_are_scalars
+    {
+        typedef typename all_mapping_arrays_are_scalars_arity<OutMapping::arity, OutMapping>::type
+                type;
+    };
+
+    template <unsigned Idx>
+    struct array
+    {
+        typedef mapping_array_select<OutMapping, Idx>::type
+                type;
+
+        struct is_scalar
+        {
+            typedef typename mapping::detail::is_scalar<type>::type
+                    type;
+        };
+    };
+};
+
 }// namespace detail
 }// namespace mapping
 }// namespace dstream
@@ -82,3 +148,41 @@ operator>>(InCoreShapeTuple const &, OutCoreShapeTuple const &)
 }// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_DEFINITION_HPP_INCLUDED
+#else
+
+#define N BOOST_PP_ITERATION()
+
+template <class Definition>
+struct all_mapping_definition_input_arrays_are_scalars_arity<N, Definition>
+{
+    typedef boost::mpl::and_<
+                #define BOOST_PP_LOCAL_MACRO(n) \
+                    BOOST_PP_COMMA_IF(n) is_same< typename Definition::in:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
+                #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
+                #include BOOST_PP_LOCAL_ITERATE()
+            >::type
+            type;
+};
+
+template <class Mapping>
+struct all_mapping_arrays_are_scalars_arity<N, Mapping>
+{
+    typedef boost::mpl::and_<
+                #define BOOST_PP_LOCAL_MACRO(n) \
+                    BOOST_PP_COMMA_IF(n) is_same< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
+                #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
+                #include BOOST_PP_LOCAL_ITERATE()
+            >::type
+            type;
+};
+
+template <class Mapping>
+struct mapping_array_select<Mapping, N>
+{
+    typedef typename Mapping::BOOST_PP_CAT(core_shape_t,N)
+            type;
+};
+
+#undef N
+
+#endif // BOOST_PP_IS_ITERATING

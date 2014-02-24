@@ -41,6 +41,7 @@
 #include <boost/mpl/equal_to.hpp>
 
 #include <boost/type_traits/is_base_of.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include <boost/utility/enable_if.hpp>
 
@@ -189,6 +190,13 @@ struct make_core_shape_tuple;
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (4, (3, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 3))
 #include BOOST_PP_ITERATE()
+
+template <class T>
+struct is_scalar
+{
+    typedef typename is_same<T, core_shape<0>::shape<> >
+            type;
+};
 
 }// namespace detail
 }// namespace mapping
