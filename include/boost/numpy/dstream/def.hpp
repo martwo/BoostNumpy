@@ -47,7 +47,7 @@
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
-#include <boost/numpy/dstream/callable.hpp>
+//#include <boost/numpy/dstream/callable.hpp>
 #include <boost/numpy/dstream/defaults.hpp>
 #include <boost/numpy/dstream/detail/def_helper.hpp>
 #include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape.hpp>

@@ -26,10 +26,8 @@
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 
-#include <boost/numpy/pp.hpp>
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
-#include <boost/numpy/detail/config.hpp>
 #include <boost/numpy/detail/callable_ptr.hpp>
 
 namespace boost {
@@ -39,53 +37,34 @@ namespace detail {
 //==============================================================================
 /**
  * \brief The master template is used to handle class member functions. The
- *     specialized template with Class = BOOST_NUMPY_PP_MPL_VOID is used for
+ *     specialized template with ClassT = numpy::mpl::unspecified is used for
  *     handling standalone functions.
  */
 template <
     int InArity
-  , class Class
+  , class ClassT
   , typename OutT
-  , BOOST_PP_ENUM_BINARY_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, typename InT_, = BOOST_NUMPY_PP_MPL_VOID BOOST_PP_INTERCEPT)
+  , BOOST_PP_ENUM_BINARY_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, typename InT_, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
 >
 struct callable_caller
 {
     typedef callable_ptr<
         InArity
-      , Class
+      , ClassT
       , OutT
       , BOOST_PP_ENUM_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, InT_)
-      > callable_ptr_t;
+      > callable_ptr_call_t;
 
-    //__________________________________________________________________________
-    callable_caller(setting_t const & setting)
-      : flags(setting.flags)
-    {
-        if(bool(flags & IS_MEMBER_FUNCTION_POINTER))
-        {
-            bfunc = setting.template get_data<typename callable_ptr_t::member_ptr_t>();
-        }
-        else if(bool(flags & IS_POINTER))
-        {
-            bfunc = setting.template get_data<typename callable_ptr_t::function_ptr_t>();
-        }
-        else
-        {
-            PyErr_SetString(PyExc_RuntimeError,
-                "Wrong configuration: The setting flags of the function "
-                "pointer do not indicate whether it is a function pointer "
-                "or a member function pointer!");
-            python::throw_error_already_set();
-        }
-    }
+    template <class F>
+    callable_caller(F f)
+      : call(callable_ptr_call_t(typename callable_ptr_call_t::bfunc_t(f)))
+    {}
 
-    //__________________________________________________________________________
-    int flags;
-    typename callable_ptr_t::bfunc_t bfunc;
+    callable_ptr_call_t const call;
 };
 
 //______________________________________________________________________________
-// Template specialization for Class = mpl::unspecified for calling a
+// Template specialization for ClassT = numpy::mpl::unspecified for calling a
 // standalone function.
 template <
     int InArity
@@ -104,28 +83,14 @@ struct callable_caller<
       , numpy::mpl::unspecified
       , OutT
       , BOOST_PP_ENUM_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, InT_)
-      > callable_ptr_t;
+      > callable_ptr_call_t;
 
-    //__________________________________________________________________________
-    callable_caller(setting_t const & setting)
-      : flags(setting.flags)
-    {
-        if(bool(flags & IS_POINTER))
-        {
-            bfunc = setting.template get_data<typename callable_ptr_t::function_ptr_t>();
-        }
-        else
-        {
-            PyErr_SetString(PyExc_RuntimeError,
-                "Wrong configuration: The setting flags of the function "
-                "pointer do not indicate if it is a function pointer!");
-            python::throw_error_already_set();
-        }
-    }
+    template <class F>
+    callable_caller(F f)
+      : call(callable_ptr_call_t(typename callable_ptr_call_t::bfunc_t(f)))
+    {}
 
-    //__________________________________________________________________________
-    int flags;
-    typename callable_ptr_t::bfunc_t bfunc;
+    callable_ptr_call_t const call;
 };
 
 }// namespace detail

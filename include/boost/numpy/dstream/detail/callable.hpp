@@ -39,8 +39,14 @@ namespace numpy {
 namespace dstream {
 namespace detail {
 
-template <unsigned OutArity, unsigned InArity>
-struct callable_outin_arity;
+template <
+      unsigned InArity
+    , class FTypes
+    , class MappingDefinition
+    , class WiringModel
+    , class ThreadAbility
+>
+struct callable_in_arity;
 
 #define BOOST_PP_ITERATION_PARAMS_1 \
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/detail/callable.hpp>))
@@ -51,9 +57,10 @@ template <
     , class FSignature
     , class MappingDefinition
     , template <
-         class _MappingDefinition
+           class _MappingDefinition
+         , class _FTypes
       >
-      class WiringModel
+      class WiringModelTemplate
     , class ThreadAbility
 >
 struct callable_base_select
@@ -61,18 +68,20 @@ struct callable_base_select
     typedef typename numpy::mpl::types_from_fctptr_signature<F, FSignature>::type
             f_types_t;
 
-    typedef WiringModel<MappingDefinition>
+    typedef WiringModelTemplate<MappingDefinition, f_types_t>
             wiring_model_t;
 
-    typedef typename callable_in_arity<MappingDefinition::in::arity>::template impl<
-                  f_types_t::is_mfp
-                , MappingDefinition::maps_to_void
-                , ThreadAbility::threads_allowed_t::value
-                , F
+    typedef typename callable_in_arity<
+                  MappingDefinition::in::arity
                 , f_types_t
                 , MappingDefinition
                 , wiring_model_t
                 , ThreadAbility
+            >::template impl<
+                  f_types_t::is_mfp
+                , MappingDefinition::maps_to_void
+                , ThreadAbility::threads_allowed_t::value
+                , F
             >
             type;
 };
@@ -82,15 +91,16 @@ template <
     , class FSignature
     , class MappingDefinition
     , template <
-          class _MappingDefinition
+            class _MappingDefinition
+          , class _FTypes
       >
-      class WiringModel
+      class WiringModelTemplate
     , class ThreadAbility
 >
 struct callable
-  : callable_base_select<F, FSignature, MappingDefinition, WiringModel, ThreadAbility>::type
+  : callable_base_select<F, FSignature, MappingDefinition, WiringModelTemplate, ThreadAbility>::type
 {
-    typedef typename callable_base_select<F, FSignature, MappingDefinition, WiringModel, ThreadAbility>::type
+    typedef typename callable_base_select<F, FSignature, MappingDefinition, WiringModelTemplate, ThreadAbility>::type
             base_t;
 
     callable(F f)
@@ -108,26 +118,112 @@ struct callable
 
 #define IN_ARITY BOOST_PP_ITERATION()
 
-template <>
-struct callable_in_arity<IN_ARITY>
+template <class FTypes, class MappingDefinition, class WiringModel, class ThreadAbility>
+struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, ThreadAbility>
 {
+    typedef numpy::detail::callable_caller<
+              IN_ARITY
+            , typename FTypes::class_type
+            , typename FTypes::return_type
+            , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, typename FTypes::arg_type)
+            >
+            f_caller_t;
+
+    typedef typename callable_call<
+                  FTypes
+                , f_caller_t
+                , MappingDefinition
+                , WiringModel
+                , ThreadAbility
+                >::type
+            callable_call_t;
+
     template <
           bool is_member_function
         , bool has_void_return
         , bool allows_threads
         , class F
-        , class FTypes
-        , class MappingDefinition
-        , class WiringModel
-        , class ThreadAbility
     >
     struct impl;
 
     //--------------------------------------------------------------------------
+    // Partial specialization for member function with void-return and threads
+    // allowed.
+    template <class F>
+    struct impl<true, true, true, F>
+    {
+        typedef boost::mpl::vector<
+                  python::object
+                , typename FTypes::class_type &
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
+                , unsigned
+                >
+                signature_t;
+
+        F m_f;
+        impl(F f) : m_f(f) {}
+
+        python::object
+        operator()(
+              typename FTypes::class_type & self
+            , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
+            , unsigned nthreads
+        )
+        {
+            f_caller_t const f_caller(m_f);
+
+            python::object out_obj;
+
+            return callable_call_t::call(
+                  f_caller
+                , self
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_obj)
+                , out_obj
+                , nthreads);
+        }
+    };
+
+    //--------------------------------------------------------------------------
+    // Partial specialization for member function with void-return and threads
+    // forbidden.
+    template <class F>
+    struct impl<true, true, false, F>
+    {
+        typedef boost::mpl::vector<
+                  python::object
+                , typename FTypes::class_type &
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
+                >
+                signature_t;
+
+        F m_f;
+        impl(F f) : m_f(f) {}
+
+        python::object
+        operator()(
+              typename FTypes::class_type & self
+            , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
+        )
+        {
+            f_caller_t const f_caller(m_f);
+
+            python::object out_obj;
+            unsigned const nthreads = 1;
+
+            return callable_call_t::call(
+                  f_caller
+                , self
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_obj)
+                , out_obj
+                , nthreads);
+        }
+    };
+
+    //--------------------------------------------------------------------------
     // Partial specialization for member function with non-void-return and
     // threads allowed.
-    template <class MappingDefinition, class F, class FTypes, class WiringModel, class ThreadAbility>
-    struct impl<true, false, true, F, FTypes, MappingDefinition, WiringModel, ThreadAbility>
+    template <class F>
+    struct impl<true, false, true, F>
     {
         typedef boost::mpl::vector<
                   python::object
@@ -138,14 +234,7 @@ struct callable_in_arity<IN_ARITY>
                 >
                 signature_t;
 
-        typedef boost::numpy::detail::callable_caller<
-                  IN_ARITY
-                , typename FTypes::class_type
-                , typename FTypes::return_type
-                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, FTypes::arg_type)
-                >
-                f_caller_t;
-
+        F m_f;
         impl(F f) : m_f(f) {}
 
         python::object
@@ -156,10 +245,7 @@ struct callable_in_arity<IN_ARITY>
             , unsigned nthreads
         )
         {
-            f_caller_t f_caller(m_f);
-
-            typedef typename callable_call<FTypes, f_caller_t, MappingDefinition, WiringModel, ThreadAbility>::type
-                    callable_call_t;
+            f_caller_t const f_caller(m_f);
 
             return callable_call_t::call(
                   f_caller
@@ -168,47 +254,34 @@ struct callable_in_arity<IN_ARITY>
                 , out_obj
                 , nthreads);
         }
-
-        F m_f;
     };
 
     //--------------------------------------------------------------------------
-    // Partial specialization for member function with void-return and threads
-    // allowed.
-    template <class MappingDefinition, class F, class FTypes, class WiringModel, class ThreadAbility>
-    struct impl<true, true, true, F, FTypes, MappingDefinition, WiringModel, ThreadAbility>
+    // Partial specialization for member function with non-void-return and
+    // threads forbidden.
+    template <class F>
+    struct impl<true, false, false, F>
     {
         typedef boost::mpl::vector<
                   python::object
                 , typename FTypes::class_type &
                 , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
-                , unsigned
+                , python::object &
                 >
                 signature_t;
 
-        typedef boost::numpy::detail::callable_caller<
-                  IN_ARITY
-                , typename FTypes::class_type
-                , void
-                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, FTypes::arg_type)
-                >
-                f_caller_t;
-
+        F m_f;
         impl(F f) : m_f(f) {}
 
         python::object
         operator()(
               typename FTypes::class_type & self
             , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
-            , unsigned nthreads
+            , python::object & out_obj
         )
         {
-            f_caller_t f_caller(m_f);
-
-            python::object out_obj;
-
-            typedef typename callable_call<FTypes, f_caller_t, MappingDefinition, WiringModel, ThreadAbility>::type
-                    callable_call_t;
+            f_caller_t const f_caller(m_f);
+            unsigned const nthreads = 1;
 
             return callable_call_t::call(
                   f_caller
@@ -217,11 +290,147 @@ struct callable_in_arity<IN_ARITY>
                 , out_obj
                 , nthreads);
         }
-
-        F m_f;
     };
 
-    // TODO: Add all the other specializations.
+    //--------------------------------------------------------------------------
+    // Partial specialization for stand-alone function with non-void-return and
+    // threads forbidden.
+    template <class F>
+    struct impl<false, false, false, F>
+    {
+        typedef boost::mpl::vector<
+                  python::object
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
+                , python::object &
+                >
+                signature_t;
+
+        F m_f;
+        impl(F f) : m_f(f) {}
+
+        python::object
+        operator()(
+              BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
+            , python::object & out_obj
+        )
+        {
+            f_caller_t const f_caller(m_f);
+            typename FTypes::class_type self();
+            unsigned const nthreads = 1;
+
+            return callable_call_t::call(
+                  f_caller
+                , self
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_obj)
+                , out_obj
+                , nthreads);
+        }
+    };
+
+    //--------------------------------------------------------------------------
+    // Partial specialization for stand-alone function with void-return and
+    // threads forbidden.
+    template <class F>
+    struct impl<false, true, false, F>
+    {
+        typedef boost::mpl::vector<
+                  python::object
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
+                >
+                signature_t;
+
+        F m_f;
+        impl(F f) : m_f(f) {}
+
+        python::object
+        operator()(
+              BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
+        )
+        {
+            f_caller_t const f_caller(m_f);
+            typename FTypes::class_type self();
+            python::object out_obj;
+            unsigned const nthreads = 1;
+
+            return callable_call_t::call(
+                  f_caller
+                , self
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_obj)
+                , out_obj
+                , nthreads);
+        }
+    };
+
+    //--------------------------------------------------------------------------
+    // Partial specialization for stand-alone function with void-return and
+    // threads allowed.
+    template <class F>
+    struct impl<false, true, true, F>
+    {
+        typedef boost::mpl::vector<
+                  python::object
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
+                , unsigned
+                >
+                signature_t;
+
+        F m_f;
+        impl(F f) : m_f(f) {}
+
+        python::object
+        operator()(
+              BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
+            , unsigned nthreads
+        )
+        {
+            f_caller_t const f_caller(m_f);
+            typename FTypes::class_type self();
+            python::object out_obj;
+
+            return callable_call_t::call(
+                  f_caller
+                , self
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_obj)
+                , out_obj
+                , nthreads);
+        }
+    };
+
+    //--------------------------------------------------------------------------
+    // Partial specialization for stand-alone function with non-void-return and
+    // threads allowed.
+    template <class F>
+    struct impl<false, false, true, F>
+    {
+        typedef boost::mpl::vector<
+                  python::object
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
+                , python::object &
+                , unsigned
+                >
+                signature_t;
+
+        F m_f;
+        impl(F f) : m_f(f) {}
+
+        python::object
+        operator()(
+              BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
+            , python::object & out_obj
+            , unsigned nthreads
+        )
+        {
+            f_caller_t const f_caller(m_f);
+            typename FTypes::class_type self();
+
+            return callable_call_t::call(
+                  f_caller
+                , self
+                , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_obj)
+                , out_obj
+                , nthreads);
+        }
+    };
 };
 
 #undef IN_ARITY

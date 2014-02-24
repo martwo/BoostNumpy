@@ -130,7 +130,7 @@ struct out_mapping
     template <unsigned Idx>
     struct array
     {
-        typedef mapping_array_select<OutMapping, Idx>::type
+        typedef typename mapping_array_select<OutMapping, Idx>::type
                 type;
 
         struct is_scalar
@@ -152,22 +152,10 @@ struct out_mapping
 
 #define N BOOST_PP_ITERATION()
 
-template <class Definition>
-struct all_mapping_definition_input_arrays_are_scalars_arity<N, Definition>
-{
-    typedef boost::mpl::and_<
-                #define BOOST_PP_LOCAL_MACRO(n) \
-                    BOOST_PP_COMMA_IF(n) is_same< typename Definition::in:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
-                #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-                #include BOOST_PP_LOCAL_ITERATE()
-            >::type
-            type;
-};
-
 template <class Mapping>
 struct all_mapping_arrays_are_scalars_arity<N, Mapping>
 {
-    typedef boost::mpl::and_<
+    typedef typename boost::mpl::and_<
                 #define BOOST_PP_LOCAL_MACRO(n) \
                     BOOST_PP_COMMA_IF(n) is_same< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
                 #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))

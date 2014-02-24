@@ -2,14 +2,13 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/detail/pygil.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines the PyGIL class for holding the python global
  *        interpreter lock. Thanks to Steve Jackson for the code inspiration.
@@ -27,11 +26,9 @@ namespace boost {
 namespace numpy {
 namespace detail {
 
-//==============================================================================
 class PyGIL
 {
   public:
-    //__________________________________________________________________________
     PyGIL(bool auto_acquire=true)
     {
         if(auto_acquire)
@@ -40,7 +37,6 @@ class PyGIL
         }
     }
 
-    //__________________________________________________________________________
     ~PyGIL()
     {
         if(is_acquired())
@@ -49,7 +45,6 @@ class PyGIL
         }
     }
 
-    //__________________________________________________________________________
     void
     acquire()
     {
@@ -57,7 +52,6 @@ class PyGIL
         acquired_ = true;
     }
 
-    //__________________________________________________________________________
     void
     release()
     {
@@ -65,7 +59,6 @@ class PyGIL
         acquired_ = false;
     }
 
-    //__________________________________________________________________________
     bool
     is_acquired() const
     {
@@ -77,8 +70,8 @@ class PyGIL
     PyGILState_STATE state_;
 };
 
-}/*detail*/
-}/*numpy*/
-}/*boost*/
+}// namespace detail
+}// namespace numpy
+}// namespace boost
 
 #endif // !BOOST_NUMPY_DETAIL_PYGIL_HPP_INCLUDED

@@ -112,7 +112,7 @@ struct types_from_fctptr_signature
 template <class FTypes>
 struct all_fct_args_are_scalars_incl_bool
 {
-    typedef detail::all_fct_args_are_scalars_incl_bool_arity<FTypes::arity, FTypes>::type
+    typedef typename detail::all_fct_args_are_scalars_incl_bool_arity<FTypes::arity, FTypes>::type
             type;
 };
 
@@ -120,8 +120,8 @@ template <class FTypes>
 struct fct_return_is_scalar_or_bool
 {
     typedef typename boost::mpl::or_<
-                typename type_traits::is_scalar<typename FTypes::return_type>::type
-              , typename type_traits::is_same<typename FTypes::return_type, bool>::type
+                typename boost::is_scalar<typename FTypes::return_type>::type
+              , typename boost::is_same<typename FTypes::return_type, bool>::type
             >::type
             type;
 };
@@ -158,7 +158,7 @@ struct types_from_fctptr_signature_impl<
 
     typedef Class class_type;
 
-    typedef typename boost::mpl::not_< is_same<class_t, numpy::mpl::unspecified> >::type
+    typedef typename boost::mpl::not_< is_same<class_type, numpy::mpl::unspecified> >::type
             is_mfp_t;
     BOOST_STATIC_CONSTANT(bool, is_mfp = is_mfp_t::value);
 
@@ -178,8 +178,8 @@ struct all_fct_args_are_scalars_incl_bool_arity<N, FTypes>
     typedef typename boost::mpl::and_<
                 #define BOOST_PP_LOCAL_MACRO(n) \
                     BOOST_PP_COMMA_IF(n) typename boost::mpl::or_< \
-                          typename type_traits::is_scalar<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type \
-                        , typename type_traits::is_same<typename FTypes:: BOOST_PP_CAT(arg_type,n), bool>::type \
+                          typename boost::is_scalar<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type \
+                        , typename boost::is_same<typename FTypes:: BOOST_PP_CAT(arg_type,n), bool>::type \
                         >::type
                 #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
                 #include BOOST_PP_LOCAL_ITERATE()

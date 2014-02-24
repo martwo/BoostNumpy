@@ -194,7 +194,7 @@ struct make_core_shape_tuple;
 template <class T>
 struct is_scalar
 {
-    typedef typename is_same<T, core_shape<0>::shape<> >
+    typedef boost::is_same<T, core_shape<0>::shape<> >
             type;
 };
 

@@ -142,12 +142,12 @@ struct default_wiring_model_selector<
 //==============================================================================
 #elif BOOST_PP_ITERATION_FLAGS() == 1
 
-#define N BOOST_PP_ITERATION()
+#define IN_ARITY BOOST_PP_ITERATION()
 
 template <>
-struct scalar_callable_arity<N>
+struct scalar_callable_arity<IN_ARITY>
 {
-    BOOST_STATIC_CONSTANT(unsigned, in_arity = N);
+    BOOST_STATIC_CONSTANT(unsigned, in_arity = IN_ARITY);
 
     template <
           bool fct_has_void_return
@@ -233,16 +233,17 @@ struct scalar_callable_arity<N>
                 intptr_t size = iter.get_inner_loop_size();
                 while(size--)
                 {
-                    #define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA_N(z, n, data) \
-                        BOOST_PP_COMMA_IF(n) *reinterpret_cast<typename FTypes:: BOOST_PP_CAT(in_t,n) *>(iter.get_data(n))
-                    FCaller::callable_ptr_t::call(
-                              f_caller.bfunc
-                            , &self
-                            , BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA_N, ~)
+                    #define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA(z, n, data) \
+                        BOOST_PP_COMMA_IF(n) *reinterpret_cast<typename FTypes:: BOOST_PP_CAT(arg_type,n) *>(\
+                            iter.get_data(MappingDefinition::out::arity + n)\
+                        )
+                    f_caller.call(
+                          &self
+                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA, ~)
                     );
-                    #undef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA_N
+                    #undef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA
 
-                    iter.add_strides_to_data_ptrs(MappingModel::n_op, &MappingModel::op_value_strides[0]);
+                    iter.add_inner_loop_strides_to_data_ptrs();
                 }
             } while(iter.next());
         }

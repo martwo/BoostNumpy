@@ -27,10 +27,19 @@
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_trailing_params.hpp>
 
+#include <boost/mpl/bitor.hpp>
+#include <boost/thread.hpp>
+
 #include <boost/python/object_fwd.hpp>
 #include <boost/python/tuple.hpp>
 
 #include <boost/numpy/limits.hpp>
+#include <boost/numpy/detail/iter.hpp>
+#include <boost/numpy/detail/pygil.hpp>
+#include <boost/numpy/dstream/array_definition.hpp>
+#include <boost/numpy/dstream/detail/input_array_service.hpp>
+#include <boost/numpy/dstream/detail/output_array_service.hpp>
+#include <boost/numpy/dstream/detail/loop_service.hpp>
 
 namespace boost {
 namespace numpy {
@@ -84,14 +93,16 @@ struct callable_call
     typedef callable_call_outin_arity<
                   MappingDefinition::out::arity
                 , MappingDefinition::in::arity
-            >::template impl<
-                  FTypes::has_void_return
-                , FTypes
+            >
+            callable_call_outin_arity_t;
+
+    typedef typename callable_call_outin_arity_t::template impl<
+                  FTypes
                 , FCaller
                 , MappingDefinition
                 , WiringModel
                 , ThreadAbility
-            >
+            >::type
             type;
 };
 
@@ -117,7 +128,7 @@ struct construct_result<OUT_ARITY>
     apply(BOOST_PP_ENUM_BINARY_PARAMS_Z(1, OUT_ARITY, OutArrService, const & out_arr_service))
     {
         // Construct a tuple with all output arrays.
-        return static_cast<bp::object>(bp::make_tuple(
+        return static_cast<python::object>(python::make_tuple(
                    BOOST_PP_ENUM_BINARY_PARAMS_Z(1, OUT_ARITY, out_arr_service, .get_arr() BOOST_PP_INTERCEPT)
                ));
     }
@@ -140,10 +151,10 @@ struct construct_result<OUT_ARITY>
 #define IN_ARITY BOOST_PP_ITERATION()
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_def(z, n, data) \
-    typedef array_definition< typename MappingDefinition::in::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::in_arr_value_type<n>::type> BOOST_PP_CAT(in_arr_def,n);
+    typedef array_definition< typename MappingDefinition::in::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::template in_arr_value_type<n>::type> BOOST_PP_CAT(in_arr_def,n);
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_def(z, n, data) \
-    typedef array_definition< typename MappingDefinition::out::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::out_arr_value_type<n>::type> BOOST_PP_CAT(out_arr_def,n);
+    typedef array_definition< typename MappingDefinition::out::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::template out_arr_value_type<n>::type> BOOST_PP_CAT(out_arr_def,n);
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_dtype(z, n, data) \
     numpy::dtype const BOOST_PP_CAT(in_arr_dtype,n) = numpy::dtype::get_builtin< BOOST_PP_CAT(in_arr_def,n)::value_type >();
@@ -201,6 +212,9 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
     >
     struct impl
     {
+        typedef impl<FTypes, FCaller, MappingDefinition, WiringModel, ThreadAbility>
+                type;
+
         static
         python::object
         call(
@@ -259,12 +273,12 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             //     EXTERNAL_LOOP, RANGED, BUFFERED, DELAY_BUFALLOC
             // So we set these flags by default for all mapping models and add
             // additional mapping model specific flags.
-            numpy::detail::iter_flags_t iter_flags =
-                  boost::numpy::detail::iter::EXTERNAL_LOOP
-                | boost::numpy::detail::iter::RANGED
-                | boost::numpy::detail::iter::BUFFERED
-                | boost::numpy::detail::iter::DELAY_BUFALLOC
-                ;
+            numpy::detail::iter_flags_t iter_flags = boost::mpl::bitor_<
+                  numpy::detail::iter::flags::EXTERNAL_LOOP
+                , numpy::detail::iter::flags::RANGED
+                , numpy::detail::iter::flags::BUFFERED
+                , numpy::detail::iter::flags::DELAY_BUFALLOC
+                >::type::value;
             iter_flags |= WiringModel::iter_flags::type::value;
 
             // Define other iterator properties.

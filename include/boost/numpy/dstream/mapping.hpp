@@ -31,7 +31,6 @@
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/ndarray.hpp>
-#include <boost/numpy/pp.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
 
 #include <boost/numpy/dstream/dim.hpp>
