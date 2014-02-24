@@ -2,17 +2,18 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@fysik.su.se>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \file    boost/numpy/dstream/wiring/models/scalar_callable.hpp
  * \version $Revision$
  * \date    $Date$
- * \author  Martin Wolf <martin.wolf@fysik.su.se>
+ * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
  * \brief This file defines the scalar_callable template for
  *        wiring one scalar function or scalar class member function that takes
- *        single scalar input values and returns one scalar output value.
+ *        single scalar input values and returns one scalar output value or
+ *        void.
  *
  *        This file is distributed under the Boost Software License,
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -58,6 +59,55 @@ namespace model {
 
 namespace detail {
 
+template <class FTypes>
+struct scalar_callable_base
+  : wiring_model_type
+{
+    template <unsigned Idx>
+    struct out_arr_value_type
+    {
+        typedef typename FTypes::return_type
+                type;
+    };
+
+    template <unsigned Idx>
+    struct in_arr_value_type
+    {
+        typedef typename boost::mpl::at< typename FTypes::in_type_vector, boost::mpl::long_<Idx> >::type
+                type;
+    };
+
+    template <unsigned Idx>
+    struct out_arr_iter_operand_flags
+    {
+        typedef boost::mpl::bitor_<
+                    typename numpy::detail::iter_operand::flags::WRITEONLY
+                    , typename numpy::detail::iter_operand::flags::NBO
+                    , typename numpy::detail::iter_operand::flags::ALIGNED
+                >
+                type;
+    };
+
+    template <unsigned Idx>
+    struct in_arr_iter_operand_flags
+    {
+        typedef typename numpy::detail::iter_operand::flags::READONLY
+                type;
+    };
+
+    struct iter_flags
+    {
+        typedef typename numpy::detail::iter::flags::DONT_NEGATE_STRIDES
+                type;
+    };
+
+    BOOST_STATIC_CONSTANT(order_t, order = numpy::KEEPORDER);
+
+    BOOST_STATIC_CONSTANT(casting_t, casting = numpy::SAME_KIND_CASTING);
+
+    BOOST_STATIC_CONSTANT(intptr_t, buffersize = 0);
+};
+
 template <unsigned in_arity>
 struct scalar_callable_arity;
 
@@ -100,11 +150,14 @@ struct scalar_callable
 
 // The scalar_callable wiring model should be selected if all of the following
 // conditions on the mapping definition and function types are true:
-//     - all input arrays of the mapping definition are scalars
-//     - the output mapping consists of zero or one output array
-//     - the output array is a scalar array
-//     - all input function types are scalars (including bool type)
-//     - the output function type is a scalar (including bool type) or is void
+//     - All input arrays of the mapping definition are scalars.
+//     - All function argument types must be a scalar or bool type.
+//     - The output mapping consists of zero or one output array.
+//       - If the output mapping has zero output arrays, the function's return
+//         type must be void.
+//       - If the output mapping has one output array, the output array must be
+//         a scalar array and the function's return type must be a scalar or
+//         bool type.
 template <class MappingDefinition, class FTypes>
 struct default_wiring_model_selector<
       MappingDefinition
@@ -115,8 +168,8 @@ struct default_wiring_model_selector<
             , typename numpy::mpl::all_fct_args_are_scalars_incl_bool<FTypes>::type
             , typename boost::mpl::or_<
                   typename boost::mpl::and_<
-                      typename boost::mpl::bool_<MappingDefinition::maps_to_void>::type
-                    , typename type_traits::is_same<typename FTypes::out_t, void>::type
+                      typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is<0>::type
+                    , typename boost::mpl::bool_<FTypes::has_return_type>::type
                   >::type
                 , typename boost::mpl::and_<
                       typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is<1>::type
@@ -144,6 +197,9 @@ struct default_wiring_model_selector<
 
 #define IN_ARITY BOOST_PP_ITERATION()
 
+#define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value(z, n, data) \
+    BOOST_PP_COMMA_IF(n) typename FTypes:: BOOST_PP_CAT(arg_type,n)(BOOST_PP_CAT(in_arr_value,n))
+
 template <>
 struct scalar_callable_arity<IN_ARITY>
 {
@@ -161,55 +217,20 @@ struct scalar_callable_arity<IN_ARITY>
     // It implements the wiring for mapping Nx() -> None
     template <class MappingDefinition, class FTypes>
     struct impl<true, MappingDefinition, FTypes>
-      : wiring_model_type
+      : scalar_callable_base<FTypes>
     {
-        template <unsigned Idx>
-        struct out_arr_value_type
-        {
-            typedef FTypes::out_t
-                    type;
-        };
+        typedef scalar_callable_base<FTypes>
+                interface_t;
 
-        template <unsigned Idx>
-        struct in_arr_value_type
-        {
-            typedef typename boost::mpl::at< typename FTypes::in_type_vector, boost::mpl::long_<Idx> >::type
-                    type;
-        };
+        // Define the input array value types.
+        #define BOOST_PP_LOCAL_MACRO(n) \
+            typedef typename interface_t::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
+        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
+        #include BOOST_PP_LOCAL_ITERATE()
 
-        template <unsigned Idx>
-        struct out_arr_iter_operand_flags
-        {
-            typedef boost::mpl::bitor_<
-                        typename numpy::detail::iter_operand::flags::WRITEONLY
-                      , typename numpy::detail::iter_operand::flags::NBO
-                      , typename numpy::detail::iter_operand::flags::ALIGNED
-                    >
-                    type;
-        };
-
-        template <unsigned Idx>
-        struct in_arr_iter_operand_flags
-        {
-            typedef typename numpy::detail::iter_operand::flags::READONLY
-                    type;
-        };
-
-        struct iter_flags
-        {
-            typedef typename numpy::detail::iter::flags::DONT_NEGATE_STRIDES
-                    type;
-        };
-
-        BOOST_STATIC_CONSTANT(order_t, order = numpy::KEEPORDER);
-
-        BOOST_STATIC_CONSTANT(casting_t, casting = numpy::SAME_KIND_CASTING);
-
-        BOOST_STATIC_CONSTANT(intptr_t, buffersize = 0);
-
-        //______________________________________________________________________
-        // The call method of the wiring model does the iteration and the
-        // actual wiring using the wiring model configuration.
+        /** The iterate method of the wiring model does the iteration and the
+         *  actual wiring.
+         */
         template <class Class, class FCaller>
         static
         void
@@ -221,7 +242,6 @@ struct scalar_callable_arity<IN_ARITY>
             , bool & error_flag
         )
         {
-            //------------------------------------------------------------------
             // Do the iteration loop over the array.
             // Note: The iterator flags is set with EXTERNAL_LOOP in order
             //       to allow for multi-threading. So each iteration is a
@@ -233,15 +253,20 @@ struct scalar_callable_arity<IN_ARITY>
                 intptr_t size = iter.get_inner_loop_size();
                 while(size--)
                 {
-                    #define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA(z, n, data) \
-                        BOOST_PP_COMMA_IF(n) *reinterpret_cast<typename FTypes:: BOOST_PP_CAT(arg_type,n) *>(\
-                            iter.get_data(MappingDefinition::out::arity + n)\
-                        )
+                    // Construct references to the input array values.
+                    #define BOOST_PP_LOCAL_MACRO(n) \
+                        BOOST_PP_CAT(in_arr_value_t,n) & BOOST_PP_CAT(in_arr_value,n) =\
+                            *reinterpret_cast<BOOST_PP_CAT(in_arr_value_t,n) *>(iter.get_data(MappingDefinition::out::arity + n));
+                    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
+                    #include BOOST_PP_LOCAL_ITERATE()
+
+                    // Call the scalar function (i.e. the to-be-exposed
+                    // function) and implicitly convert between types, in case
+                    // function types differ from array value types.
                     f_caller.call(
                           &self
-                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA, ~)
+                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value, ~)
                     );
-                    #undef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA
 
                     iter.add_inner_loop_strides_to_data_ptrs();
                 }
@@ -250,76 +275,65 @@ struct scalar_callable_arity<IN_ARITY>
     };
 
     //--------------------------------------------------------------------------
-    // Partial specialization for mapping models mapping to non-void.
-    template <
-          class MappingModel
-        , class Class
-    >
-    struct scalar_callable_impl<false, MappingModel, Class>
-      : base_wiring_model<MappingModel, Class, wiring_model_config_t>
+    // Partial specialization for functions returning non-void.
+    // It implements the wiring for mapping Nx() -> ()
+    template <class MappingDefinition, class FTypes>
+    struct impl<false, MappingDefinition, FTypes>
+      : scalar_callable_base<FTypes>
     {
-        typedef base_wiring_model<MappingModel, Class, wiring_model_config_t>
-                base_wiring_model_t;
+        typedef scalar_callable_base<FTypes>
+                interface_t;
 
-        //----------------------------------------------------------------------
-        #define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_dshape_vtype(z, n, data) \
-            BOOST_PP_COMMA_IF(n) typename MappingModel::in_arr_dshape_ ## n ::value_type
-        typedef boost::numpy::detail::callable_caller<
-              N
-            , Class
-            , typename MappingModel::out_arr_dshape::value_type
-            , BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_dshape_vtype, ~)
-            > callable_caller_t;
-        #undef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_dshape_vtype
-        typedef typename callable_caller_t::callable_ptr_t callable_t;
+        // Define the output and input array value types.
+        typedef typename interface_t::template out_arr_value_type<0>::type
+                out_arr_value_t;
+        #define BOOST_PP_LOCAL_MACRO(n) \
+            typedef typename interface_t::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
+        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
+        #include BOOST_PP_LOCAL_ITERATE()
 
-        //______________________________________________________________________
-        scalar_callable_impl(wiring_model_config_t const & wmc)
-          : base_wiring_model_t(wmc)
-        {}
-
-        //______________________________________________________________________
-        // The call method of the wiring model does the iteration and the
-        // actual wiring using the wiring model configuration.
+        template <class Class, class FCaller>
         static
         void
-        call(Class & self, wiring_model_config_t const & config, boost::numpy::detail::iter & iter, bool & error_flag)
+        iterate(
+              Class & self
+            , FCaller const & f_caller
+            , numpy::detail::iter & iter
+            , std::vector< std::vector<intptr_t> > const & core_shapes
+            , bool & error_flag
+        )
         {
-            //------------------------------------------------------------------
-            // Get the configuration:
-            //-- The pointer to the C++ class method.
-            callable_caller_t callable_caller(config.get_setting(0));
-
-            //------------------------------------------------------------------
-            // Do the iteration loop over the array.
-            // Note: The iterator flags is set with EXTERNAL_LOOP in order
-            //       to allow for multi-threading. So each iteration is a
-            //       chunk of size iter.get_inner_loop_size() of data, that
-            //       needs to be iterated manually. The inner loop size is
-            //       strongly related to the buffer size specified at
-            //       iterator construction.
             do {
                 intptr_t size = iter.get_inner_loop_size();
                 while(size--)
                 {
+                    // Construct references to the output and input array
+                    // values.
+                    out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0));
+                    #define BOOST_PP_LOCAL_MACRO(n) \
+                        BOOST_PP_CAT(in_arr_value_t,n) & BOOST_PP_CAT(in_arr_value,n) =\
+                            *reinterpret_cast<BOOST_PP_CAT(in_arr_value_t,n) *>(iter.get_data(MappingDefinition::out::arity + n));
+                    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
+                    #include BOOST_PP_LOCAL_ITERATE()
 
-                    #define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA_N(z, n, data) \
-                        BOOST_PP_COMMA_IF(n) *reinterpret_cast<typename MappingModel:: BOOST_PP_CAT(in_arr_dshape_,n) ::value_type *>(iter.get_data( BOOST_PP_ADD(n, 1) ))
-                    *reinterpret_cast<typename MappingModel::out_arr_dshape::value_type *>(iter.get_data(0)) =
-                        callable_t::call(
-                              callable_caller.bfunc
-                            , &self
-                            , BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA_N, ~)
-                        );
-                    #undef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__GET_ITER_DATA_N
+                    // Call the scalar function (i.e. the to-be-exposed
+                    // function) and implicitly convert between types, in case
+                    // function types differ from array value types.
+                    typename FTypes::return_type ret = f_caller.call(
+                          &self
+                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value, ~)
+                    );
+                    out_arr_value = out_arr_value_t(ret);
 
-                    iter.add_strides_to_data_ptrs(MappingModel::n_op, &MappingModel::op_value_strides[0]);
+                    iter.add_inner_loop_strides_to_data_ptrs();
                 }
             } while(iter.next());
         }
     };
 };
 
-#undef N
+#undef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value
+
+#undef IN_ARITY
 
 #endif // !BOOST_PP_IS_ITERATING
