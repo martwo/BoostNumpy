@@ -126,6 +126,7 @@ struct def_helper
         , char const*
         > all_t;
 
+    def_helper() : m_all(m_nil,m_nil,m_nil,m_nil) {}
     def_helper(T1 const& a1) : m_all(a1,m_nil,m_nil,m_nil) {}
     def_helper(T1 const& a1, T2 const& a2) : m_all(a1,a2,m_nil,m_nil) {}
     def_helper(T1 const& a1, T2 const& a2, T3 const& a3) : m_all(a1,a2,a3,m_nil) {}

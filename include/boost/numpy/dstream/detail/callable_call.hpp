@@ -219,7 +219,7 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
         python::object
         call(
               FCaller const & f_caller
-            , typename FTypes::class_t & self
+            , typename FTypes::class_type & self
             , BOOST_PP_ENUM_PARAMS(IN_ARITY, python::object const & in_obj)
             , python::object & out_obj
             , unsigned nthreads

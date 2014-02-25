@@ -136,11 +136,11 @@ struct out_mapping
     struct array
     {
         typedef typename mapping_array_select<OutMapping, Idx>::type
-                type;
+                array_type;
 
         struct is_scalar
         {
-            typedef typename mapping::detail::is_scalar<type>::type
+            typedef typename mapping::detail::is_scalar<array_type>::type
                     type;
         };
     };

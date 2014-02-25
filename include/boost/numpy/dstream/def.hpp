@@ -93,7 +93,7 @@ struct default_selectors
     // one, or the default one based on the argument and return types of the
     // to-be-exposed function.
     typedef typename boost::mpl::if_<
-                  typename boost::is_same<UserMappingDefinition, numpy::mpl::unspecified>::type
+                  boost::is_same<UserMappingDefinition, numpy::mpl::unspecified>
                 , typename default_mapping_definition_selector<FTypes::arity>::template select<FTypes>::type
                 , UserMappingDefinition
                 >::type
@@ -149,7 +149,7 @@ void create_and_add_py_function(
     python::objects::py_function pyfunc(caller, typename FTypes::signature_t());
 
     // Create a python::object holding a Python function object.
-    python::object pyfunct_obj = python::objects::function_object(pyfunc, kwargs);
+    python::object pyfunct_obj = python::objects::function_object(pyfunc, kwargs.range());
 
     // Finally, add the Python function object to the Python namespace scope,
     // where scope could be a python module or a python class.
@@ -240,7 +240,8 @@ struct default_mapping_definition_selector<IN_ARITY>
                 out_mapping_t;
 
         #define BOOST_PP_LOCAL_MACRO(n) \
-            typedef typename mapping::converter::detail::arg_type_to_core_shape<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type BOOST_PP_CAT(in_core_shape_t,n);
+            typedef typename mapping::converter::detail::arg_type_to_core_shape<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type \
+                    BOOST_PP_CAT(in_core_shape_t,n);
         #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY, 1))
         #include BOOST_PP_LOCAL_ITERATE()
         typedef mapping::detail::in<IN_ARITY>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_core_shape_t) >
@@ -285,7 +286,7 @@ void def_with_ftypes_and_mapping_definition(
                 BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
             >
             def_helper_t;
-    def_helper_t helper(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
+    def_helper_t const helper = def_helper_t(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
 
     create_and_add_py_function(
           sc
@@ -304,7 +305,6 @@ template <
       class F
     , class FTypes
     , class KW
-    , class Signature
     BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
 >
 void def_with_ftypes(
@@ -319,14 +319,14 @@ void def_with_ftypes(
     typedef default_selectors<FTypes, numpy::mpl::unspecified>
             default_selectors_t;
 
-    typedef def_helper<
+    typedef dstream::detail::def_helper<
                   typename default_selectors_t::mapping_definition_t
                 , typename default_selectors_t::wiring_model_selector_t
                 , typename default_selectors_t::thread_ability_selector_t
                 BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
             >
             def_helper_t;
-    def_helper_t helper(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
+    def_helper_t const helper = def_helper_t(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
 
     def_with_ftypes_and_mapping_definition(
           sc
@@ -357,7 +357,7 @@ void def_with_signature(
     typedef typename numpy::mpl::types_from_fctptr_signature<F, Signature>::type
             f_types_t;
 
-    def_with_ftypes(sc, name, f, (f_types_t*)(NULL), kwargs BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
+    def_with_ftypes(sc, name, f, (f_types_t*)NULL, kwargs BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
 }
 
 #elif BOOST_PP_ITERATION_FLAGS() == 3

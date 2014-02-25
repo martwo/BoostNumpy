@@ -163,23 +163,24 @@ template <class MappingDefinition, class FTypes>
 struct default_wiring_model_selector<
       MappingDefinition
     , FTypes
-    , typename enable_if<
-          typename boost::mpl::and_<
-              typename dstream::mapping::detail::in_mapping<typename MappingDefinition::in>::all_arrays_are_scalars::type
-            , typename numpy::mpl::all_fct_args_are_scalars_incl_bool<FTypes>::type
-            , typename boost::mpl::or_<
-                  typename boost::mpl::and_<
-                      typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is<0>::type
-                    , typename boost::mpl::bool_<FTypes::has_return_type>::type
-                  >::type
-                , typename boost::mpl::and_<
-                      typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is<1>::type
-                    , typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template array<0>::is_scalar::type
-                    , typename numpy::mpl::fct_return_is_scalar_or_bool<FTypes>::type
-                  >::type
-              >::type
-          >::type
-      >::type
+    , void
+//     , typename enable_if<
+//           typename boost::mpl::and_<
+//               typename dstream::mapping::detail::in_mapping<typename MappingDefinition::in>::all_arrays_are_scalars::type
+//             , typename numpy::mpl::all_fct_args_are_scalars_incl_bool<FTypes>::type
+//             , typename boost::mpl::or_<
+//                   typename boost::mpl::and_<
+//                       typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is<0>::type
+//                     , typename boost::mpl::bool_<FTypes::has_return_type>::type
+//                   >::type
+//                 , typename boost::mpl::and_<
+//                       typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is<1>::type
+//                     , typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template array<0>::is_scalar::type
+//                     , typename numpy::mpl::fct_return_is_scalar_or_bool<FTypes>::type
+//                   >::type
+//               >::type
+//           >::type
+//       >::type
 >
 {
     typedef model::scalar_callable
