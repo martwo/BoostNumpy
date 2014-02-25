@@ -34,7 +34,6 @@
 #include <boost/preprocessor/repetition/enum_trailing_binary_params.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/size.hpp>
@@ -42,21 +41,28 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/remove_reference.hpp>
 
+#include <boost/python/signature.hpp>
+#include <boost/python/object/add_to_namespace.hpp>
+#include <boost/python/object/py_function.hpp>
+#include <boost/python/object/function_object.hpp>
+
 #include <boost/numpy/detail/prefix.hpp>
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
-//#include <boost/numpy/dstream/callable.hpp>
-#include <boost/numpy/dstream/defaults.hpp>
+#include <boost/numpy/dstream/threading.hpp>
+#include <boost/numpy/dstream/detail/callable.hpp>
+#include <boost/numpy/dstream/detail/caller.hpp>
 #include <boost/numpy/dstream/detail/def_helper.hpp>
 #include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape.hpp>
 #include <boost/numpy/dstream/mapping/converter/return_type_to_out_mapping.hpp>
+
+// Include all built-in wiring models.
 #include <boost/numpy/dstream/wiring/default_wiring_model_selector_fwd.hpp>
 #include <boost/numpy/dstream/wiring/models/scalar_callable.hpp>
 
-#include <boost/python/signature.hpp>
-#include <boost/python/object/add_to_namespace.hpp>
+#define BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS 4
 
 namespace boost {
 namespace numpy {
@@ -78,32 +84,23 @@ struct default_mapping_definition_selector;
 
 //==============================================================================
 template <
-      class Class
-    , class IOTypes
-    , class UserMappingModelSelector
+      class FTypes
+    , class UserMappingDefinition
 >
 struct default_selectors
 {
-    // Choose the mapping model selector class: Either the user defined one, or
-    // the default one based on the IO types of the function.
-    typedef typename boost::mpl::if_
-                < typename is_same<UserMappingModelSelector, numpy::mpl::unspecified>::type
-                , typename default_mapping_model_selector_from_io_types
-                      < IOTypes::in_arity
-                      , IOTypes
-                      >::default_mapping_model_selector_t
-                , UserMappingModelSelector
+    // Choose the mapping definition: Either the user defined
+    // one, or the default one based on the argument and return types of the
+    // to-be-exposed function.
+    typedef typename boost::mpl::if_<
+                  typename boost::is_same<UserMappingDefinition, numpy::mpl::unspecified>::type
+                , typename default_mapping_definition_selector<FTypes::arity>::template select<FTypes>::type
+                , UserMappingDefinition
                 >::type
-            mapping_model_selector_t;
+            mapping_definition_t;
 
-    typedef typename mapping_model_selector_t::template select<IOTypes>::type
-            mapping_model_t;
-
-    typedef typename default_wiring_model_selector<mapping_model_t, Class>::type
+    typedef typename wiring::default_wiring_model_selector<mapping_definition_t, FTypes>::type
             wiring_model_selector_t;
-
-    typedef typename default_out_arr_transform_selector<mapping_model_t>::type
-            out_arr_transform_selector_t;
 
     typedef default_thread_ability
             thread_ability_selector_t;
@@ -112,78 +109,80 @@ struct default_selectors
 //==============================================================================
 template <
       class F
+    , class FTypes
     , class KW
-    , class Class
-    , class IOTypes
-    , class MappingModelSelector
+    , class MappingDefinition
     , class WiringModelSelector
-    , class OutArrTransformSelector
     , class ThreadAbilitySelector
 >
-void create_and_add_callable_object(
+void create_and_add_py_function(
       python::scope const& scope
     , char const* name
     , F f
+    , FTypes *
     , KW const& kwargs
     , char const* doc
-    , Class const*
-    , IOTypes const &
-    , MappingModelSelector const &
+    , MappingDefinition const &
     , WiringModelSelector const &
-    , OutArrTransformSelector const &
     , ThreadAbilitySelector const &
 )
 {
+    // Construct a callable object and a caller object that takes that callable
+    // object as argument, so it can call this callable.
     typedef callable<
-                  Class
-                //, IOTypes
-                , typename MappingModelSelector::template select<IOTypes>::type
-                , WiringModelSelector::template wiring_model
-                , OutArrTransformSelector::template out_arr_transform
+                  F
+                , FTypes
+                , MappingDefinition
+                , WiringModelSelector::template select
                 , typename ThreadAbilitySelector::type
-                >
+            >
             callable_t;
 
-    // Create a wiring model configuration object with the
-    // function/member function pointer as setting.
-    typedef typename callable_t::wiring_model_config_t
-            wiring_model_config_t;
-    wiring_model_config_t wmc((boost::numpy::detail::cfg()=f));
+    typedef caller<callable_t>
+            caller_t;
 
-    // Create a callable_t object on the heap.
-    callable_t* callable = new callable_t(wmc);
+    callable_t callable(f);
+    caller_t caller(callable);
 
-    // Finally, create a python function object via boost::python within the
-    // given scope, where scope could be a python module or a python class.
-    python::objects::add_to_namespace(scope, name, callable->make_function(kwargs), doc);
+    // Create a py_function object that takes a caller object for implementing
+    // the call procedure.
+    python::objects::py_function pyfunc(caller, typename FTypes::signature_t());
+
+    // Create a python::object holding a Python function object.
+    python::object pyfunct_obj = python::objects::function_object(pyfunc, kwargs);
+
+    // Finally, add the Python function object to the Python namespace scope,
+    // where scope could be a python module or a python class.
+    python::objects::add_to_namespace(scope, name, pyfunct_obj, doc);
 }
 
 //==============================================================================
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (0, 5, <boost/numpy/dstream/def.hpp>, 2))
+    (4, (0, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, <boost/numpy/dstream/def.hpp>, 2))
 #include BOOST_PP_ITERATE()
 
 }// namespace detail
 
-// The def(...)/classdef(...) functions need at least 3 arguments:
+// The def(...) function needs at least 3 arguments:
 //   - the name of the python function,
 //   - the pointer to the to-be-exposed C++ function, and
 //   - the names of the keyword arguments.
 // Optionally, a
-//   - boost::python::scope, a
+//   - boost::python::scope
+// can be specified as first argument and
+// optionally, a
 //   - docstring, a
-//   - mapping model selector, a
-//   - wiring model selector, an
-//   - out array transform selector, and a
+//   - mapping definition, a
+//   - wiring model selector, and a
 //   - thread ability selector
-// can be specified in any order.
+// can be specified in any order as last arguments.
 //
 // When exposing a class method, either the scope, i.e. the class_
 // object needs to be supplied, or a boost::python::scope object of the class_
-// object needs to be in existence when calling the classdef(...) function.
+// object needs to be in existence when calling the def(...) function.
 //______________________________________________________________________________
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (0, 5, <boost/numpy/dstream/def.hpp>, 3))
+    (4, (0, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, <boost/numpy/dstream/def.hpp>, 3))
 #include BOOST_PP_ITERATE()
 
 namespace detail {
@@ -192,7 +191,7 @@ template <
       unsigned Arity
     , class F
     , class KW
-    , BOOST_PP_ENUM_BINARY_PARAMS_Z(1, 5, class A, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
+    , BOOST_PP_ENUM_BINARY_PARAMS_Z(1, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, class A, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
 >
 class method_visitor;
 
@@ -200,23 +199,25 @@ template <
       unsigned Arity
     , class F
     , class KW
-    , BOOST_PP_ENUM_BINARY_PARAMS_Z(1, 5, class A, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
+    , BOOST_PP_ENUM_BINARY_PARAMS_Z(1, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, class A, = numpy::mpl::unspecified BOOST_PP_INTERCEPT)
 >
 class staticmethod_visitor;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (0, 5, <boost/numpy/dstream/def.hpp>, 4))
+    (4, (0, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, <boost/numpy/dstream/def.hpp>, 4))
 #include BOOST_PP_ITERATE()
 
 }// namespace detail
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (0, 5, <boost/numpy/dstream/def.hpp>, 5))
+    (4, (0, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, <boost/numpy/dstream/def.hpp>, 5))
 #include BOOST_PP_ITERATE()
 
 }// namespace dstream
 }// namespace numpy
 }// namespace boost
+
+#undef BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS
 
 #endif // !BOOST_NUMPY_DSTREAM_DEF_HPP_INCLUDED
 #else
@@ -229,18 +230,17 @@ class staticmethod_visitor;
 
 template <>
 struct default_mapping_definition_selector<IN_ARITY>
-  : mapping::mapping_definition_selector_type
 {
     template <class FTypes>
     struct select
     {
         // Construct a boost::numpy::dstream::mapping::detail::out type based on
-        // the FTypes::out_t type.
-        typedef typename mapping::converter::detail::return_type_to_out_mapping<typename FTypes::out_t>::type
+        // the FTypes::return_type type.
+        typedef typename mapping::converter::detail::return_type_to_out_mapping<typename FTypes::return_type>::type
                 out_mapping_t;
 
         #define BOOST_PP_LOCAL_MACRO(n) \
-            typedef typename mapping::converter::detail::arg_type_to_core_shape<typename FTypes:: BOOST_PP_CAT(in_t,n) >::type BOOST_PP_CAT(in_core_shape_t,n);
+            typedef typename mapping::converter::detail::arg_type_to_core_shape<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type BOOST_PP_CAT(in_core_shape_t,n);
         #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY, 1))
         #include BOOST_PP_LOCAL_ITERATE()
         typedef mapping::detail::in<IN_ARITY>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_core_shape_t) >
@@ -256,93 +256,85 @@ struct default_mapping_definition_selector<IN_ARITY>
 #elif BOOST_PP_ITERATION_FLAGS() == 2
 
 template <
-      class Class
-    , class F
+      class F
+    , class FTypes
     , class KW
-    , class IOTypes
-    , class MappingModelSelector
+    , class MappingDefinition
     BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
 >
-void make_def_with_iotypes_and_mapping_model_selector(
+void def_with_ftypes_and_mapping_definition(
       python::scope const& sc
     , char const* name
-    , Class*
     , F f
-    , KW const& kwargs
-    , IOTypes const & io_types
-    , MappingModelSelector const &
+    , FTypes *
+    , KW const & kwargs
+    , MappingDefinition const &
     BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
 )
 {
-    // At this point we have a mapping model selector selected (either a default
+    // At this point we have a mapping definition selected (either a default
     // one or the user specified one). Now we select the default wiring model
-    // selector based on the fixed mapping model selector and its mapping model.
-    typedef default_selectors<Class, IOTypes, MappingModelSelector>
+    // selector based on the fixed mapping definition and the function's types.
+    typedef default_selectors<FTypes, MappingDefinition>
             default_selectors_t;
 
-    typedef def_helper
-                < typename default_selectors_t::mapping_model_selector_t
+    typedef def_helper<
+                  typename default_selectors_t::mapping_definition_t
                 , typename default_selectors_t::wiring_model_selector_t
-                , typename default_selectors_t::out_arr_transform_selector_t
                 , typename default_selectors_t::thread_ability_selector_t
                 BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
-                >
+            >
             def_helper_t;
     def_helper_t helper(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
 
-    create_and_add_callable_object(
-          sc, name, f, kwargs
+    create_and_add_py_function(
+          sc
+        , name
+        , f
+        , (FTypes*)NULL
+        , kwargs
         , helper.get_doc()
-        , (Class*)(NULL)
-        , io_types
-        , helper.get_mapping_model_selector()
+        , helper.get_mapping_definition()
         , helper.get_wiring_model_selector()
-        , helper.get_out_arr_transform_selector()
         , helper.get_thread_ability_selector()
     );
 }
 
 template <
-      class Class
-    , class F
+      class F
+    , class FTypes
     , class KW
     , class Signature
     BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
 >
-void make_def_with_signature(
+void def_with_ftypes(
       python::scope const& sc
     , char const* name
-    , Class*
     , F f
+    , FTypes*
     , KW const& kwargs
-    , Signature const & sig
     BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
 )
 {
-    typedef io_types_from_signature<Class, Signature>
-            io_types_t;
-
-    typedef default_selectors<Class, io_types_t, numpy::mpl::unspecified>
+    typedef default_selectors<FTypes, numpy::mpl::unspecified>
             default_selectors_t;
 
-    typedef def_helper
-                < typename default_selectors_t::mapping_model_selector_t
+    typedef def_helper<
+                  typename default_selectors_t::mapping_definition_t
                 , typename default_selectors_t::wiring_model_selector_t
-                , typename default_selectors_t::out_arr_transform_selector_t
                 , typename default_selectors_t::thread_ability_selector_t
                 BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
-                >
+            >
             def_helper_t;
     def_helper_t helper(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
 
-    make_def_with_iotypes_and_mapping_model_selector(
+    def_with_ftypes_and_mapping_definition(
           sc
         , name
-        , (Class*)NULL
         , f
+        , (FTypes*)NULL
         , kwargs
-        , io_types_t()
-        , helper.get_mapping_model_selector()
+        , helper.get_mapping_definition()
         BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a)
     );
 }
@@ -358,38 +350,14 @@ void def_with_signature(
     , char const* name
     , F f
     , KW const& kwargs
-    , Signature const & sig
+    , Signature const &
     BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
 )
 {
-    typedef numpy::mpl::unspecified
-            class_t;
+    typedef typename numpy::mpl::types_from_fctptr_signature<F, Signature>::type
+            f_types_t;
 
-    make_def_with_signature(sc, name, (class_t*)(NULL), f, kwargs, sig BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
-}
-
-template <
-      class F
-    , class KW
-    , class Signature
-    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
->
-void classdef_with_signature(
-      python::scope const& sc
-    , char const* name
-    , F f
-    , KW const& kwargs
-    , Signature const & sig
-    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
-)
-{
-    // Get the class type either from the first argument type of the provided
-    // static function or from the member function pointer type.
-    // In both cases it's the second type of the signature MPL type vector.
-    typedef typename boost::remove_reference< typename boost::mpl::at<Signature, boost::mpl::long_<1> >::type >::type
-            class_t;
-
-    make_def_with_signature(sc, name, (class_t*)(NULL), f, kwargs, sig BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
+    def_with_ftypes(sc, name, f, (f_types_t*)(NULL), kwargs BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
 }
 
 #elif BOOST_PP_ITERATION_FLAGS() == 3
@@ -430,57 +398,20 @@ def(
     def(sc, name, f, kwargs BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
 }
 
-template <
-      class F
-    , class KW
-    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
->
-void
-classdef(
-      python::scope const& sc
-    , char const * name
-    , F f
-    , KW const & kwargs
-    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
-)
-{
-    detail::classdef_with_signature(sc, name, f, kwargs, python::detail::get_signature(f) BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
-}
-
-template <
-      class F
-    , class KW
-    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
->
-void
-classdef(
-      char const * name
-    , F f
-    , KW const & kwargs
-    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
-)
-{
-    // Get the current scope by creating a python::scope object and assuming
-    // that it is indeed a class_ object.
-    python::scope const sc;
-
-    classdef(sc, name, f, kwargs BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
-}
-
 #elif BOOST_PP_ITERATION_FLAGS() == 4
 
 template <
       class F
     , class KW
-    , BOOST_PP_ENUM_PARAMS_Z(1, 5, class A)
+    , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, class A)
 >
 class method_visitor<
       N
     , F
     , KW
-    , BOOST_PP_ENUM_PARAMS_Z(1, 5, A)
+    , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, A)
 >
-  : public python::def_visitor< method_visitor<N, F, KW, BOOST_PP_ENUM_PARAMS_Z(1, 5, A)> >
+  : public python::def_visitor< method_visitor<N, F, KW, BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, A)> >
 {
   public:
     method_visitor(
@@ -492,19 +423,21 @@ class method_visitor<
       : m_name(name)
       , m_f(f)
       , m_kwargs(kwargs)
-      #define BOOST_NUMPY_DSTREAM_DEF_m_a(z, n, data) \
-              , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
-      BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF_m_a, ~)
-      #undef BOOST_NUMPY_DSTREAM_DEF_m_a
+      #if N
+      #define BOOST_PP_LOCAL_MACRO(n) \
+          , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
+      #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
+      #include BOOST_PP_LOCAL_ITERATE()
+      #endif
     {}
 
   private:
     friend class python::def_visitor_access;
 
-    template <class Class>
-    void visit(Class& cls) const
+    template <class ClassT>
+    void visit(ClassT & cls) const
     {
-        dstream::classdef(
+        dstream::def(
               cls
             , m_name
             , m_f
@@ -516,24 +449,26 @@ class method_visitor<
     char const * m_name;
     F m_f;
     KW const & m_kwargs;
-    #define BOOST_NUMPY_DSTREAM_DEF_m_a(z, n, data) \
-            BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
-    BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF_m_a, ~)
-    #undef BOOST_NUMPY_DSTREAM_DEF_m_a
+    #if N
+    #define BOOST_PP_LOCAL_MACRO(n) \
+        BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
+    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
+    #include BOOST_PP_LOCAL_ITERATE()
+    #endif
 };
 
 template <
       class F
     , class KW
-    , BOOST_PP_ENUM_PARAMS_Z(1, 5, class A)
+    , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, class A)
 >
 class staticmethod_visitor<
       N
     , F
     , KW
-    , BOOST_PP_ENUM_PARAMS_Z(1, 5, A)
+    , BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, A)
 >
-  : public python::def_visitor< staticmethod_visitor<N, F, KW, BOOST_PP_ENUM_PARAMS_Z(1, 5, A)> >
+  : public python::def_visitor< staticmethod_visitor<N, F, KW, BOOST_PP_ENUM_PARAMS_Z(1, BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS, A)> >
 {
   public:
     staticmethod_visitor(
@@ -545,17 +480,19 @@ class staticmethod_visitor<
       : m_name(name)
       , m_f(f)
       , m_kwargs(kwargs)
-      #define BOOST_NUMPY_DSTREAM_DEF_m_a(z, n, data) \
-              , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
-      BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF_m_a, ~)
-      #undef BOOST_NUMPY_DSTREAM_DEF_m_a
+      #if N
+      #define BOOST_PP_LOCAL_MACRO(n) \
+          , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
+      #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
+      #include BOOST_PP_LOCAL_ITERATE()
+      #endif
     {}
 
   private:
     friend class python::def_visitor_access;
 
-    template <class Class>
-    void visit(Class& cls) const
+    template <class ClassT>
+    void visit(ClassT & cls) const
     {
         dstream::def(
               cls
@@ -570,10 +507,12 @@ class staticmethod_visitor<
     char const * m_name;
     F m_f;
     KW const & m_kwargs;
-    #define BOOST_NUMPY_DSTREAM_DEF_m_a(z, n, data) \
-            BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
-    BOOST_PP_REPEAT(N, BOOST_NUMPY_DSTREAM_DEF_m_a, ~)
-    #undef BOOST_NUMPY_DSTREAM_DEF_m_a
+    #if N
+    #define BOOST_PP_LOCAL_MACRO(n) \
+        BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
+    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
+    #include BOOST_PP_LOCAL_ITERATE()
+    #endif
 };
 
 #elif BOOST_PP_ITERATION_FLAGS() == 5

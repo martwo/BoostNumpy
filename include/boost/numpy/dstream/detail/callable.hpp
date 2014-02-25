@@ -32,6 +32,7 @@
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
+#include <boost/numpy/detail/callable_caller.hpp>
 #include <boost/numpy/dstream/detail/callable_call.hpp>
 
 namespace boost {
@@ -54,7 +55,7 @@ struct callable_in_arity;
 
 template <
       class F
-    , class FSignature
+    , class FTypes
     , class MappingDefinition
     , template <
            class _MappingDefinition
@@ -65,30 +66,27 @@ template <
 >
 struct callable_base_select
 {
-    typedef typename numpy::mpl::types_from_fctptr_signature<F, FSignature>::type
-            f_types_t;
-
-    typedef WiringModelTemplate<MappingDefinition, f_types_t>
+    typedef typename WiringModelTemplate<MappingDefinition, FTypes>::type
             wiring_model_t;
 
     typedef typename callable_in_arity<
                   MappingDefinition::in::arity
-                , f_types_t
+                , FTypes
                 , MappingDefinition
                 , wiring_model_t
                 , ThreadAbility
             >::template impl<
-                  f_types_t::is_mfp
+                  FTypes::is_mfp
                 , MappingDefinition::maps_to_void
                 , ThreadAbility::threads_allowed_t::value
                 , F
-            >
+            >::type
             type;
 };
 
 template <
       class F
-    , class FSignature
+    , class FTypes
     , class MappingDefinition
     , template <
             class _MappingDefinition
@@ -98,9 +96,9 @@ template <
     , class ThreadAbility
 >
 struct callable
-  : callable_base_select<F, FSignature, MappingDefinition, WiringModelTemplate, ThreadAbility>::type
+  : callable_base_select<F, FTypes, MappingDefinition, WiringModelTemplate, ThreadAbility>::type
 {
-    typedef typename callable_base_select<F, FSignature, MappingDefinition, WiringModelTemplate, ThreadAbility>::type
+    typedef typename callable_base_select<F, FTypes, MappingDefinition, WiringModelTemplate, ThreadAbility>::type
             base_t;
 
     callable(F f)
@@ -152,6 +150,9 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
     template <class F>
     struct impl<true, true, true, F>
     {
+        typedef impl<true, true, true, F>
+                type;
+
         typedef boost::mpl::vector<
                   python::object
                 , typename FTypes::class_type &
@@ -189,6 +190,9 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
     template <class F>
     struct impl<true, true, false, F>
     {
+        typedef impl<true, true, false, F>
+                type;
+
         typedef boost::mpl::vector<
                   python::object
                 , typename FTypes::class_type &
@@ -225,6 +229,9 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
     template <class F>
     struct impl<true, false, true, F>
     {
+        typedef impl<true, false, true, F>
+                type;
+
         typedef boost::mpl::vector<
                   python::object
                 , typename FTypes::class_type &
@@ -262,6 +269,9 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
     template <class F>
     struct impl<true, false, false, F>
     {
+        typedef impl<true, false, false, F>
+                type;
+
         typedef boost::mpl::vector<
                   python::object
                 , typename FTypes::class_type &
@@ -298,6 +308,9 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
     template <class F>
     struct impl<false, false, false, F>
     {
+        typedef impl<false, false, false, F>
+                type;
+
         typedef boost::mpl::vector<
                   python::object
                 , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
@@ -333,6 +346,9 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
     template <class F>
     struct impl<false, true, false, F>
     {
+        typedef impl<false, true, false, F>
+                type;
+
         typedef boost::mpl::vector<
                   python::object
                 , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
@@ -367,6 +383,9 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
     template <class F>
     struct impl<false, true, true, F>
     {
+        typedef impl<false, true, true, F>
+                type;
+
         typedef boost::mpl::vector<
                   python::object
                 , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
@@ -402,6 +421,9 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
     template <class F>
     struct impl<false, false, true, F>
     {
+        typedef impl<false, false, true, F>
+                type;
+
         typedef boost::mpl::vector<
                   python::object
                 , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)

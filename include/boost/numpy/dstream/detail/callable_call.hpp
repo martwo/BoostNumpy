@@ -151,10 +151,10 @@ struct construct_result<OUT_ARITY>
 #define IN_ARITY BOOST_PP_ITERATION()
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_def(z, n, data) \
-    typedef array_definition< typename MappingDefinition::in::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::template in_arr_value_type<n>::type> BOOST_PP_CAT(in_arr_def,n);
+    typedef array_definition< typename MappingDefinition::in::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::api::template in_arr_value_type<n>::type> BOOST_PP_CAT(in_arr_def,n);
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_def(z, n, data) \
-    typedef array_definition< typename MappingDefinition::out::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::template out_arr_value_type<n>::type> BOOST_PP_CAT(out_arr_def,n);
+    typedef array_definition< typename MappingDefinition::out::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::api::template out_arr_value_type<n>::type> BOOST_PP_CAT(out_arr_def,n);
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_dtype(z, n, data) \
     numpy::dtype const BOOST_PP_CAT(in_arr_dtype,n) = numpy::dtype::get_builtin< BOOST_PP_CAT(in_arr_def,n)::value_type >();
@@ -171,7 +171,7 @@ struct construct_result<OUT_ARITY>
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_iter_op_flags(z, n, data) \
     numpy::detail::iter_operand_flags_t BOOST_PP_CAT(in_arr_iter_op_flags,n) = \
-        WiringModel::template in_arr_iter_operand_flags<n>::type::value;
+        WiringModel::api::template in_arr_iter_operand_flags<n>::type::value;
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_iter_op(z, n, data)   \
     numpy::detail::iter_operand BOOST_PP_CAT(in_arr_iter_op,n)(                \
@@ -188,7 +188,7 @@ struct construct_result<OUT_ARITY>
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_iter_op_flags(z, n, data) \
     numpy::detail::iter_operand_flags_t BOOST_PP_CAT(out_arr_iter_op_flags,n) = \
-        WiringModel::template out_arr_iter_operand_flags<n>::type::value;
+        WiringModel::api::template out_arr_iter_operand_flags<n>::type::value;
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_iter_op(z, n, data)  \
     numpy::detail::iter_operand BOOST_PP_CAT(out_arr_iter_op,n)(               \
@@ -279,12 +279,12 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
                 , numpy::detail::iter::flags::BUFFERED
                 , numpy::detail::iter::flags::DELAY_BUFALLOC
                 >::type::value;
-            iter_flags |= WiringModel::iter_flags::type::value;
+            iter_flags |= WiringModel::api::iter_flags::type::value;
 
             // Define other iterator properties.
-            numpy::order_t order = WiringModel::order;
-            numpy::casting_t casting = WiringModel::casting;
-            intptr_t buffersize = WiringModel::buffersize;
+            numpy::order_t order = WiringModel::api::order;
+            numpy::casting_t casting = WiringModel::api::casting;
+            intptr_t buffersize = WiringModel::api::buffersize;
 
             // Finally, create the iterator object.
             numpy::detail::iter iter(

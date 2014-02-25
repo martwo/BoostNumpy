@@ -39,6 +39,10 @@ namespace boost {
 namespace numpy {
 namespace dstream {
 namespace mapping {
+
+struct mapping_definition_type
+{};
+
 namespace detail {
 
 template <
@@ -46,6 +50,7 @@ template <
     , class InMapping
 >
 struct definition
+  : mapping_definition_type
 {
     typedef OutMapping out;
     typedef InMapping in;

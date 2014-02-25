@@ -32,54 +32,35 @@ struct wiring_model_selector_type
 
 //==============================================================================
 /**
- * @brief The base_wiring_model template provides a base for a certain
- *        wiring model. Wiring is the part that defines what C++ class member
- *        functions should be called using the values from the input arrays.
+ * @brief The wiring_model_base template provides a base for a certain
+ *        wiring model. Wiring is the part that defines what C++ (member)
+ *        function should be called using the values from the input arrays.
  *        Usually the user needs to define his own wiring model, because it is
- *        highly dependent on the implementation of the C++ class interface that
- *        is going to be exposed to Python. But for simple C++ class interfaces
+ *        highly dependent on the implementation of the C++ function that
+ *        is going to be exposed to Python. But for simple C++ functions
  *        some wiring model are pre-defined. For example if all input values
- *        feed one C++ class member function and returning one output value.
+ *        feed one C++ (member) function and returning one output value.
  */
 template <
-      class MappingModel
-    , class Class
-    , class WiringModelConfig
+      class MappingDefinition
+    , class FTypes
 >
-struct base_wiring_model
+struct wiring_model_base
   : wiring_model_type
 {
-    typedef base_wiring_model<MappingModel, Class, WiringModelConfig>
-            base_wiring_model_t;
+    typedef wiring_model_base<MappingDefinition, FTypes>
+            type;
 
-    typedef MappingModel
-            mapping_model_t;
+    typedef MappingDefinition
+            mapping_definition_t;
 
-    typedef Class
-            class_t;
-
-    typedef WiringModelConfig
-            wiring_model_config_t;
-
-    // The config_ variable holds the configuration of the wiring model.
-    wiring_model_config_t const config_;
-
-    //__________________________________________________________________________
-    base_wiring_model(wiring_model_config_t const & config)
-      : config_(config)
-    {}
-
-    //__________________________________________________________________________
-    wiring_model_config_t const &
-    GetConfig() const
-    {
-        return config_;
-    }
+    typedef FTypes
+            f_types_t;
 };
 
-}/*namespace wiring*/
-}/*namespace dstream*/
-}/*namespace numpy*/
-}/*namespace boost*/
+}// namespace wiring
+}// namespace dstream
+}// namespace numpy
+}// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_WIRING_HPP_INCLUDED

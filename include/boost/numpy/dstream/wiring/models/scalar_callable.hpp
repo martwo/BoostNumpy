@@ -46,6 +46,7 @@
 
 #include <boost/numpy/pp.hpp>
 #include <boost/numpy/limits.hpp>
+#include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
 #include <boost/numpy/detail/callable_caller.hpp>
 #include <boost/numpy/dstream/mapping/detail/definition.hpp>
 #include <boost/numpy/dstream/wiring.hpp>
@@ -59,9 +60,9 @@ namespace model {
 
 namespace detail {
 
-template <class FTypes>
+template <class MappingDefinition, class FTypes>
 struct scalar_callable_base
-  : wiring_model_type
+  : wiring_model_base<MappingDefinition, FTypes>
 {
     template <unsigned Idx>
     struct out_arr_value_type
@@ -217,25 +218,25 @@ struct scalar_callable_arity<IN_ARITY>
     // It implements the wiring for mapping Nx() -> None
     template <class MappingDefinition, class FTypes>
     struct impl<true, MappingDefinition, FTypes>
-      : scalar_callable_base<FTypes>
+      : scalar_callable_base<MappingDefinition, FTypes>
     {
-        typedef scalar_callable_base<FTypes>
-                interface_t;
+        typedef scalar_callable_base<MappingDefinition, FTypes>
+                api;
 
         // Define the input array value types.
         #define BOOST_PP_LOCAL_MACRO(n) \
-            typedef typename interface_t::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
+            typedef typename api::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
         #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
         #include BOOST_PP_LOCAL_ITERATE()
 
         /** The iterate method of the wiring model does the iteration and the
          *  actual wiring.
          */
-        template <class Class, class FCaller>
+        template <class ClassT, class FCaller>
         static
         void
         iterate(
-              Class & self
+              ClassT & self
             , FCaller const & f_caller
             , numpy::detail::iter & iter
             , std::vector< std::vector<intptr_t> > const & core_shapes
@@ -279,24 +280,24 @@ struct scalar_callable_arity<IN_ARITY>
     // It implements the wiring for mapping Nx() -> ()
     template <class MappingDefinition, class FTypes>
     struct impl<false, MappingDefinition, FTypes>
-      : scalar_callable_base<FTypes>
+      : scalar_callable_base<MappingDefinition, FTypes>
     {
-        typedef scalar_callable_base<FTypes>
-                interface_t;
+        typedef scalar_callable_base<MappingDefinition, FTypes>
+                api;
 
         // Define the output and input array value types.
-        typedef typename interface_t::template out_arr_value_type<0>::type
+        typedef typename api::template out_arr_value_type<0>::type
                 out_arr_value_t;
         #define BOOST_PP_LOCAL_MACRO(n) \
-            typedef typename interface_t::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
+            typedef typename api::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
         #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
         #include BOOST_PP_LOCAL_ITERATE()
 
-        template <class Class, class FCaller>
+        template <class ClassT, class FCaller>
         static
         void
         iterate(
-              Class & self
+              ClassT & self
             , FCaller const & f_caller
             , numpy::detail::iter & iter
             , std::vector< std::vector<intptr_t> > const & core_shapes

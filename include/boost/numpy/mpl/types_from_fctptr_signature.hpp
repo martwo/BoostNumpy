@@ -136,18 +136,21 @@ struct fct_return_is_scalar_or_bool
 #define N BOOST_PP_ITERATION()
 
 template <
-      class Class
+      class ClassT
     , class Signature
     , int sig_arg_offset
 >
 struct types_from_fctptr_signature_impl<
       N
-    , Class
+    , ClassT
     , Signature
     , sig_arg_offset
 >
 {
     BOOST_STATIC_CONSTANT(unsigned, arity = N);
+
+    typedef Signature
+            signature_t;
 
     typedef typename boost::mpl::begin<Signature>::type::type
             return_type;
@@ -156,7 +159,7 @@ struct types_from_fctptr_signature_impl<
             has_void_return_t;
     BOOST_STATIC_CONSTANT(bool, has_void_return = has_void_return_t::value);
 
-    typedef Class class_type;
+    typedef ClassT class_type;
 
     typedef typename boost::mpl::not_< is_same<class_type, numpy::mpl::unspecified> >::type
             is_mfp_t;

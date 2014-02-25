@@ -51,12 +51,6 @@ scalar()
     (3, (1, BOOST_NUMPY_LIMIT_CORE_SHAPE_ND, <boost/numpy/dstream/mapping.hpp>))
 #include BOOST_PP_ITERATE()
 
-namespace mapping {
-
-struct mapping_definition_selector_type
-{};
-
-}// namespace mapping
 }// namespace dstream
 }// namespace numpy
 }// namespace boost
