@@ -164,7 +164,7 @@ struct caller_arity<N>
             // Note: The precall of default_call_policies does nothing at all as
             //       of boost::python <=1.55 but we keep this call for forward
             //       compatibility and to follow the interface definition.
-            if (!call_policies.precall(inner_args))
+            if(!call_policies.precall(inner_args))
                 return 0;
 
             PyObject* result = invoke_arity<N>::invoke(

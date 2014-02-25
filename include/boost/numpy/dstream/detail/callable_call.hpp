@@ -22,6 +22,8 @@
 #ifndef BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL_HPP_INCLUDED
 
+#include <vector>
+
 #include <boost/preprocessor/iterate.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
@@ -52,6 +54,7 @@ struct construct_result;
 template <>
 struct construct_result<0>
 {
+    static
     python::object
     apply()
     {
@@ -63,6 +66,7 @@ template <>
 struct construct_result<1>
 {
     template <class OutArrService>
+    static
     python::object
     apply(OutArrService const & out_arr_service)
     {
@@ -124,6 +128,7 @@ template <>
 struct construct_result<OUT_ARITY>
 {
     template <BOOST_PP_ENUM_PARAMS_Z(1, OUT_ARITY, class OutArrService)>
+    static
     python::object
     apply(BOOST_PP_ENUM_BINARY_PARAMS_Z(1, OUT_ARITY, OutArrService, const & out_arr_service))
     {
@@ -157,7 +162,7 @@ struct construct_result<OUT_ARITY>
     typedef array_definition< typename MappingDefinition::out::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::api::template out_arr_value_type<n>::type> BOOST_PP_CAT(out_arr_def,n);
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_dtype(z, n, data) \
-    numpy::dtype const BOOST_PP_CAT(in_arr_dtype,n) = numpy::dtype::get_builtin< BOOST_PP_CAT(in_arr_def,n)::value_type >();
+    numpy::dtype const BOOST_PP_CAT(in_arr_dtype,n) = numpy::dtype::get_builtin< typename BOOST_PP_CAT(in_arr_def,n)::value_type >();
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_service(z, n, data)   \
     numpy::dstream::detail::input_array_service<BOOST_PP_CAT(in_arr_def,n)>    \
@@ -247,15 +252,15 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             // Construct numpy::detail::iter_operand_flags_t objects for all
             // input arrays.
             BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_iter_op_flags, ~)
-
+std::cout << "H0" << std::endl << std::flush;
             // Construct numpy::detail::iter_operand objects for all input
             // arrays.
             BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_iter_op, ~)
-
+std::cout << "H1" << std::endl << std::flush;
             // Construct out_obj boos::python objects holding the individual
             // provided output objects.
             BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_obj, ~)
-
+std::cout << "H2" << std::endl << std::flush;
             // Construct array_definition types for all output arrays.
             BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_def, ~)
 
@@ -379,7 +384,8 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             try {
                 for(it = iter_vec.begin(); it!=iter_vec_end; ++it)
                 {
-                    boost::thread *t = new boost::thread(&WiringModel::iterate
+                    boost::thread *t = new boost::thread(
+                          &WiringModel::template iterate<typename FTypes::class_type, FCaller>
                         , boost::ref(self)
                         , boost::cref(f_caller)
                         , boost::ref(*it)
@@ -399,7 +405,13 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             }
 
             // Do the iteration for the first iterator.
-            WiringModel::iterate(self, f_caller, iter, core_shapes, thread_error_flag);
+            WiringModel::template iterate<typename FTypes::class_type, FCaller>(
+                  self
+                , f_caller
+                , iter
+                , core_shapes
+                , thread_error_flag
+            );
 
             // Join all the threads.
             threads.join_all();

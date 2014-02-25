@@ -169,7 +169,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
               typename FTypes::class_type & self
             , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
             , unsigned nthreads
-        )
+        ) const
         {
             f_caller_t const f_caller(m_f);
 
@@ -207,7 +207,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         operator()(
               typename FTypes::class_type & self
             , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
-        )
+        ) const
         {
             f_caller_t const f_caller(m_f);
 
@@ -250,7 +250,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
             , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
             , python::object & out_obj
             , unsigned nthreads
-        )
+        ) const
         {
             f_caller_t const f_caller(m_f);
 
@@ -288,7 +288,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
               typename FTypes::class_type & self
             , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
             , python::object & out_obj
-        )
+        ) const
         {
             f_caller_t const f_caller(m_f);
             unsigned const nthreads = 1;
@@ -325,10 +325,10 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         operator()(
               BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
             , python::object & out_obj
-        )
+        ) const
         {
             f_caller_t const f_caller(m_f);
-            typename FTypes::class_type self();
+            typename FTypes::class_type self;
             unsigned const nthreads = 1;
 
             return callable_call_t::call(
@@ -361,7 +361,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::object
         operator()(
               BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
-        )
+        ) const
         {
             f_caller_t const f_caller(m_f);
             typename FTypes::class_type self();
@@ -400,7 +400,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         operator()(
               BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
             , unsigned nthreads
-        )
+        ) const
         {
             f_caller_t const f_caller(m_f);
             typename FTypes::class_type self();
@@ -440,7 +440,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
               BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
             , python::object & out_obj
             , unsigned nthreads
-        )
+        ) const
         {
             f_caller_t const f_caller(m_f);
             typename FTypes::class_type self();

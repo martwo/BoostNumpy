@@ -61,8 +61,7 @@ namespace model {
 namespace detail {
 
 template <class MappingDefinition, class FTypes>
-struct scalar_callable_base
-  : wiring_model_base<MappingDefinition, FTypes>
+struct scalar_callable_api
 {
     template <unsigned Idx>
     struct out_arr_value_type
@@ -116,18 +115,23 @@ struct scalar_callable_arity;
     (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/wiring/models/scalar_callable.hpp>, 1))
 #include BOOST_PP_ITERATE()
 
-template <
-    class MappingDefinition
-  , class FTypes
->
+template <class MappingDefinition, class FTypes>
+struct scalar_callable_impl_select
+{
+    typedef typename scalar_callable_arity<MappingDefinition::in::arity>::template impl<
+                  FTypes::has_void_return
+                , MappingDefinition
+                , FTypes
+                >::type
+            type;
+};
+
+template <class MappingDefinition, class FTypes>
 struct scalar_callable
-  : scalar_callable_arity<MappingDefinition::in::arity>::template scalar_callable_impl<FTypes::has_void_return, MappingDefinition, FTypes>
+  : scalar_callable_impl_select<MappingDefinition, FTypes>::type
 {
     typedef scalar_callable<MappingDefinition, FTypes>
             type;
-
-    typedef typename scalar_callable_arity<MappingDefinition::in::arity>::template scalar_callable_impl<FTypes::has_void_return, MappingDefinition, FTypes>
-            base_t;
 };
 
 }// namespace detail
@@ -219,9 +223,12 @@ struct scalar_callable_arity<IN_ARITY>
     // It implements the wiring for mapping Nx() -> None
     template <class MappingDefinition, class FTypes>
     struct impl<true, MappingDefinition, FTypes>
-      : scalar_callable_base<MappingDefinition, FTypes>
+      : wiring_model_base<MappingDefinition, FTypes>
     {
-        typedef scalar_callable_base<MappingDefinition, FTypes>
+        typedef impl<true, MappingDefinition, FTypes>
+                type;
+
+        typedef scalar_callable_api<MappingDefinition, FTypes>
                 api;
 
         // Define the input array value types.
@@ -281,9 +288,12 @@ struct scalar_callable_arity<IN_ARITY>
     // It implements the wiring for mapping Nx() -> ()
     template <class MappingDefinition, class FTypes>
     struct impl<false, MappingDefinition, FTypes>
-      : scalar_callable_base<MappingDefinition, FTypes>
+      : wiring_model_base<MappingDefinition, FTypes>
     {
-        typedef scalar_callable_base<MappingDefinition, FTypes>
+        typedef impl<false, MappingDefinition, FTypes>
+                type;
+
+        typedef scalar_callable_api<MappingDefinition, FTypes>
                 api;
 
         // Define the output and input array value types.

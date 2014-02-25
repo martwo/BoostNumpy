@@ -45,6 +45,7 @@
 #include <boost/python/object/add_to_namespace.hpp>
 #include <boost/python/object/py_function.hpp>
 #include <boost/python/object/function_object.hpp>
+#include <boost/python/refcount.hpp>
 
 #include <boost/numpy/detail/prefix.hpp>
 
@@ -141,15 +142,16 @@ void create_and_add_py_function(
     typedef caller<callable_t>
             caller_t;
 
-    callable_t callable(f);
-    caller_t caller(callable);
+    callable_t callable = callable_t(f);
+    caller_t caller = caller_t(callable);
 
     // Create a py_function object that takes a caller object for implementing
     // the call procedure.
-    python::objects::py_function pyfunc(caller, typename FTypes::signature_t());
+    python::objects::py_function pyfunc(caller, typename callable_t::signature_t());
 
     // Create a python::object holding a Python function object.
-    python::object pyfunct_obj = python::objects::function_object(pyfunc, kwargs.range());
+    python::object pyfunct_obj = python::objects::function_object(pyfunc, kwargs.range()/*(kwargs,python::arg("out")=python::object()).range()*/);
+    //python::incref(pyfunct_obj.ptr());
 
     // Finally, add the Python function object to the Python namespace scope,
     // where scope could be a python module or a python class.
