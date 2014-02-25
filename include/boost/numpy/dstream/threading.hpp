@@ -70,7 +70,7 @@ struct min_thread_chunck_size
 
 template <
       class ThreadsAllowed
-    , class MinNTasksPerThread = min_thread_chunck_size<BOOST_NUMPY_DSTREAM_DEFAULT_MIN_N_TASKS_PER_THREAD>
+    , class MinNTasksPerThread = min_n_tasks_per_thread<BOOST_NUMPY_DSTREAM_DEFAULT_MIN_N_TASKS_PER_THREAD>
 >
 struct thread_ability
   : threading::thread_ability_type

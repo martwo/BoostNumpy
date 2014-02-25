@@ -28,6 +28,7 @@
 
 #include <boost/mpl/if.hpp>
 
+#include <boost/python/args.hpp>
 #include <boost/python/object.hpp>
 
 #include <boost/numpy/limits.hpp>
@@ -164,6 +165,17 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         F m_f;
         impl(F f) : m_f(f) {}
 
+        template <class KW>
+        static
+        python::detail::keywords<KW::size+2>
+        make_kwargs(KW const & kwargs)
+        {
+            return ( python::arg("self")
+                   , kwargs
+                   , python::arg("nthreads")
+                   );
+        }
+
         python::object
         operator()(
               typename FTypes::class_type & self
@@ -203,6 +215,16 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         F m_f;
         impl(F f) : m_f(f) {}
 
+        template <class KW>
+        static
+        python::detail::keywords<KW::size+1>
+        make_kwargs(KW const & kwargs)
+        {
+            return ( python::arg("self")
+                   , kwargs
+                   );
+        }
+
         python::object
         operator()(
               typename FTypes::class_type & self
@@ -236,20 +258,32 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
                   python::object
                 , typename FTypes::class_type &
                 , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
-                , python::object &
                 , unsigned
+                , python::object &
                 >
                 signature_t;
 
         F m_f;
         impl(F f) : m_f(f) {}
 
+        template <class KW>
+        static
+        python::detail::keywords<KW::size+3>
+        make_kwargs(KW const & kwargs)
+        {
+            return ( python::arg("self")
+                   , kwargs
+                   , python::arg("nthreads")=1
+                   , python::arg("out")=python::object()
+                   );
+        }
+
         python::object
         operator()(
               typename FTypes::class_type & self
             , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
-            , python::object & out_obj
             , unsigned nthreads
+            , python::object & out_obj
         ) const
         {
             f_caller_t const f_caller(m_f);
@@ -282,6 +316,17 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
 
         F m_f;
         impl(F f) : m_f(f) {}
+
+        template <class KW>
+        static
+        python::detail::keywords<KW::size+2>
+        make_kwargs(KW const & kwargs)
+        {
+            return ( python::arg("self")
+                   , kwargs
+                   , python::arg("out")=python::object()
+                   );
+        }
 
         python::object
         operator()(
@@ -321,6 +366,16 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         F m_f;
         impl(F f) : m_f(f) {}
 
+        template <class KW>
+        static
+        python::detail::keywords<KW::size+1>
+        make_kwargs(KW const & kwargs)
+        {
+            return ( kwargs
+                   , python::arg("out")=python::object()
+                   );
+        }
+
         python::object
         operator()(
               BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
@@ -358,13 +413,21 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         F m_f;
         impl(F f) : m_f(f) {}
 
+        template <class KW>
+        static
+        python::detail::keywords<KW::size>
+        make_kwargs(KW const & kwargs)
+        {
+            return kwargs;
+        }
+
         python::object
         operator()(
               BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
         ) const
         {
             f_caller_t const f_caller(m_f);
-            typename FTypes::class_type self();
+            typename FTypes::class_type self;
             python::object out_obj;
             unsigned const nthreads = 1;
 
@@ -396,6 +459,16 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         F m_f;
         impl(F f) : m_f(f) {}
 
+        template <class KW>
+        static
+        python::detail::keywords<KW::size+1>
+        make_kwargs(KW const & kwargs)
+        {
+            return ( kwargs
+                   , python::arg("nthreads")=1
+                   );
+        }
+
         python::object
         operator()(
               BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
@@ -403,7 +476,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         ) const
         {
             f_caller_t const f_caller(m_f);
-            typename FTypes::class_type self();
+            typename FTypes::class_type self;
             python::object out_obj;
 
             return callable_call_t::call(
@@ -427,23 +500,34 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         typedef boost::mpl::vector<
                   python::object
                 , BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & BOOST_PP_INTERCEPT)
-                , python::object &
                 , unsigned
+                , python::object &
                 >
                 signature_t;
 
         F m_f;
         impl(F f) : m_f(f) {}
 
+        template <class KW>
+        static
+        python::detail::keywords<KW::size+2>
+        make_kwargs(KW const & kwargs)
+        {
+            return ( kwargs
+                   , python::arg("nthreads")=1
+                   , python::arg("out")=python::object()
+                   );
+        }
+
         python::object
         operator()(
               BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, python::object const & in_obj)
-            , python::object & out_obj
             , unsigned nthreads
+            , python::object & out_obj
         ) const
         {
             f_caller_t const f_caller(m_f);
-            typename FTypes::class_type self();
+            typename FTypes::class_type self;
 
             return callable_call_t::call(
                   f_caller

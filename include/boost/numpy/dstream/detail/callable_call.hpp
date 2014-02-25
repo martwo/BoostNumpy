@@ -68,9 +68,12 @@ struct construct_result<1>
     template <class OutArrService>
     static
     python::object
-    apply(OutArrService const & out_arr_service)
+    apply(python::object const & out_obj, OutArrService const & out_arr_service)
     {
-        return static_cast<python::object>(out_arr_service.get_arr());
+        if(out_obj.ptr() == Py_None)
+            return static_cast<python::object>(out_arr_service.get_arr());
+        else
+            return python::object();
     }
 };
 
@@ -130,12 +133,17 @@ struct construct_result<OUT_ARITY>
     template <BOOST_PP_ENUM_PARAMS_Z(1, OUT_ARITY, class OutArrService)>
     static
     python::object
-    apply(BOOST_PP_ENUM_BINARY_PARAMS_Z(1, OUT_ARITY, OutArrService, const & out_arr_service))
+    apply(python::object const & out_obj BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, OUT_ARITY, OutArrService, const & out_arr_service))
     {
-        // Construct a tuple with all output arrays.
-        return static_cast<python::object>(python::make_tuple(
-                   BOOST_PP_ENUM_BINARY_PARAMS_Z(1, OUT_ARITY, out_arr_service, .get_arr() BOOST_PP_INTERCEPT)
-               ));
+        if(out_obj.ptr() == Py_None) {
+            // Construct a Python tuple with all output arrays.
+            return static_cast<python::object>(python::make_tuple(
+                       BOOST_PP_ENUM_BINARY_PARAMS_Z(1, OUT_ARITY, out_arr_service, .get_arr() BOOST_PP_INTERCEPT)
+                   ));
+        }
+        else {
+            return python::object();
+        }
     }
 };
 
@@ -427,7 +435,7 @@ std::cout << "H2" << std::endl << std::flush;
                 boost::python::throw_error_already_set();
             }
 
-            return construct_result<MappingDefinition::out::arity>::apply(BOOST_PP_ENUM_PARAMS_Z(1, OUT_ARITY, out_arr_service));
+            return construct_result<MappingDefinition::out::arity>::apply(out_obj BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, OUT_ARITY, out_arr_service));
         }
     };
 };
