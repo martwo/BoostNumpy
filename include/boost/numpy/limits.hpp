@@ -29,8 +29,19 @@
     #define BOOST_NUMPY_LIMIT_OUTPUT_ARITY 5//10
 #endif
 
+// No changes below this line !!!
+//------------------------------------------------------------------------------
+//
 #define BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY \
     BOOST_NUMPY_LIMIT_INPUT_ARITY + BOOST_NUMPY_LIMIT_OUTPUT_ARITY
+
+#if BOOST_NUMPY_LIMIT_INPUT_ARITY >= BOOST_NUMPY_LIMIT_OUTPUT_ARITY
+     #define BOOST_NUMPY_LIMIT_MAX_INPUT_OUTPUT_ARITY \
+             BOOST_NUMPY_LIMIT_INPUT_ARITY
+#else
+     #define BOOST_NUMPY_LIMIT_MAX_INPUT_OUTPUT_ARITY \
+             BOOST_NUMPY_LIMIT_OUTPUT_ARITY
+#endif
 
 #define BOOST_NUMPY_LIMIT_CORE_SHAPE_ND \
     BOOST_MPL_LIMIT_VECTOR_SIZE

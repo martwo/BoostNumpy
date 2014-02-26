@@ -260,15 +260,15 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             // Construct numpy::detail::iter_operand_flags_t objects for all
             // input arrays.
             BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_iter_op_flags, ~)
-std::cout << "H0" << std::endl << std::flush;
+
             // Construct numpy::detail::iter_operand objects for all input
             // arrays.
             BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_iter_op, ~)
-std::cout << "H1" << std::endl << std::flush;
+
             // Construct out_obj boos::python objects holding the individual
             // provided output objects.
             BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_obj, ~)
-std::cout << "H2" << std::endl << std::flush;
+
             // Construct array_definition types for all output arrays.
             BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_def, ~)
 

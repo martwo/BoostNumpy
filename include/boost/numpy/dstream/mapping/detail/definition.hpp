@@ -31,6 +31,7 @@
 #include <boost/mpl/if.hpp>
 #include <boost/type_traits/is_same.hpp>
 
+#include <boost/numpy/limits.hpp>
 #include <boost/numpy/dstream/mapping/detail/in.hpp>
 #include <boost/numpy/dstream/mapping/detail/out.hpp>
 #include <boost/numpy/dstream/mapping/detail/core_shape.hpp>
@@ -99,11 +100,22 @@ struct all_mapping_arrays_are_scalars_arity<0, Mapping>
             type;
 };
 
+template <class Mapping>
+struct all_mapping_arrays_are_scalars_arity<1, Mapping>
+{
+    typedef boost::is_same< typename Mapping::core_shape_t0, core_shape<0>::shape<> >
+            type;
+};
+
+#define BOOST_PP_ITERATION_PARAMS_1 \
+    (4, (2, BOOST_NUMPY_LIMIT_MAX_INPUT_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/definition.hpp>, 1))
+#include BOOST_PP_ITERATE()
+
 template <class OutMapping, unsigned Idx>
 struct mapping_array_select;
 
-#define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/mapping/detail/definition.hpp>, 1))
+#define BOOST_PP_ITERATION_PARAMS_1 \
+    (4, (0, BOOST_NUMPY_LIMIT_MAX_INPUT_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/definition.hpp>, 2))
 #include BOOST_PP_ITERATE()
 
 template <class InMapping>
@@ -140,7 +152,7 @@ struct out_mapping
 
         struct is_scalar
         {
-            typedef typename mapping::detail::is_scalar<array_type>::type
+            typedef typename numpy::dstream::mapping::detail::is_scalar<array_type>::type
                     type;
         };
     };
@@ -155,6 +167,10 @@ struct out_mapping
 #endif // !BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_DEFINITION_HPP_INCLUDED
 #else
 
+
+
+#if BOOST_PP_ITERATION_FLAGS() == 1
+
 #define N BOOST_PP_ITERATION()
 
 template <class Mapping>
@@ -162,12 +178,18 @@ struct all_mapping_arrays_are_scalars_arity<N, Mapping>
 {
     typedef typename boost::mpl::and_<
                 #define BOOST_PP_LOCAL_MACRO(n) \
-                    BOOST_PP_COMMA_IF(n) is_same< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
+                    BOOST_PP_COMMA_IF(n) boost::is_same< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
                 #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
                 #include BOOST_PP_LOCAL_ITERATE()
             >::type
             type;
 };
+
+#undef N
+
+#elif BOOST_PP_ITERATION_FLAGS() == 2
+
+#define N BOOST_PP_ITERATION()
 
 template <class Mapping>
 struct mapping_array_select<Mapping, N>
@@ -177,5 +199,9 @@ struct mapping_array_select<Mapping, N>
 };
 
 #undef N
+
+#endif // BOOST_PP_ITERATION_FLAGS
+
+
 
 #endif // BOOST_PP_IS_ITERATING

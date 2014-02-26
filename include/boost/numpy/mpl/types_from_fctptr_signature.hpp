@@ -32,8 +32,10 @@
 #ifndef BOOST_NUMPY_MPL_OUTIN_TYPES_FROM_FCTPTR_SIGNATURE_HPP_INCLUDED
 #define BOOST_NUMPY_MPL_OUTIN_TYPES_FROM_FCTPTR_SIGNATURE_HPP_INCLUDED
 
+#include <boost/preprocessor/arithmetic/sub.hpp>
 #include <boost/preprocessor/iteration/iterate.hpp>
 #include <boost/preprocessor/iteration/local.hpp>
+#include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 
 #include <boost/mpl/at.hpp>
@@ -66,11 +68,27 @@ template <
 >
 struct types_from_fctptr_signature_impl;
 
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/mpl/types_from_fctptr_signature.hpp>, 1))
+#include BOOST_PP_ITERATE()
+
 template <unsigned in_arity, class FTypes>
 struct all_fct_args_are_scalars_incl_bool_arity;
 
+// Specialization for arity = 1 because boost::mpl::and_ needs at least 2
+// arguments.
+template <class FTypes>
+struct all_fct_args_are_scalars_incl_bool_arity<1, FTypes>
+{
+    typedef typename boost::mpl::or_<
+                  boost::is_scalar<typename FTypes::arg_type0 >
+                , boost::is_same<typename FTypes::arg_type0, bool>
+            >::type
+            type;
+};
+
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/mpl/types_from_fctptr_signature.hpp>))
+    (4, (2, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/mpl/types_from_fctptr_signature.hpp>, 2))
 #include BOOST_PP_ITERATE()
 
 template <class F, class Signature>
@@ -120,8 +138,8 @@ template <class FTypes>
 struct fct_return_is_scalar_or_bool
 {
     typedef typename boost::mpl::or_<
-                typename boost::is_scalar<typename FTypes::return_type>::type
-              , typename boost::is_same<typename FTypes::return_type, bool>::type
+                boost::is_scalar<typename FTypes::return_type>
+              , boost::is_same<typename FTypes::return_type, bool>
             >::type
             type;
 };
@@ -134,6 +152,8 @@ struct fct_return_is_scalar_or_bool
 #else
 
 #define N BOOST_PP_ITERATION()
+
+#if BOOST_PP_ITERATION_FLAGS() == 1
 
 template <
       class ClassT
@@ -168,12 +188,14 @@ struct types_from_fctptr_signature_impl<
     // Define arg_type# sub-types.
     #define BOOST_PP_LOCAL_MACRO(n) \
         typedef typename boost::mpl::at<Signature, boost::mpl::long_<sig_arg_offset + n> >::type BOOST_PP_CAT(arg_type,n);
-    #define BOOST_PP_LOCAL_LIMITS (0, N-1)
+    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
     #include BOOST_PP_LOCAL_ITERATE()
 
     typedef boost::mpl::vector< BOOST_PP_ENUM_PARAMS_Z(1, N, arg_type) >
             in_type_vector;
 };
+
+#elif BOOST_PP_ITERATION_FLAGS() == 2
 
 template <class FTypes>
 struct all_fct_args_are_scalars_incl_bool_arity<N, FTypes>
@@ -181,14 +203,16 @@ struct all_fct_args_are_scalars_incl_bool_arity<N, FTypes>
     typedef typename boost::mpl::and_<
                 #define BOOST_PP_LOCAL_MACRO(n) \
                     BOOST_PP_COMMA_IF(n) typename boost::mpl::or_< \
-                          typename boost::is_scalar<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type \
-                        , typename boost::is_same<typename FTypes:: BOOST_PP_CAT(arg_type,n), bool>::type \
+                          boost::is_scalar<typename FTypes:: BOOST_PP_CAT(arg_type,n) > \
+                        , boost::is_same<typename FTypes:: BOOST_PP_CAT(arg_type,n), bool> \
                         >::type
                 #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
                 #include BOOST_PP_LOCAL_ITERATE()
             >::type
             type;
 };
+
+#endif // BOOST_PP_ITERATION_FLAGS
 
 #undef N
 
