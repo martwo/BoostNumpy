@@ -36,7 +36,6 @@
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 
-#include <boost/numpy/pp.hpp>
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/detail/config.hpp>
 #include <boost/numpy/detail/callable_caller.hpp>

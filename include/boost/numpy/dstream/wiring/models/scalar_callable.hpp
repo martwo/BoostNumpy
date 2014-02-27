@@ -44,7 +44,6 @@
 #include <boost/mpl/integral_c.hpp>
 #include <boost/mpl/or.hpp>
 
-#include <boost/numpy/pp.hpp>
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
 #include <boost/numpy/detail/callable_caller.hpp>
