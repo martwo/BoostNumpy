@@ -21,7 +21,6 @@
 #ifndef BOOST_NUMPY_DETAIL_PREFIX_INCLUDED
 #define BOOST_NUMPY_DETAIL_PREFIX_INCLUDED
 
-#include <boost/numpy/detail/pre_boost_python_hpp_includes.hpp>
 #include <boost/python.hpp>
 
 #endif // !BOOST_NUMPY_DETAIL_PREFIX_INCLUDED
