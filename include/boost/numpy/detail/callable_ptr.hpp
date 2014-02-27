@@ -28,6 +28,8 @@
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 
+#include <boost/type_traits/remove_reference.hpp>
+
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
 
@@ -82,7 +84,7 @@ struct callable_ptr<
   , BOOST_PP_ENUM_PARAMS(BOOST_NUMPY_LIMIT_INPUT_ARITY, InT_)
 >
 {
-    typedef boost::function<OutT (ClassT* self, BOOST_PP_ENUM_BINARY_PARAMS(IN_ARITY, InT_, in_))>
+    typedef boost::function<OutT (typename boost::remove_reference<ClassT>::type * self, BOOST_PP_ENUM_BINARY_PARAMS(IN_ARITY, InT_, in_))>
             bfunc_t;
 
     bfunc_t bfunc_;
@@ -91,9 +93,9 @@ struct callable_ptr<
     {}
 
     OutT
-    operator()(ClassT* self, BOOST_PP_ENUM_BINARY_PARAMS(IN_ARITY, InT_, in_)) const
+    operator()(ClassT & self, BOOST_PP_ENUM_BINARY_PARAMS(IN_ARITY, InT_, in_)) const
     {
-        return bfunc_(self, BOOST_PP_ENUM_PARAMS(IN_ARITY, in_));
+        return bfunc_(&self, BOOST_PP_ENUM_PARAMS(IN_ARITY, in_));
     }
 };
 
@@ -119,7 +121,7 @@ struct callable_ptr<
     {}
 
     OutT
-    operator()(numpy::mpl::unspecified*, BOOST_PP_ENUM_BINARY_PARAMS(IN_ARITY, InT_, in_)) const
+    operator()(numpy::mpl::unspecified &, BOOST_PP_ENUM_BINARY_PARAMS(IN_ARITY, InT_, in_)) const
     {
         return bfunc_(BOOST_PP_ENUM_PARAMS(IN_ARITY, in_));
     }

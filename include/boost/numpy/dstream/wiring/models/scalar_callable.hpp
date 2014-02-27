@@ -272,7 +272,7 @@ struct scalar_callable_arity<IN_ARITY>
                     // function) and implicitly convert between types, in case
                     // function types differ from array value types.
                     f_caller.call(
-                          &self
+                          self
                         , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value, ~)
                     );
 
@@ -331,7 +331,7 @@ struct scalar_callable_arity<IN_ARITY>
                     // function) and implicitly convert between types, in case
                     // function types differ from array value types.
                     typename FTypes::return_type ret = f_caller.call(
-                          &self
+                          self
                         , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value, ~)
                     );
                     out_arr_value = out_arr_value_t(ret);
