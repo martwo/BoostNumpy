@@ -135,7 +135,7 @@ struct callable
             is_correct_number_of_kwargs_t;                                     \
     BOOST_MPL_ASSERT_MSG(                                                      \
           is_correct_number_of_kwargs_t::value                                 \
-        , LESS_OR_MORE_KEYWORD_ARGUMENTS_THAN_FUNCTION_ARGUMENTS               \
+        , THE_NUMBER_OF_KEYWORD_ARGUMENTS_MUST_MATCH_THE_NUMBER_OF_FUNCTION_ARGUMENTS \
         , (KW)                                                                 \
     );
 
