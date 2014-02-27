@@ -26,7 +26,10 @@
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 
+#include <boost/mpl/assert.hpp>
+#include <boost/mpl/equal_to.hpp>
 #include <boost/mpl/if.hpp>
+#include <boost/mpl/integral_c.hpp>
 
 #include <boost/python/args.hpp>
 #include <boost/python/object.hpp>
@@ -40,6 +43,16 @@ namespace boost {
 namespace numpy {
 namespace dstream {
 namespace detail {
+
+template <unsigned n_kwargs, unsigned in_arity>
+struct is_correct_number_of_kwargs
+{
+    typedef typename boost::mpl::equal_to<
+                  boost::mpl::integral_c<unsigned, n_kwargs>
+                , boost::mpl::integral_c<unsigned, in_arity>
+            >::type
+            type;
+};
 
 template <
       unsigned InArity
@@ -117,6 +130,15 @@ struct callable
 
 #define IN_ARITY BOOST_PP_ITERATION()
 
+#define BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KWSIZE, FINARITY)     \
+    typedef typename is_correct_number_of_kwargs<KWSIZE, FINARITY>::type       \
+            is_correct_number_of_kwargs_t;                                     \
+    BOOST_MPL_ASSERT_MSG(                                                      \
+          is_correct_number_of_kwargs_t::value                                 \
+        , LESS_OR_MORE_KEYWORD_ARGUMENTS_THAN_FUNCTION_ARGUMENTS               \
+        , (KW)                                                                 \
+    );
+
 template <class FTypes, class MappingDefinition, class WiringModel, class ThreadAbility>
 struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, ThreadAbility>
 {
@@ -170,6 +192,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::detail::keywords<KW::size+2>
         make_kwargs(KW const & kwargs)
         {
+            BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
+
             return ( python::arg("self")
                    , kwargs
                    , python::arg("nthreads")
@@ -220,6 +244,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::detail::keywords<KW::size+1>
         make_kwargs(KW const & kwargs)
         {
+            BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
+
             return ( python::arg("self")
                    , kwargs
                    );
@@ -271,6 +297,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::detail::keywords<KW::size+3>
         make_kwargs(KW const & kwargs)
         {
+            BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
+
             return ( python::arg("self")
                    , kwargs
                    , python::arg("nthreads")=1
@@ -322,6 +350,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::detail::keywords<KW::size+2>
         make_kwargs(KW const & kwargs)
         {
+            BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
+
             return ( python::arg("self")
                    , kwargs
                    , python::arg("out")=python::object()
@@ -371,6 +401,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::detail::keywords<KW::size+1>
         make_kwargs(KW const & kwargs)
         {
+            BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
+
             return ( kwargs
                    , python::arg("out")=python::object()
                    );
@@ -418,6 +450,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::detail::keywords<KW::size>
         make_kwargs(KW const & kwargs)
         {
+            BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
+
             return kwargs;
         }
 
@@ -464,6 +498,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::detail::keywords<KW::size+1>
         make_kwargs(KW const & kwargs)
         {
+            BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
+
             return ( kwargs
                    , python::arg("nthreads")=1
                    );
@@ -513,6 +549,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         python::detail::keywords<KW::size+2>
         make_kwargs(KW const & kwargs)
         {
+            BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
+
             return ( kwargs
                    , python::arg("nthreads")=1
                    , python::arg("out")=python::object()
@@ -538,6 +576,8 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         }
     };
 };
+
+#undef BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs
 
 #undef IN_ARITY
 
