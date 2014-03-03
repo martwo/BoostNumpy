@@ -69,9 +69,9 @@ struct is_std_vector_of_scalar_impl<T, true>
 template <class T>
 struct is_std_vector_of_scalar
 {
-    typedef typename detail::is_std_vector_of_scalar_impl
-            < T
-            , boost::mpl::and_< numpy::mpl::has_allocator_type<T>, numpy::mpl::has_value_type<T> >::type::value
+    typedef typename detail::is_std_vector_of_scalar_impl<
+                T
+              , boost::mpl::and_< numpy::mpl::has_allocator_type<T>, numpy::mpl::has_value_type<T> >::type::value
             >::type
             type;
 };

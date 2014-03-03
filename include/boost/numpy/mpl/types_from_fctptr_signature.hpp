@@ -43,7 +43,6 @@
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/long.hpp>
 #include <boost/mpl/not.hpp>
-#include <boost/mpl/or.hpp>
 #include <boost/mpl/size.hpp>
 #include <boost/mpl/vector.hpp>
 
@@ -53,6 +52,7 @@
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
+#include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
 
 namespace boost {
 namespace numpy {
@@ -73,17 +73,14 @@ struct types_from_fctptr_signature_impl;
 #include BOOST_PP_ITERATE()
 
 template <unsigned in_arity, class FTypes>
-struct all_fct_args_are_scalars_incl_bool_arity;
+struct all_fct_args_are_scalars_arity;
 
 // Specialization for arity = 1 because boost::mpl::and_ needs at least 2
 // arguments.
 template <class FTypes>
-struct all_fct_args_are_scalars_incl_bool_arity<1, FTypes>
+struct all_fct_args_are_scalars_arity<1, FTypes>
 {
-    typedef typename boost::mpl::or_<
-                  boost::is_scalar<typename FTypes::arg_type0 >
-                , boost::is_same<typename FTypes::arg_type0, bool>
-            >::type
+    typedef boost::is_scalar<typename FTypes::arg_type0>
             type;
 };
 
@@ -128,19 +125,23 @@ struct types_from_fctptr_signature
 };
 
 template <class FTypes>
-struct all_fct_args_are_scalars_incl_bool
+struct all_fct_args_are_scalars
 {
-    typedef typename detail::all_fct_args_are_scalars_incl_bool_arity<FTypes::arity, FTypes>::type
+    typedef typename detail::all_fct_args_are_scalars_arity<FTypes::arity, FTypes>::type
             type;
 };
 
 template <class FTypes>
-struct fct_return_is_scalar_or_bool
+struct fct_return_is_scalar
 {
-    typedef typename boost::mpl::or_<
-                boost::is_scalar<typename FTypes::return_type>
-              , boost::is_same<typename FTypes::return_type, bool>
-            >::type
+    typedef boost::is_scalar<typename FTypes::return_type>
+            type;
+};
+
+template <class FTypes>
+struct fct_return_is_std_vector_of_scalar
+{
+    typedef typename numpy::mpl::is_std_vector_of_scalar<typename FTypes::return_type>::type
             type;
 };
 
@@ -198,14 +199,11 @@ struct types_from_fctptr_signature_impl<
 #elif BOOST_PP_ITERATION_FLAGS() == 2
 
 template <class FTypes>
-struct all_fct_args_are_scalars_incl_bool_arity<N, FTypes>
+struct all_fct_args_are_scalars_arity<N, FTypes>
 {
     typedef typename boost::mpl::and_<
                 #define BOOST_PP_LOCAL_MACRO(n) \
-                    BOOST_PP_COMMA_IF(n) typename boost::mpl::or_< \
-                          boost::is_scalar<typename FTypes:: BOOST_PP_CAT(arg_type,n) > \
-                        , boost::is_same<typename FTypes:: BOOST_PP_CAT(arg_type,n), bool> \
-                        >::type
+                    BOOST_PP_COMMA_IF(n) boost::is_scalar<typename FTypes:: BOOST_PP_CAT(arg_type,n) >
                 #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
                 #include BOOST_PP_LOCAL_ITERATE()
             >::type

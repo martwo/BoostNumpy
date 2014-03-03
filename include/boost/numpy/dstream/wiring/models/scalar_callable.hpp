@@ -28,7 +28,6 @@
 
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/arithmetic/add.hpp>
-#include <boost/preprocessor/facilities/identity.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/iteration/iterate.hpp>
 #include <boost/preprocessor/iteration/local.hpp>
@@ -38,11 +37,15 @@
 #include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/mpl/and.hpp>
+#include <boost/mpl/at.hpp>
 #include <boost/mpl/bitor.hpp>
 #include <boost/mpl/equal_to.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/integral_c.hpp>
+#include <boost/mpl/long.hpp>
 #include <boost/mpl/or.hpp>
+
+#include <boost/utility/enable_if.hpp>
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
@@ -80,7 +83,7 @@ struct scalar_callable_api
     struct out_arr_iter_operand_flags
     {
         typedef boost::mpl::bitor_<
-                    typename numpy::detail::iter_operand::flags::WRITEONLY
+                      typename numpy::detail::iter_operand::flags::WRITEONLY
                     , typename numpy::detail::iter_operand::flags::NBO
                     , typename numpy::detail::iter_operand::flags::ALIGNED
                 >
@@ -151,7 +154,6 @@ struct scalar_callable
 
 }// namespace model
 
-
 // The scalar_callable wiring model should be selected if all of the following
 // conditions on the mapping definition and function types are true:
 //     - All input arrays of the mapping definition are scalars.
@@ -169,16 +171,16 @@ struct default_wiring_model_selector<
     , typename enable_if<
           typename boost::mpl::and_<
               typename dstream::mapping::detail::in_mapping<typename MappingDefinition::in>::all_arrays_are_scalars::type
-            , typename numpy::mpl::all_fct_args_are_scalars_incl_bool<FTypes>::type
+            , typename numpy::mpl::all_fct_args_are_scalars<FTypes>::type
             , typename boost::mpl::or_<
                   typename boost::mpl::and_<
-                      typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is<0>::type
+                      typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is_equal_to<0>::type
                     , typename boost::mpl::bool_<FTypes::has_void_return>::type
                   >::type
                 , typename boost::mpl::and_<
-                      typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is<1>::type
+                      typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is_equal_to<1>::type
                     , typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template array<0>::is_scalar::type
-                    , typename numpy::mpl::fct_return_is_scalar_or_bool<FTypes>::type
+                    , typename numpy::mpl::fct_return_is_scalar<FTypes>::type
                   >::type
               >::type
           >::type

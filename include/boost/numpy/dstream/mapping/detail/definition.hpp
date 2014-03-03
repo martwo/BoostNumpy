@@ -28,7 +28,12 @@
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 
 #include <boost/mpl/bool.hpp>
+#include <boost/mpl/equal_to.hpp>
+#include <boost/mpl/greater.hpp>
+#include <boost/mpl/greater_equal.hpp>
 #include <boost/mpl/if.hpp>
+#include <boost/mpl/integral_c.hpp>
+
 #include <boost/type_traits/is_same.hpp>
 
 #include <boost/numpy/limits.hpp>
@@ -132,9 +137,32 @@ template <class OutMapping>
 struct out_mapping
 {
     template <unsigned n>
-    struct arity_is
+    struct arity_is_equal_to
     {
-        typedef typename boost::mpl::equal_to< boost::mpl::int_<OutMapping::arity>, boost::mpl::int_<n> >::type
+        typedef typename boost::mpl::equal_to<
+                      boost::mpl::integral_c<unsigned, OutMapping::arity>
+                    , boost::mpl::integral_c<unsigned, n>
+                >::type
+                type;
+    };
+
+    template <unsigned n>
+    struct arity_is_greater
+    {
+        typedef typename boost::mpl::greater<
+                      boost::mpl::integral_c<unsigned, OutMapping::arity>
+                    , boost::mpl::integral_c<unsigned, n>
+                >::type
+                type;
+    };
+
+    template <unsigned n>
+    struct arity_is_greater_equal
+    {
+        typedef typename boost::mpl::greater_equal<
+                      boost::mpl::integral_c<unsigned, OutMapping::arity>
+                    , boost::mpl::integral_c<unsigned, n>
+                >::type
                 type;
     };
 
@@ -153,6 +181,12 @@ struct out_mapping
         struct is_scalar
         {
             typedef typename numpy::dstream::mapping::detail::is_scalar<array_type>::type
+                    type;
+        };
+
+        struct is_1d
+        {
+            typedef typename numpy::dstream::mapping::detail::is_1d<array_type>::type
                     type;
         };
     };

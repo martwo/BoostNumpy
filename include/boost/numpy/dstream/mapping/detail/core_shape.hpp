@@ -58,14 +58,14 @@ namespace detail {
 struct core_shape_type
 {};
 
+struct core_shape_base_type
+  : core_shape_type
+{};
+
 template <class T>
 struct is_core_shape
 {
-    typedef typename boost::mpl::if_<
-              is_base_of<core_shape_type, T>
-            , boost::mpl::true_
-            , boost::mpl::false_
-            >::type
+    typedef typename is_base_of<core_shape_base_type, T>::type
             type;
     BOOST_STATIC_CONSTANT(bool, value = type::value);
 };
@@ -79,7 +79,7 @@ struct is_core_shape
 // be broadcasted to the length of the other dimensions with the same key.
 template <class ShapeVec>
 struct core_shape_base
-  : core_shape_type
+  : core_shape_base_type
 {
     typedef ShapeVec shape_vec_t;
     typedef boost::mpl::size<shape_vec_t> nd;
@@ -163,6 +163,9 @@ struct core_shape<0>
     {
         typedef shape<>
                 type;
+
+        typedef detail::core_shape_base< boost::mpl::vector<> >
+                base;
     };
 };
 
@@ -194,7 +197,20 @@ struct make_core_shape_tuple;
 template <class T>
 struct is_scalar
 {
-    typedef boost::is_same<T, core_shape<0>::shape<> >
+    typedef typename boost::mpl::and_<
+                typename is_core_shape<T>::type
+              , typename boost::mpl::equal_to<typename T::base::nd, boost::mpl::integral_c<unsigned, 0> >
+            >::type
+            type;
+};
+
+template <class T>
+struct is_1d
+{
+    typedef typename boost::mpl::and_<
+                typename is_core_shape<T>::type
+              , typename boost::mpl::equal_to<typename T::base::nd, boost::mpl::integral_c<unsigned, 1> >
+            >::type
             type;
 };
 
@@ -243,6 +259,14 @@ struct core_shape<N>
     {
         typedef shape<BOOST_PP_ENUM_PARAMS_Z(1, N, Key)>
                 type;
+
+        typedef core_shape_base< boost::mpl::vector< BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~) > >
+                base;
+
+        #define BOOST_PP_LOCAL_MACRO(n) \
+            BOOST_STATIC_CONSTANT(int, BOOST_PP_CAT(dim,n) = BOOST_PP_CAT(Key,n));
+        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
+        #include BOOST_PP_LOCAL_ITERATE()
     };
     #undef BOOST_NUMPY_DEF
 };
