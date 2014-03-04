@@ -28,6 +28,8 @@
 #include <vector>
 
 #include <boost/preprocessor/iteration/iterate.hpp>
+#include <boost/preprocessor/iteration/local.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/at.hpp>
@@ -99,11 +101,11 @@ struct scalars_to_vector_of_scalar_callable_api
     BOOST_STATIC_CONSTANT(intptr_t, buffersize = 0);
 };
 
-template <unsigned in_arity>
+template <unsigned out_arity, unsigned in_arity>
 struct scalars_to_vector_of_scalar_callable_arity;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/wiring/models/scalars_to_vector_of_scalar_callable.hpp>, 1))
+    (3, (1, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/models/scalars_to_vector_of_scalar_callable.hpp>))
 #include BOOST_PP_ITERATE()
 
 template <class MappingDefinition, class FTypes>
@@ -119,7 +121,14 @@ struct scalars_to_vector_of_scalar_callable_impl_select
             >::type
             output_style_t;
 
-    typedef typename scalars_to_vector_of_scalar_callable_arity<MappingDefinition::in::arity>::template impl<
+    typedef typename boost::mpl::if_<
+                is_single_output_t
+              , boost::mpl::integral_c<unsigned, MappingDefinition::out::core_shape_t0::dim0>
+              , boost::mpl::integral_c<unsigned, MappingDefinition::out::arity>
+            >::type
+            n_out_values_t;
+
+    typedef typename scalars_to_vector_of_scalar_callable_arity<n_out_values_t::value, MappingDefinition::in::arity>::template impl<
                   output_style_t::value
                 , MappingDefinition
                 , FTypes
@@ -188,13 +197,27 @@ struct default_wiring_model_selector<
 #endif // BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALARS_TO_VECTOR_OF_SCALAR_CALLABLE_HPP_INCLUDED
 // EOF
 //==============================================================================
-#elif BOOST_PP_ITERATION_FLAGS() == 1
+#else
 
+#if BOOST_PP_ITERATION_DEPTH() == 1
+
+// Loop over the InArity.
+#define BOOST_PP_ITERATION_PARAMS_2 \
+    (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/wiring/models/scalars_to_vector_of_scalar_callable.hpp>))
+#include BOOST_PP_ITERATE()
+
+#elif BOOST_PP_ITERATION_DEPTH() == 2
+
+#define OUT_ARITY BOOST_PP_RELATIVE_ITERATION(1)
 #define IN_ARITY BOOST_PP_ITERATION()
 
+#define BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value(z, n, data) \
+    BOOST_PP_COMMA_IF(n) typename FTypes:: BOOST_PP_CAT(arg_type,n)(BOOST_PP_CAT(in_arr_value,n))
+
 template <>
-struct scalars_to_vector_of_scalar_callable_arity<IN_ARITY>
+struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
 {
+    BOOST_STATIC_CONSTANT(unsigned, out_arity = OUT_ARITY);
     BOOST_STATIC_CONSTANT(unsigned, in_arity = IN_ARITY);
 
     template <
@@ -218,9 +241,71 @@ struct scalars_to_vector_of_scalar_callable_arity<IN_ARITY>
 
         typedef scalars_to_vector_of_scalar_callable_api<MappingDefinition, FTypes>
                 api;
+
+        typedef typename api::template out_arr_value_type<0>::type
+                out_arr_value_t;
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            typedef typename api::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
+        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+
+        template <class ClassT, class FCaller>
+        static
+        void
+        iterate(
+              ClassT & self
+            , FCaller const & f_caller
+            , numpy::detail::iter & iter
+            , std::vector< std::vector<intptr_t> > const & core_shapes
+            , bool & error_flag
+        )
+        {
+            do {
+                intptr_t const out_op_value_stride = iter.get_item_size(0);
+                intptr_t size = iter.get_inner_loop_size();
+                while(size--)
+                {
+                    // Construct references to the output array values.
+                    #define BOOST_NUMPY_DEF(z, n, data) \
+                        out_arr_value_t & BOOST_PP_CAT(out_arr_value,n) = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0) + n * out_op_value_stride);
+                    BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
+
+                    // Construct references to the input array values.
+                    #define BOOST_NUMPY_DEF(z, n, data) \
+                        BOOST_PP_CAT(in_arr_value_t,n) & BOOST_PP_CAT(in_arr_value,n) =\
+                            *reinterpret_cast<BOOST_PP_CAT(in_arr_value_t,n) *>(iter.get_data(MappingDefinition::out::arity + n));
+                    BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
+
+                    // Call the scalar function (i.e. the to-be-exposed
+                    // function) and implicitly convert between types, in case
+                    // function types differ from array value types.
+                    typename FTypes::return_type ret = f_caller.call(
+                          self
+                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value, ~)
+                    );
+
+                    // Set the return values to the output array.
+                    #define BOOST_NUMPY_DEF(z, n, data) \
+                        BOOST_PP_CAT(out_arr_value,n) = out_arr_value_t(ret[n]);
+                    BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
+
+                    iter.add_inner_loop_strides_to_data_ptrs();
+                }
+            } while(iter.next());
+        }
     };
+
+    // FIXME: Add specialization for multiple scalar output arrays.
 };
 
+#undef BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value
+
 #undef IN_ARITY
+#undef OUT_ARITY
+
+#endif // BOOST_PP_ITERATION_DEPTH
 
 #endif // BOOST_PP_IS_ITERATING

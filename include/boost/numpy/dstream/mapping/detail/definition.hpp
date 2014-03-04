@@ -87,12 +87,74 @@ typename boost::lazy_enable_if<
     boost::mpl::and_< is_core_shape_tuple<InCoreShapeTuple>
                     , is_core_shape_tuple<OutCoreShapeTuple>
     >
-  , make_definition<OutCoreShapeTuple, InCoreShapeTuple>
+  , make_definition<
+        OutCoreShapeTuple
+      , InCoreShapeTuple
+    >
 >::type
 operator>>(InCoreShapeTuple const &, OutCoreShapeTuple const &)
 {
-    std::cout << "Creating definition type" << std::endl;
-    return typename make_definition<OutCoreShapeTuple, InCoreShapeTuple>::type();
+    return typename make_definition<
+               OutCoreShapeTuple
+             , InCoreShapeTuple
+           >::type();
+}
+
+// Construct a mapping definition from a core_shape_tuple and a core_shape type.
+template <class InCoreShapeTuple, class OutCoreShape>
+typename boost::lazy_enable_if<
+    boost::mpl::and_< is_core_shape_tuple<InCoreShapeTuple>
+                    , is_core_shape<OutCoreShape>
+    >
+  , make_definition<
+        core_shape_tuple<1>::template core_shapes<OutCoreShape>
+      , InCoreShapeTuple
+    >
+>::type
+operator>>(InCoreShapeTuple const &, OutCoreShape const &)
+{
+    return typename make_definition<
+               core_shape_tuple<1>::template core_shapes<OutCoreShape>
+             , InCoreShapeTuple
+           >::type();
+}
+
+// Construct a mapping definition from a core_shape and a core_shape_tuple type.
+template <class InCoreShape, class OutCoreShapeTuple>
+typename boost::lazy_enable_if<
+    boost::mpl::and_< is_core_shape<InCoreShape>
+                    , is_core_shape_tuple<OutCoreShapeTuple>
+    >
+  , make_definition<
+        OutCoreShapeTuple
+      , core_shape_tuple<1>::template core_shapes<InCoreShape>
+    >
+>::type
+operator>>(InCoreShape const &, OutCoreShapeTuple const &)
+{
+    return typename make_definition<
+               OutCoreShapeTuple
+             , core_shape_tuple<1>::template core_shapes<InCoreShape>
+           >::type();
+}
+
+// Construct a mapping definition from a core_shape and a core_shape type.
+template <class InCoreShape, class OutCoreShape>
+typename boost::lazy_enable_if<
+    boost::mpl::and_< is_core_shape<InCoreShape>
+                    , is_core_shape<OutCoreShape>
+    >
+  , make_definition<
+        core_shape_tuple<1>::template core_shapes<OutCoreShape>
+      , core_shape_tuple<1>::template core_shapes<InCoreShape>
+    >
+>::type
+operator>>(InCoreShape const &, OutCoreShape const &)
+{
+    return typename make_definition<
+               core_shape_tuple<1>::template core_shapes<OutCoreShape>
+             , core_shape_tuple<1>::template core_shapes<InCoreShape>
+           >::type();
 }
 
 template <unsigned arity, class Mapping>
