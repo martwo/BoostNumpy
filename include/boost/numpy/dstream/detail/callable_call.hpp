@@ -405,7 +405,8 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             }
             catch(boost::thread_resource_error)
             {
-                // TODO: Is pygil.acquire(); needed here???
+                // Acquire the python GIL again.
+                pygil.acquire();
                 PyErr_SetString(PyExc_RuntimeError,
                     "At least one thread could not be launched due to a "
                     "resource error.");

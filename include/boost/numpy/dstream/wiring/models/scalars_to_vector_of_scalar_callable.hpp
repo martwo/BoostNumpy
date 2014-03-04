@@ -108,28 +108,34 @@ struct scalars_to_vector_of_scalar_callable_arity;
     (3, (1, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/models/scalars_to_vector_of_scalar_callable.hpp>))
 #include BOOST_PP_ITERATE()
 
+template <bool is_single_output, class MappingDefinition>
+struct n_out_values;
+
+template <class MappingDefinition>
+struct n_out_values<true, MappingDefinition>
+{
+    typedef boost::mpl::integral_c<unsigned, MappingDefinition::out::core_shape_t0::dim0>
+            type;
+};
+
+template <class MappingDefinition>
+struct n_out_values<false, MappingDefinition>
+{
+    typedef boost::mpl::integral_c<unsigned, MappingDefinition::out::arity>
+            type;
+};
+
 template <class MappingDefinition, class FTypes>
 struct scalars_to_vector_of_scalar_callable_impl_select
 {
     typedef typename dstream::mapping::detail::out_mapping<typename MappingDefinition::out>::template arity_is_equal_to<1>::type
             is_single_output_t;
 
-    typedef typename boost::mpl::if_<
-                is_single_output_t
-              , boost::mpl::integral_c<unsigned, 0>
-              , boost::mpl::integral_c<unsigned, 1>
-            >::type
-            output_style_t;
-
-    typedef typename boost::mpl::if_<
-                is_single_output_t
-              , boost::mpl::integral_c<unsigned, MappingDefinition::out::core_shape_t0::dim0>
-              , boost::mpl::integral_c<unsigned, MappingDefinition::out::arity>
-            >::type
+    typedef typename n_out_values<is_single_output_t::value, MappingDefinition>::type
             n_out_values_t;
 
     typedef typename scalars_to_vector_of_scalar_callable_arity<n_out_values_t::value, MappingDefinition::in::arity>::template impl<
-                  output_style_t::value
+                  is_single_output_t::value
                 , MappingDefinition
                 , FTypes
                 >::type
@@ -221,22 +227,22 @@ struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
     BOOST_STATIC_CONSTANT(unsigned, in_arity = IN_ARITY);
 
     template <
-          int output_style
+          bool is_single_output
         , class MappingDefinition
         , class FTypes
     >
     struct impl;
 
     //--------------------------------------------------------------------------
-    // Partial specialization for an output style, where the output is a 1d
+    // Partial specialization for single output, where the output is a 1d
     // array.
     template <
           class MappingDefinition
         , class FTypes
     >
-    struct impl<0, MappingDefinition, FTypes>
+    struct impl<true, MappingDefinition, FTypes>
     {
-        typedef impl<0, MappingDefinition, FTypes>
+        typedef impl<true, MappingDefinition, FTypes>
                 type;
 
         typedef scalars_to_vector_of_scalar_callable_api<MappingDefinition, FTypes>
@@ -245,7 +251,8 @@ struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
         typedef typename api::template out_arr_value_type<0>::type
                 out_arr_value_t;
         #define BOOST_NUMPY_DEF(z, n, data) \
-            typedef typename api::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
+            typedef typename api::template in_arr_value_type<n>::type \
+                    BOOST_PP_CAT(in_arr_value_t,n);
         BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
 
@@ -267,7 +274,8 @@ struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
                 {
                     // Construct references to the output array values.
                     #define BOOST_NUMPY_DEF(z, n, data) \
-                        out_arr_value_t & BOOST_PP_CAT(out_arr_value,n) = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0) + n * out_op_value_stride);
+                        out_arr_value_t & BOOST_PP_CAT(out_arr_value,n) =\
+                            *reinterpret_cast<out_arr_value_t *>(iter.get_data(0) + n * out_op_value_stride);
                     BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DEF, ~)
                     #undef BOOST_NUMPY_DEF
 
@@ -278,13 +286,23 @@ struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
                     BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
                     #undef BOOST_NUMPY_DEF
 
-                    // Call the scalar function (i.e. the to-be-exposed
-                    // function) and implicitly convert between types, in case
-                    // function types differ from array value types.
+                    // Call the to-be-exposed function and implicitly convert
+                    // between types, in case function types differ from array
+                    // value types.
                     typename FTypes::return_type ret = f_caller.call(
                           self
                         , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value, ~)
                     );
+
+                    if(ret.size() != OUT_ARITY)
+                    {
+                        std::cerr << "Function returned std::vector of wrong "
+                                  << "size! Must be " << OUT_ARITY << ", but "
+                                  << "was " << ret.size() << "!"
+                                  << std::endl;
+                        error_flag = true;
+                        return;
+                    }
 
                     // Set the return values to the output array.
                     #define BOOST_NUMPY_DEF(z, n, data) \
@@ -298,7 +316,89 @@ struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
         }
     };
 
-    // FIXME: Add specialization for multiple scalar output arrays.
+    // Specialization for multiple scalar output arrays.
+    template <
+          class MappingDefinition
+        , class FTypes
+    >
+    struct impl<false, MappingDefinition, FTypes>
+    {
+        typedef impl<false, MappingDefinition, FTypes>
+                type;
+
+        typedef scalars_to_vector_of_scalar_callable_api<MappingDefinition, FTypes>
+                api;
+
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            typedef typename api::template out_arr_value_type<n>::type \
+                    BOOST_PP_CAT(out_arr_value_t,n);
+        BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            typedef typename api::template in_arr_value_type<n>::type \
+                    BOOST_PP_CAT(in_arr_value_t,n);
+        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+
+        template <class ClassT, class FCaller>
+        static
+        void
+        iterate(
+              ClassT & self
+            , FCaller const & f_caller
+            , numpy::detail::iter & iter
+            , std::vector< std::vector<intptr_t> > const & core_shapes
+            , bool & error_flag
+        )
+        {
+            do {
+                intptr_t size = iter.get_inner_loop_size();
+                while(size--)
+                {
+                    // Construct references to the output array values.
+                    #define BOOST_NUMPY_DEF(z, n, data) \
+                        BOOST_PP_CAT(out_arr_value_t,n) & BOOST_PP_CAT(out_arr_value,n) =\
+                            *reinterpret_cast<BOOST_PP_CAT(out_arr_value_t,n) *>(iter.get_data(n));
+                    BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
+
+                    // Construct references to the input array values.
+                    #define BOOST_NUMPY_DEF(z, n, data) \
+                        BOOST_PP_CAT(in_arr_value_t,n) & BOOST_PP_CAT(in_arr_value,n) =\
+                            *reinterpret_cast<BOOST_PP_CAT(in_arr_value_t,n) *>(iter.get_data(MappingDefinition::out::arity + n));
+                    BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
+
+                    // Call the to-be-exposed function and implicitly convert
+                    // between types, in case function types differ from array
+                    // value types.
+                    typename FTypes::return_type ret = f_caller.call(
+                          self
+                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value, ~)
+                    );
+
+                    if(ret.size() != OUT_ARITY)
+                    {
+                        std::cerr << "Function returned std::vector of wrong "
+                                  << "size! Must be " << OUT_ARITY << ", but "
+                                  << "was " << ret.size() << "!"
+                                  << std::endl;
+                        error_flag = true;
+                        return;
+                    }
+
+                    // Set the return values to the output array.
+                    #define BOOST_NUMPY_DEF(z, n, data) \
+                        BOOST_PP_CAT(out_arr_value,n) = BOOST_PP_CAT(out_arr_value_t,n)(ret[n]);
+                    BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
+
+                    iter.add_inner_loop_strides_to_data_ptrs();
+                }
+            } while(iter.next());
+        }
+    };
 };
 
 #undef BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value
