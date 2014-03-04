@@ -61,7 +61,7 @@
 
 // Include all built-in wiring models.
 #include <boost/numpy/dstream/wiring/default_wiring_model_selector_fwd.hpp>
-#include <boost/numpy/dstream/wiring/models/scalar_callable.hpp>
+#include <boost/numpy/dstream/wiring/models/scalars_to_scalar_callable.hpp>
 #include <boost/numpy/dstream/wiring/models/scalars_to_vector_of_scalar_callable.hpp>
 
 #define BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS 4

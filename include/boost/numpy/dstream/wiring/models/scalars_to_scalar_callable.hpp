@@ -5,12 +5,12 @@
  * 2013 - $Date$
  *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
- * \file    boost/numpy/dstream/wiring/models/scalar_callable.hpp
+ * \file    boost/numpy/dstream/wiring/models/scalars_to_scalar_callable.hpp
  * \version $Revision$
  * \date    $Date$
  * \author  Martin Wolf <boostnumpy@martin-wolf.org>
  *
- * \brief This file defines the scalar_callable template for
+ * \brief This file defines the scalars_to_scalar_callable template for
  *        wiring one scalar function or scalar class member function that takes
  *        single scalar input values and returns one scalar output value or
  *        void.
@@ -21,8 +21,8 @@
  */
 #if !BOOST_PP_IS_ITERATING
 
-#ifndef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE_HPP_INCLUDED
-#define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE_HPP_INCLUDED
+#ifndef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALARS_TO_SCALAR_CALLABLE_HPP_INCLUDED
+#define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALARS_TO_SCALAR_CALLABLE_HPP_INCLUDED
 
 #include <vector>
 
@@ -63,7 +63,7 @@ namespace model {
 namespace detail {
 
 template <class MappingDefinition, class FTypes>
-struct scalar_callable_api
+struct scalars_to_scalar_callable_api
 {
     template <unsigned Idx>
     struct out_arr_value_type
@@ -111,16 +111,16 @@ struct scalar_callable_api
 };
 
 template <unsigned in_arity>
-struct scalar_callable_arity;
+struct scalars_to_scalar_callable_arity;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/wiring/models/scalar_callable.hpp>, 1))
+    (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/wiring/models/scalars_to_scalar_callable.hpp>))
 #include BOOST_PP_ITERATE()
 
 template <class MappingDefinition, class FTypes>
-struct scalar_callable_impl_select
+struct scalars_to_scalar_callable_impl_select
 {
-    typedef typename scalar_callable_arity<MappingDefinition::in::arity>::template impl<
+    typedef typename scalars_to_scalar_callable_arity<MappingDefinition::in::arity>::template impl<
                   FTypes::has_void_return
                 , MappingDefinition
                 , FTypes
@@ -129,16 +129,16 @@ struct scalar_callable_impl_select
 };
 
 template <class MappingDefinition, class FTypes>
-struct scalar_callable
-  : scalar_callable_impl_select<MappingDefinition, FTypes>::type
+struct scalars_to_scalar_callable
+  : scalars_to_scalar_callable_impl_select<MappingDefinition, FTypes>::type
 {
-    typedef scalar_callable<MappingDefinition, FTypes>
+    typedef scalars_to_scalar_callable<MappingDefinition, FTypes>
             type;
 };
 
 }// namespace detail
 
-struct scalar_callable
+struct scalars_to_scalar_callable
   : wiring_model_selector_type
 {
     template <
@@ -147,7 +147,7 @@ struct scalar_callable
     >
     struct select
     {
-        typedef detail::scalar_callable<MappingDefinition, FTypes>
+        typedef detail::scalars_to_scalar_callable<MappingDefinition, FTypes>
                 type;
     };
 };
@@ -187,7 +187,7 @@ struct default_wiring_model_selector<
       >::type
 >
 {
-    typedef model::scalar_callable
+    typedef model::scalars_to_scalar_callable
             type;
 };
 
@@ -196,18 +196,18 @@ struct default_wiring_model_selector<
 }// namespace numpy
 }// namespace boost
 
-#endif // !BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE_HPP_INCLUDED
+#endif // !BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALARS_TO_SCALAR_CALLABLE_HPP_INCLUDED
 // EOF
 //==============================================================================
-#elif BOOST_PP_ITERATION_FLAGS() == 1
+#else
 
 #define IN_ARITY BOOST_PP_ITERATION()
 
-#define BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value(z, n, data) \
+#define BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value(z, n, data) \
     BOOST_PP_COMMA_IF(n) typename FTypes:: BOOST_PP_CAT(arg_type,n)(BOOST_PP_CAT(in_arr_value,n))
 
 template <>
-struct scalar_callable_arity<IN_ARITY>
+struct scalars_to_scalar_callable_arity<IN_ARITY>
 {
     BOOST_STATIC_CONSTANT(unsigned, in_arity = IN_ARITY);
 
@@ -228,7 +228,7 @@ struct scalar_callable_arity<IN_ARITY>
         typedef impl<true, MappingDefinition, FTypes>
                 type;
 
-        typedef scalar_callable_api<MappingDefinition, FTypes>
+        typedef scalars_to_scalar_callable_api<MappingDefinition, FTypes>
                 api;
 
         // Define the input array value types.
@@ -274,7 +274,7 @@ struct scalar_callable_arity<IN_ARITY>
                     // function types differ from array value types.
                     f_caller.call(
                           self
-                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value, ~)
+                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value, ~)
                     );
 
                     iter.add_inner_loop_strides_to_data_ptrs();
@@ -293,7 +293,7 @@ struct scalar_callable_arity<IN_ARITY>
         typedef impl<false, MappingDefinition, FTypes>
                 type;
 
-        typedef scalar_callable_api<MappingDefinition, FTypes>
+        typedef scalars_to_scalar_callable_api<MappingDefinition, FTypes>
                 api;
 
         // Define the output and input array value types.
@@ -333,7 +333,7 @@ struct scalar_callable_arity<IN_ARITY>
                     // function types differ from array value types.
                     typename FTypes::return_type ret = f_caller.call(
                           self
-                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value, ~)
+                        , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value, ~)
                     );
                     out_arr_value = out_arr_value_t(ret);
 
@@ -344,7 +344,7 @@ struct scalar_callable_arity<IN_ARITY>
     };
 };
 
-#undef BOOST_NUMPY_DSTREAM_WIRING_MODEL_SCALAR_CALLABLE__in_arr_value
+#undef BOOST_NUMPY_DSTREAM_WIRING_MODEL__in_arr_value
 
 #undef IN_ARITY
 
