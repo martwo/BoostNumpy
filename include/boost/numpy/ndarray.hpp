@@ -139,35 +139,23 @@ class ndarray : public python::object
     /**
      * @brief Return the number of array dimensions.
      */
-    inline
-    int const
-    get_nd() const
-    {
-        return PyArray_NDIM((PyArrayObject*)this->ptr());
-    }
+    int
+    get_nd() const;
 
     //__________________________________________________________________________
     /**
      * @brief Returns the total number of elements of the array.
      */
-    inline
-    intptr_t const
-    get_size() const
-    {
-        return PyArray_Size(this->ptr());
-    }
+    intptr_t
+    get_size() const;
 
     //__________________________________________________________________________
     /**
      * @brief Return the shape of the array as a C array of intptr_t values
      *        (length == get_nd()).
      */
-    inline
     intptr_t const *
-    get_shape() const
-    {
-        return PyArray_DIMS((PyArrayObject*)this->ptr());
-    }
+    get_shape() const;
 
     //__________________________________________________________________________
     /**
@@ -204,10 +192,7 @@ class ndarray : public python::object
      *        (length == get_nd()).
      */
     intptr_t const *
-    get_strides() const
-    {
-        return PyArray_STRIDES((PyArrayObject*)this->ptr());
-    }
+    get_strides() const;
 
     //__________________________________________________________________________
     /**
@@ -228,10 +213,7 @@ class ndarray : public python::object
      *  it.
      */
     char *
-    get_data() const
-    {
-        return PyArray_BYTES((PyArrayObject*)this->ptr());
-    }
+    get_data() const;
 
     //__________________________________________________________________________
     /**
@@ -642,10 +624,7 @@ operator=(ndarray::object_cref rhs)
  */
 inline
 bool
-is_any_scalar(python::object const & obj)
-{
-    return PyArray_IsAnyScalar(obj.ptr());
-}
+is_any_scalar(python::object const & obj);
 
 }// namespace numpy
 }// namespace boost

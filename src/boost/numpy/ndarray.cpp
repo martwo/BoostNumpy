@@ -265,6 +265,46 @@ get_flags() const
 }
 
 //______________________________________________________________________________
+int
+ndarray::
+get_nd() const
+{
+    return PyArray_NDIM((PyArrayObject*)this->ptr());
+}
+
+//______________________________________________________________________________
+intptr_t
+ndarray::
+get_size() const
+{
+    return PyArray_Size(this->ptr());
+}
+
+//______________________________________________________________________________
+intptr_t const *
+ndarray::
+get_shape() const
+{
+    return PyArray_DIMS((PyArrayObject*)this->ptr());
+}
+
+//______________________________________________________________________________
+intptr_t const *
+ndarray::
+get_strides() const
+{
+    return PyArray_STRIDES((PyArrayObject*)this->ptr());
+}
+
+//______________________________________________________________________________
+char *
+ndarray::
+get_data() const
+{
+    return PyArray_BYTES((PyArrayObject*)this->ptr());
+}
+
+//______________________________________________________________________________
 ndarray
 ndarray::
 transpose() const
@@ -490,5 +530,12 @@ from_object(
             NULL)));
 }
 
-}/*namespace numpy*/
-}/*namespace boost*/
+//______________________________________________________________________________
+bool
+is_any_scalar(python::object const & obj)
+{
+    return PyArray_IsAnyScalar(obj.ptr());
+}
+
+}// namespace numpy
+}// namespace boost
