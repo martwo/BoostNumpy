@@ -2,16 +2,15 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  * 2010-2012
  *     Jim Bosch
  *
  * @file boost/numpy/dtype.hpp
  * @version $Revision$
  * @date $Date$
- * @author Martin Wolf <martin.wolf@icecube.wisc.edu>,
+ * @author Martin Wolf <boostnumpy@martin-wolf.org>,
  *         Jim Bosch
  * @brief This file defines the boost::numpy::dtype object manager and some
  *        builtin type convertion between C++ and numpy types.
@@ -148,15 +147,15 @@ struct builtin_dtype<bool, true>
     static dtype get();
 };
 
-}/*namespace detail*/
+}// namespace detail
 
 template <typename T>
 dtype
 dtype::
 get_builtin() { return detail::builtin_dtype<T>::get(); }
 
-}/*namespace numpy*/
-}/*namespace boost*/
+}// namespace numpy
+}// namespace boost
 
 BOOST_NUMPY_OBJECT_MANAGER_TRAITS(boost::numpy::dtype);
 
