@@ -6,7 +6,7 @@ add_definitions(-fPIC)
 
 link_libraries(stdc++)
 
-set(BOOSTNUMPY_VERSION_STRING "1.0.0" CACHE STRING "The BoostNumpy version." FORCE)
+set(BOOST_NUMPY_VERSION_STRING "1.0.0" CACHE STRING "The boost_numpy version." FORCE)
 
-message(STATUS "+    BOOSTNUMPY_VERSION: ${BOOSTNUMPY_VERSION_STRING}")
+message(STATUS "+    BOOST_NUMPY_VERSION: ${BOOST_NUMPY_VERSION_STRING}")
 message(STATUS "+    CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")

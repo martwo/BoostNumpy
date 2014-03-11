@@ -9,7 +9,7 @@ parser.add_option("", "--prefix", type="string", dest="prefix", default=".",
          "By default it installs into the build directory.", metavar="PATH")
 (options, args) = parser.parse_args()
 
-print("Configuring BoostNumpy ...")
+print("Configuring boost_numpy ...")
 print("    prefix=%s"%(options.prefix))
 
 system("rm -rf build")

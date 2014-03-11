@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 
-# Set BoostNumpy_BINARY_DIR and BoostNumpy_SOURCE_DIR cmake variables.
-project(BoostNumpy CXX)
+# Set boost_numpy_BINARY_DIR and boost_numpy_SOURCE_DIR cmake variables.
+project(boost_numpy CXX)
 
 message(STATUS "Configuring project \"${PROJECT_NAME}\"")
 message(STATUS "+    project source dir: ${PROJECT_SOURCE_DIR}")
 
 set(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY TRUE
-    CACHE BOOL "BoostNumpy configured successfully." FORCE)
+    CACHE BOOL "${PROJECT_NAME} configured successfully." FORCE)
 
 include(${CMAKE_SOURCE_DIR}/cmake/config.cmake)
 
@@ -17,12 +17,12 @@ include(${CMAKE_SOURCE_DIR}/cmake/tools/boost.cmake)
 
 if((NOT PYTHON_FOUND) OR (NOT NUMPY_FOUND) OR (NOT BOOST_FOUND))
     set(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY FALSE
-        CACHE BOOL "BoostNumpy configured successfully." FORCE)
+        CACHE BOOL "${PROJECT_NAME} configured successfully." FORCE)
 endif((NOT PYTHON_FOUND) OR (NOT NUMPY_FOUND) OR (NOT BOOST_FOUND))
 
 if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
 
-    list(APPEND ${PROJECT_NAME}_libboostnumpy_INCLUDE_DIRS
+    list(APPEND ${PROJECT_NAME}_libboost_numpy_INCLUDE_DIRS
         ${PYTHON_INCLUDE_DIRS}
         ${NUMPY_INCLUDE_DIR}
         ${Boost_INCLUDE_DIR}
@@ -30,7 +30,7 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
         ${PROJECT_SOURCE_DIR}/src
     )
 
-    list(APPEND ${PROJECT_NAME}_libboostnumpy_SOURCE_FILES
+    list(APPEND ${PROJECT_NAME}_libboost_numpy_SOURCE_FILES
         src/boost/numpy/detail/iter.cpp
         src/boost/numpy/dtype.cpp
         src/boost/numpy/matrix.cpp
@@ -39,25 +39,25 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
         src/boost/numpy/scalars.cpp
     )
 
-    list(APPEND ${PROJECT_NAME}_libboostnumpy_LIBRARIES
+    list(APPEND ${PROJECT_NAME}_libboost_numpy_LIBRARIES
         ${PYTHON_LIBRARIES}
         ${Boost_LIBRARIES}
     )
 
     include_directories(
-        ${${PROJECT_NAME}_libboostnumpy_INCLUDE_DIRS}
+        ${${PROJECT_NAME}_libboost_numpy_INCLUDE_DIRS}
     )
-    add_library(boostnumpy
-        ${${PROJECT_NAME}_libboostnumpy_SOURCE_FILES}
+    add_library(boost_numpy
+        ${${PROJECT_NAME}_libboost_numpy_SOURCE_FILES}
     )
-    target_link_libraries(boostnumpy
-        ${${PROJECT_NAME}_libboostnumpy_LIBRARIES}
+    target_link_libraries(boost_numpy
+        ${${PROJECT_NAME}_libboost_numpy_LIBRARIES}
     )
-    get_target_property(${PROJECT_NAME}_libboostnumpy_LIBRARY_OUTPUT_DIRECTORY
-        boostnumpy LIBRARY_OUTPUT_DIRECTORY)
-    add_custom_command(TARGET boostnumpy
+    get_target_property(${PROJECT_NAME}_libboost_numpy_LIBRARY_OUTPUT_DIRECTORY
+        boost_numpy LIBRARY_OUTPUT_DIRECTORY)
+    add_custom_command(TARGET boost_numpy
         PRE_LINK
-        COMMAND mkdir -p ${${PROJECT_NAME}_libboostnumpy_LIBRARY_OUTPUT_DIRECTORY}
+        COMMAND mkdir -p ${${PROJECT_NAME}_libboost_numpy_LIBRARY_OUTPUT_DIRECTORY}
     )
 
     # Install all the public header files into the include directory.
@@ -68,13 +68,13 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
     )
 
     # Install the shared libraries into the library directory.
-    install(TARGETS boostnumpy
+    install(TARGETS boost_numpy
         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/
     )
 
     # Install the documentation into <PREFIX>/share/doc.
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/boostnumpy
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/boost_numpy
         PATTERN ".svn" EXCLUDE
     )
 
