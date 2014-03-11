@@ -11,13 +11,6 @@ set(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY TRUE
 
 include(${CMAKE_SOURCE_DIR}/cmake/config.cmake)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
-    CACHE PATH "Output directory for static libraries." FORCE)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
-    CACHE PATH "Output directory for shared libraries." FORCE)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
-    CACHE PATH "Output directory for executables and DLL's." FORCE)
-
 include(${CMAKE_SOURCE_DIR}/cmake/tools/python.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/NumPy.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/boost.cmake)
@@ -69,19 +62,19 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
 
     # Install all the public header files into the include directory.
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/
         FILES_MATCHING PATTERN "*.hpp"
         PATTERN ".svn" EXCLUDE
     )
 
     # Install the shared libraries into the library directory.
     install(TARGETS boostnumpy
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/
     )
 
     # Install the documentation into <PREFIX>/share/doc.
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/BoostNumpy-${BOOSTNUMPY_VERSION_STRING}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/boostnumpy
         PATTERN ".svn" EXCLUDE
     )
 
