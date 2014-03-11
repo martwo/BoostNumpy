@@ -54,6 +54,16 @@ struct is_correct_number_of_kwargs
             type;
 };
 
+template <class KW>
+python::detail::keywords<1 + KW::size>
+make_self_plus_kwargs(KW const & kwargs)
+{
+    python::detail::keywords<1 + KW::size> self_plus_kw;
+    self_plus_kw.elements[0].name = "self";
+    std::copy(kwargs.elements, kwargs.elements+KW::size, self_plus_kw.elements+1);
+    return self_plus_kw;
+}
+
 template <
       unsigned InArity
     , class FTypes
@@ -194,8 +204,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         {
             BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
 
-            return ( python::arg("self")
-                   , kwargs
+            return ( make_self_plus_kwargs(kwargs)
                    , python::arg("nthreads")
                    );
         }
@@ -246,9 +255,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         {
             BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
 
-            return ( python::arg("self")
-                   , kwargs
-                   );
+            return make_self_plus_kwargs(kwargs);
         }
 
         python::object
@@ -299,8 +306,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         {
             BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
 
-            return ( python::arg("self")
-                   , kwargs
+            return ( make_self_plus_kwargs(kwargs)
                    , python::arg("nthreads")=1
                    , python::arg("out")=python::object()
                    );
@@ -352,8 +358,7 @@ struct callable_in_arity<IN_ARITY, FTypes, MappingDefinition, WiringModel, Threa
         {
             BOOST_NUMPY_DSTREAM__is_correct_number_of_kwargs(KW::size, IN_ARITY)
 
-            return ( python::arg("self")
-                   , kwargs
+            return ( make_self_plus_kwargs(kwargs)
                    , python::arg("out")=python::object()
                    );
         }
