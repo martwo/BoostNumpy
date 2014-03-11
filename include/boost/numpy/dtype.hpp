@@ -110,8 +110,18 @@ template <int bits>
 dtype
 get_complex_dtype();
 
+template <typename T>
+struct is_intish
+{
+    BOOST_STATIC_CONSTANT(bool, value =
+        (::boost::type_traits::ice_or<
+            ::boost::is_integral<T>::value,
+            ::boost::is_enum<T>::value
+         >::value));
+};
+
 //______________________________________________________________________________
-template <typename T, bool is_integral=boost::is_integral<T>::value>
+template <typename T, bool is_integral=is_intish<T>::value>
 struct builtin_dtype;
 
 template <typename T>
