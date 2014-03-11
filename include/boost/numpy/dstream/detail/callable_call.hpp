@@ -56,7 +56,7 @@ struct construct_result<0>
 {
     static
     python::object
-    apply()
+    apply(python::object const & out_obj)
     {
         return python::object();
     }

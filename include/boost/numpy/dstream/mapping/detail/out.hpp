@@ -28,6 +28,7 @@
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
+#include <boost/numpy/dstream/mapping/detail/core_shape.hpp>
 
 namespace boost {
 namespace numpy {
@@ -48,6 +49,9 @@ struct out<0>
     struct core_shapes
     {
         BOOST_STATIC_CONSTANT(unsigned, arity = 0);
+
+        typedef typename core_shape<0>::shape<>::type
+                core_shape_t0;
     };
 };
 
