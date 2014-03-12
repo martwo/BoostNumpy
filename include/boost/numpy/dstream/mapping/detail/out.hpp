@@ -49,9 +49,6 @@ struct out<0>
     struct core_shapes
     {
         BOOST_STATIC_CONSTANT(unsigned, arity = 0);
-
-        typedef typename core_shape<0>::shape<>::type
-                core_shape_t0;
     };
 };
 

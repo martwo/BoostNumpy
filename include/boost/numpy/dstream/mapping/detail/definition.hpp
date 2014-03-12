@@ -287,6 +287,15 @@ struct all_mapping_arrays_are_scalars_arity<N, Mapping>
 
 #define N BOOST_PP_ITERATION()
 
+// In case the output mapping has arity 0, any array of the output is
+// unspecified.
+template <>
+struct mapping_array_select<out<0>::core_shapes<numpy::mpl::unspecified>, N>
+{
+    typedef numpy::mpl::unspecified
+            type;
+};
+
 template <class Mapping>
 struct mapping_array_select<Mapping, N>
 {

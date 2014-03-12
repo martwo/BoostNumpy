@@ -204,6 +204,13 @@ struct is_scalar
             type;
 };
 
+template <>
+struct is_scalar<numpy::mpl::unspecified>
+{
+    typedef boost::mpl::false_
+            type;
+};
+
 template <class T>
 struct is_1d
 {
@@ -211,6 +218,13 @@ struct is_1d
                 typename is_core_shape<T>::type
               , typename boost::mpl::equal_to<typename T::base::nd, boost::mpl::integral_c<unsigned, 1> >
             >::type
+            type;
+};
+
+template <>
+struct is_1d<numpy::mpl::unspecified>
+{
+    typedef boost::mpl::false_
             type;
 };
 
