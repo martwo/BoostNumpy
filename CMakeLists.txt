@@ -64,8 +64,8 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
     )
 
     # Install all the public header files into the include directory.
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/boost/numpy
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/boost
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/boost
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/
         FILES_MATCHING PATTERN "*.hpp"
         PATTERN ".svn" EXCLUDE
     )
