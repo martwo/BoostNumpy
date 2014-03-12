@@ -347,11 +347,12 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
 
             intptr_t const parallel_iter_size = n_tasks_per_thread * task_size;
 
+#ifndef NDEBUG
             std::cout << "Launching " << nthreads << " threads with "
                       << n_tasks_per_thread << " tasks per thread "
                       << "and a task size of " << task_size << "."
                       << std::endl;
-
+#endif
             // Make nthreads - 1 copies of the iter object and store it inside
             // the vector. This will call NpyIter_Copy for each made copy.
             std::vector<numpy::detail::iter> iter_vec(nthreads - 1, iter);

@@ -116,7 +116,9 @@ struct loop_service_arity<N>
             // iteration.
             if(_loop_shape.size() == 0)
             {
+#ifndef NDEBUG
                 std::cout << "Do a virtual loop" << std::endl;
+#endif
                 _is_virtual_loop = true;
                 _loop_shape.push_back(1);
                 #define BOOST_PP_LOCAL_MACRO(n) \

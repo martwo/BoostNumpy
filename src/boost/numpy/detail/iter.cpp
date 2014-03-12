@@ -27,6 +27,7 @@
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/detail/iter.hpp>
 
+#ifndef NDEBUG
 #define print_c_array(NAME, SIZE) \
     std::cout << #NAME << ": [";\
     for(int i=0; i<SIZE; ++i)\
@@ -35,6 +36,9 @@
         std::cout << NAME[i];\
     }\
     std::cout << "]" << std::endl;
+#else
+#define print_c_array(NAME, SIZE)
+#endif
 
 namespace boost {
 namespace numpy {

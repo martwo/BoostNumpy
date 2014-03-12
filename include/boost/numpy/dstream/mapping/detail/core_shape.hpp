@@ -182,7 +182,9 @@ typename boost::lazy_enable_if<
 >::type
 operator,(CoreShapeLHS const &, CoreShapeRHS const &)
 {
+#ifndef NDEBUG
     std::cout << "Creating cshape_tuple<2> type" << std::endl;
+#endif
     return core_shape_tuple<2>::core_shapes<CoreShapeLHS, CoreShapeRHS>();
 }
 
@@ -309,7 +311,9 @@ typename boost::lazy_enable_if<
 >::type
 operator,(CoreShapeTuple const &, CoreShape const &)
 {
+#ifndef NDEBUG
     std::cout << "Creating core_shape_tuple<"<<N<<"> type" << std::endl;
+#endif
     return typename make_core_shape_tuple<N>::impl<CoreShapeTuple,CoreShape>::type();
 }
 

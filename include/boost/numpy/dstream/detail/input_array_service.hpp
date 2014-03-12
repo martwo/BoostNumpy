@@ -57,7 +57,9 @@ class input_array_service
         }
         if(shape_changed)
         {
+#ifndef NDEBUG
             std::cout << "input_array_service: reshape array" << std::endl;
+#endif
             arr_ = arr_.reshape(arr_shape_);
         }
 
