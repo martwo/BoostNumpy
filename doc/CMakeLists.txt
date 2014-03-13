@@ -1,27 +1,24 @@
 if(SPHINX_FOUND)
 
-    file(GLOB BOOST_NUMPY_DOC_DEPS conf.py *.rst)
-
-    message(STATUS "BOOST_NUMPY_DOC_DEPS=${BOOST_NUMPY_DOC_DEPS}")
-
-    add_custom_target(doc-html
+    add_custom_target(html
         ${SPHINX_BUILD}
             -b html
             -c ${CMAKE_CURRENT_SOURCE_DIR}
             -d .doctrees
             ${CMAKE_CURRENT_SOURCE_DIR}
-            _html
+            html
 
-        DEPENDS ${BOOST_NUMPY_DOC_DEPS}
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMENT "Generating HTML Documentation"
     )
 
-    set_property(TARGET doc-html PROPERTY FOLDER "doc")
+    add_custom_command(TARGET html
+        PRE_BUILD
+        COMMAND mkdir -p ${PROJECT_BINARY_DIR}/html
+    )
 
     install(DIRECTORY ${PROJECT_BINARY_DIR}/html
-        DESTINATION share/doc/libboost_numpy
-        OPTIONAL
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/libboost_numpy
     )
 
 else()
