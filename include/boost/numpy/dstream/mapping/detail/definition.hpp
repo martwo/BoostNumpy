@@ -23,11 +23,8 @@
 
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/arithmetic/add.hpp>
-#include <boost/preprocessor/arithmetic/div.hpp>
 #include <boost/preprocessor/arithmetic/sub.hpp>
-#include <boost/preprocessor/arithmetic/mul.hpp>
 #include <boost/preprocessor/iterate.hpp>
-#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/punctuation/comma.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
 
