@@ -5,8 +5,9 @@
 Converter
 =========
 
-Converters are used to automatically convert between return and output types and
-argument and core shape types, respectively. Converters are MPL functions.
+Converters are meta-functions and are used to automatically convert C++ function
+return types into output mapping types, and C++ function argument types into
+core shape types.
 
 .. toctree::
    :maxdepth: 3

@@ -47,30 +47,16 @@ struct threads_allowed
   : boost::mpl::bool_<b>
 {};
 
-}// namespace threading
-
 template <unsigned n>
 struct min_n_tasks_per_thread
   : boost::mpl::integral_c<unsigned, n>
 {};
 
-template <class ThreadsAllowed, class MinNTasksPerThread>
-struct thread_ability;
-
-template <unsigned n>
-struct min_thread_chunck_size
-  : threading::thread_ability_selector_type
-{
-    typedef thread_ability<
-                  threading::threads_allowed<true>
-                , min_n_tasks_per_thread<n>
-            >
-            type;
-};
+}// namespace threading
 
 template <
       class ThreadsAllowed
-    , class MinNTasksPerThread = min_n_tasks_per_thread<BOOST_NUMPY_DSTREAM_DEFAULT_MIN_N_TASKS_PER_THREAD>
+    , class MinNTasksPerThread = threading::min_n_tasks_per_thread<BOOST_NUMPY_DSTREAM_DEFAULT_MIN_N_TASKS_PER_THREAD>
 >
 struct thread_ability
   : threading::thread_ability_type
@@ -83,6 +69,17 @@ struct thread_ability
 
     typedef MinNTasksPerThread
             min_n_tasks_per_thread_t;
+};
+
+template <unsigned n>
+struct min_thread_size
+  : threading::thread_ability_selector_type
+{
+    typedef thread_ability<
+                  threading::threads_allowed<true>
+                , threading::min_n_tasks_per_thread<n>
+            >
+            type;
 };
 
 struct allow_threads
@@ -99,7 +96,7 @@ struct no_threads
 {
     typedef thread_ability<
                   threading::threads_allowed<false>
-                , min_n_tasks_per_thread<0>
+                , threading::min_n_tasks_per_thread<0>
             >
             type;
 };
