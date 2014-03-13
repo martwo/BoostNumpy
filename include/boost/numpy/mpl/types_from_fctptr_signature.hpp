@@ -32,11 +32,13 @@
 #ifndef BOOST_NUMPY_MPL_OUTIN_TYPES_FROM_FCTPTR_SIGNATURE_HPP_INCLUDED
 #define BOOST_NUMPY_MPL_OUTIN_TYPES_FROM_FCTPTR_SIGNATURE_HPP_INCLUDED
 
+#include <boost/preprocessor/arithmetic/add.hpp>
 #include <boost/preprocessor/arithmetic/sub.hpp>
 #include <boost/preprocessor/iteration/iterate.hpp>
 #include <boost/preprocessor/iteration/local.hpp>
-#include <boost/preprocessor/punctuation/comma_if.hpp>
+#include <boost/preprocessor/punctuation/comma.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/bool.hpp>
@@ -201,13 +203,24 @@ struct types_from_fctptr_signature_impl<
 template <class FTypes>
 struct all_fct_args_are_scalars_arity<N, FTypes>
 {
-    typedef typename boost::mpl::and_<
-                #define BOOST_PP_LOCAL_MACRO(n) \
-                    BOOST_PP_COMMA_IF(n) boost::is_scalar<typename FTypes:: BOOST_PP_CAT(arg_type,n) >
-                #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-                #include BOOST_PP_LOCAL_ITERATE()
-            >::type
+    // By default, boost::mpl::and_ has only a maximal arity of 5, so we have
+    // to construct a sequence of boost::mpl::and_<.,.> with always, two
+    // arguments.
+    #define BOOST_NUMPY_DEF_is_scalar(n) \
+        boost::is_scalar<typename FTypes:: BOOST_PP_CAT(arg_type,n) >
+    #define BOOST_NUMPY_DEF_pre_and(z, n, data) \
+        typename boost::mpl::and_<
+    #define BOOST_NUMPY_DEF_post_and(z, n, data) \
+        BOOST_PP_COMMA() BOOST_NUMPY_DEF_is_scalar(BOOST_PP_ADD(n,1)) >::type
+
+    typedef BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF_pre_and, ~)
+            BOOST_NUMPY_DEF_is_scalar(0)
+            BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF_post_and, ~)
             type;
+
+    #undef BOOST_NUMPY_DEF_post_and
+    #undef BOOST_NUMPY_DEF_pre_and
+    #undef BOOST_NUMPY_DEF_is_scalar
 };
 
 #endif // BOOST_PP_ITERATION_FLAGS

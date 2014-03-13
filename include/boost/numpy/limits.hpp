@@ -22,11 +22,11 @@
 #include <boost/mpl/limits/vector.hpp>
 
 #ifndef BOOST_NUMPY_LIMIT_INPUT_ARITY
-    #define BOOST_NUMPY_LIMIT_INPUT_ARITY 5//10
+    #define BOOST_NUMPY_LIMIT_INPUT_ARITY 10
 #endif
 
 #ifndef BOOST_NUMPY_LIMIT_OUTPUT_ARITY
-    #define BOOST_NUMPY_LIMIT_OUTPUT_ARITY 5//10
+    #define BOOST_NUMPY_LIMIT_OUTPUT_ARITY 10
 #endif
 
 // No changes below this line !!!

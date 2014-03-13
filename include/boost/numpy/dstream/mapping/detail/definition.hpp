@@ -22,10 +22,14 @@
 #define BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_DEFINITION_HPP_INCLUDED
 
 #include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/arithmetic/add.hpp>
+#include <boost/preprocessor/arithmetic/div.hpp>
 #include <boost/preprocessor/arithmetic/sub.hpp>
+#include <boost/preprocessor/arithmetic/mul.hpp>
 #include <boost/preprocessor/iterate.hpp>
 #include <boost/preprocessor/iteration/local.hpp>
-#include <boost/preprocessor/punctuation/comma_if.hpp>
+#include <boost/preprocessor/punctuation/comma.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/equal_to.hpp>
@@ -263,8 +267,6 @@ struct out_mapping
 #endif // !BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_DEFINITION_HPP_INCLUDED
 #else
 
-
-
 #if BOOST_PP_ITERATION_FLAGS() == 1
 
 #define N BOOST_PP_ITERATION()
@@ -272,13 +274,24 @@ struct out_mapping
 template <class Mapping>
 struct all_mapping_arrays_are_scalars_arity<N, Mapping>
 {
-    typedef typename boost::mpl::and_<
-                #define BOOST_PP_LOCAL_MACRO(n) \
-                    BOOST_PP_COMMA_IF(n) boost::is_same< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
-                #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-                #include BOOST_PP_LOCAL_ITERATE()
-            >::type
+    // By default, boost::mpl::and_ has only a maximal arity of 5, so we have
+    // to construct a sequence of boost::mpl::and_<.,.> with always, two
+    // arguments.
+    #define BOOST_NUMPY_DEF_is_same(n) \
+        boost::is_same< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
+    #define BOOST_NUMPY_DEF_pre_and(z, n, data) \
+        typename boost::mpl::and_<
+    #define BOOST_NUMPY_DEF_post_and(z, n, data) \
+        BOOST_PP_COMMA() BOOST_NUMPY_DEF_is_same(BOOST_PP_ADD(n,1)) >::type
+
+    typedef BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF_pre_and, ~)
+            BOOST_NUMPY_DEF_is_same(0)
+            BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF_post_and, ~)
             type;
+
+    #undef BOOST_NUMPY_DEF_post_and
+    #undef BOOST_NUMPY_DEF_pre_and
+    #undef BOOST_NUMPY_DEF_is_same
 };
 
 #undef N
@@ -306,7 +319,5 @@ struct mapping_array_select<Mapping, N>
 #undef N
 
 #endif // BOOST_PP_ITERATION_FLAGS
-
-
 
 #endif // BOOST_PP_IS_ITERATING
