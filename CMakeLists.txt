@@ -16,6 +16,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
 
 include(${CMAKE_SOURCE_DIR}/cmake/tools/python.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/NumPy.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/tools/sphinx.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/boost.cmake)
 
 if((NOT PYTHON_FOUND) OR (NOT NUMPY_FOUND) OR (NOT BOOST_FOUND))
@@ -80,6 +81,8 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
         DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/boost_numpy
         PATTERN ".svn" EXCLUDE
     )
+
+    add_subdirectory(doc)
 
     message(STATUS "Project \"${PROJECT_NAME}\" configured.")
     message(STATUS "+    Now, type-in \"cd ${CMAKE_BINARY_DIR} && make && make install\"!")
