@@ -19,6 +19,7 @@ if(SPHINX_FOUND)
 
     install(DIRECTORY ${PROJECT_BINARY_DIR}/html
         DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/libboost_numpy
+        OPTIONAL
     )
 
 else()
