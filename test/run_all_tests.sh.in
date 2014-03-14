@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+echo "Run all test scripts."
+echo "$@"
+for test_script in $@
+do
+    echo "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@/run_test.sh ${test_script} ..."
+    @CMAKE_RUNTIME_OUTPUT_DIRECTORY@/run_test.sh ${test_script}
+done

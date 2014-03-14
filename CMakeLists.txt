@@ -13,7 +13,10 @@ include(${CMAKE_SOURCE_DIR}/cmake/config.cmake)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
     CACHE PATH "Output directory for shared libraries." FORCE)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    CACHE PATH "Output directory for executables like tests.")
 
+include(${CMAKE_SOURCE_DIR}/cmake/add_python_module.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/python.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/NumPy.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/sphinx.cmake)
@@ -77,6 +80,7 @@ if(BOOST_NUMPY_CONFIGURED_SUCCESSFULLY)
     )
 
     add_subdirectory(doc)
+    add_subdirectory(test)
 
     message(STATUS "Project \"${PROJECT_NAME}\" configured.")
     message(STATUS "+    Now, type-in \"cd ${CMAKE_BINARY_DIR} && make && make install\"!")
