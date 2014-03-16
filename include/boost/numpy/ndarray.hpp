@@ -34,7 +34,7 @@
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/type_traits/is_same.hpp>
 
-#include <boost/numpy/detail/prefix.hpp>
+#include <boost/python.hpp>
 
 #include <boost/numpy/numpy_c_api.hpp>
 #include <boost/numpy/dtype.hpp>

@@ -41,13 +41,12 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/remove_reference.hpp>
 
+#include <boost/python.hpp>
 #include <boost/python/signature.hpp>
 #include <boost/python/object/add_to_namespace.hpp>
 #include <boost/python/object/py_function.hpp>
 #include <boost/python/object/function_object.hpp>
 #include <boost/python/refcount.hpp>
-
-#include <boost/numpy/detail/prefix.hpp>
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
