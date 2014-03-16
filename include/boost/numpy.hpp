@@ -40,7 +40,7 @@ namespace numpy {
  *            and "import_ufunc()", and then calls
  *            dtype::register_scalar_converters().
  */
-void initialize(bool register_scalar_converters=true);
+void initialize();
 
 }// namespace numpy
 }// namespace boost

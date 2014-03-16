@@ -2,16 +2,15 @@
  * $Id$
  *
  * Copyright (C)
- * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ * 2013 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  * 2010-2012
  *     Jim Bosch
  *
  * @file    boost/numpy/numpy.cpp
  * @version $Revision$
  * @date    $Date$
- * @author  Martin Wolf <martin.wolf@icecube.wisc.edu>,
+ * @author  Martin Wolf <boostnumpy@martin-wolf.org>,
  *          Jim Bosch
  *
  * @brief This file implements the boost::numpy utility functions.
@@ -25,16 +24,20 @@
 #define BOOST_NUMPY_INTERNAL_IMPL_MAIN
 #include <boost/numpy/internal_impl.hpp>
 
+// The numpy C-API must be included before boost headers, otherwise a
+// pyconfig.h:1161:0: warning: "_POSIX_C_SOURCE" redefined compiler warning gets
+// issued.
 #include <boost/numpy/numpy_c_api.hpp>
-#include <boost/numpy/dtype.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/version.hpp>
 
+#include <boost/numpy/dtype.hpp>
+
 namespace boost {
 namespace numpy {
 
-void initialize(bool register_scalar_converters)
+void initialize()
 {
     // Check if the boost version is at least 1.38. For previous versions this
     // library has not been tested.
@@ -47,11 +50,8 @@ void initialize(bool register_scalar_converters)
     import_array();
     //import_ufunc();
 
-    if(register_scalar_converters)
-    {
-        dtype::register_scalar_converters();
-    }
+    dtype::register_scalar_converters();
 }
 
-}/*numpy*/
-}/*boost*/
+}// namespace numpy
+}// namespace boost
