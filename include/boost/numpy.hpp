@@ -3,16 +3,15 @@
  *
  * Copyright (C)
  * 2013
- *     Martin Wolf <martin.wolf@fysik.su.se>
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  * 2010-2012
  *     Jim Bosch
  *
  * @file boost/numpy.hpp
  * @version $Revision$
  * @date $Date$
- * @author Martin Wolf <martin.wolf@fysik.su.se>
- * @brief This file is the main public header file for boost::numpy. It includes
- *        the boost/python.hpp header file.
+ * @author Martin Wolf <boostnumpy@martin-wolf.org>
+ * @brief This file is the main public header file for boost::numpy.
  *
  *        This file is distributed under the Boost Software License,
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -21,10 +20,11 @@
 #ifndef BOOST_NUMPY_HPP_INCLUDED
 #define BOOST_NUMPY_HPP_INCLUDED
 
-#include <boost/numpy/detail/prefix.hpp>
+#include <boost/python.hpp>
 
-// For user convenience, include also the ndarray boost::python::object class.
+// For user convenience, include also the ndarray and matrix class.
 #include <boost/numpy/ndarray.hpp>
+#include <boost/numpy/matrix.hpp>
 
 namespace boost {
 namespace numpy {
@@ -42,7 +42,7 @@ namespace numpy {
  */
 void initialize(bool register_scalar_converters=true);
 
-}/*numpy*/
-}/*boost*/
+}// namespace numpy
+}// namespace boost
 
 #endif // !BOOST_NUMPY_HPP_INCLUDED

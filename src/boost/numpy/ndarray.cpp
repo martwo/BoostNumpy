@@ -462,7 +462,7 @@ empty(
     dtype const &         dt)
 {
     int nd = python::len(shape);
-    Py_intptr_t dims[nd];
+    intptr_t dims[nd];
     for(int n=0; n<nd; ++n) {
         dims[n] = python::extract<intptr_t>(shape[n]);
     }
