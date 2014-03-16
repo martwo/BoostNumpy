@@ -28,6 +28,10 @@ Start the compilation process::
 
     make
 
+Run all the tests::
+
+    make test
+
 Build the documentation (if Sphinx is installed)::
 
     make html

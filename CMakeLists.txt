@@ -6,7 +6,7 @@ project(BoostNumpy CXX)
 message(STATUS "Configuring project \"${PROJECT_NAME}\"")
 message(STATUS "+    project source dir: ${PROJECT_SOURCE_DIR}")
 
-set(BOOST_NUMPY_CONFIGURED_SUCCESSFULLY TRUE
+set(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY TRUE
     CACHE BOOL "${PROJECT_NAME} configured successfully." FORCE)
 
 include(${CMAKE_SOURCE_DIR}/cmake/config.cmake)
@@ -17,22 +17,27 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
     CACHE PATH "Output directory for executables like tests.")
 
 include(${CMAKE_SOURCE_DIR}/cmake/add_python_module.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/tools/boost.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/python.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/NumPy.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/tools/sphinx.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/tools/boost.cmake)
+
+find_boost()
+find_python()
+find_numpy()
+find_sphinx()
 
 if((NOT PYTHON_FOUND) OR (NOT NUMPY_FOUND) OR (NOT BOOST_FOUND))
-    set(BOOST_NUMPY_CONFIGURED_SUCCESSFULLY FALSE
+    set(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY FALSE
         CACHE BOOL "${PROJECT_NAME} configured successfully." FORCE)
 endif((NOT PYTHON_FOUND) OR (NOT NUMPY_FOUND) OR (NOT BOOST_FOUND))
 
-if(BOOST_NUMPY_CONFIGURED_SUCCESSFULLY)
+if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
 
     list(APPEND ${PROJECT_NAME}_libboost_numpy_INCLUDE_DIRS
         ${PYTHON_INCLUDE_DIRS}
-        ${NUMPY_INCLUDE_DIR}
-        ${Boost_INCLUDE_DIR}
+        ${NUMPY_INCLUDE_DIRS}
+        ${BOOST_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/src
     )
@@ -80,10 +85,12 @@ if(BOOST_NUMPY_CONFIGURED_SUCCESSFULLY)
     )
 
     add_subdirectory(doc)
+
+    enable_testing()
     add_subdirectory(test)
 
     message(STATUS "Project \"${PROJECT_NAME}\" configured.")
     message(STATUS "+    Now, type-in \"cd ${CMAKE_BINARY_DIR} && make && make install\"!")
     message(STATUS "+    \"${PROJECT_NAME}\" will be installed in ${CMAKE_INSTALL_PREFIX}.")
 
-endif(BOOST_NUMPY_CONFIGURED_SUCCESSFULLY)
+endif(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)

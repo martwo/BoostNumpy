@@ -1,37 +1,28 @@
-project(BoostNumpy_test)
-
-enable_testing()
 
 set(${PROJECT_NAME}_RUN_TEST_SCRIPT
     run_test.sh)
-set(${PROJECT_NAME}_RUN_ALL_TESTS_SCRIPT
-    run_all_tests.sh)
 configure_file(${${PROJECT_NAME}_RUN_TEST_SCRIPT}.in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${${PROJECT_NAME}_RUN_TEST_SCRIPT} @ONLY)
-configure_file(${${PROJECT_NAME}_RUN_ALL_TESTS_SCRIPT}.in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${${PROJECT_NAME}_RUN_ALL_TESTS_SCRIPT} @ONLY)
 
 set(${PROJECT_NAME}_TEST_SOURCE_DIR
-    ${PROJECT_SOURCE_DIR})
+    ${PROJECT_SOURCE_DIR}/test)
 set(${PROJECT_NAME}_TEST_COMMAND
     ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${${PROJECT_NAME}_RUN_TEST_SCRIPT})
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/add_python_test.cmake)
-
 list(APPEND ${PROJECT_NAME}_PYMOD_ADD_LIB_LIST
     boost_numpy
-    ${Boost_LIBRARIES})
+    ${BOOST_LIBRARIES})
 
-set(${PROJECT_NAME}_PYTEST_MODULE_LIST "")
-set(${PROJECT_NAME}_PYTEST_PYSCRIPT_LIST "")
+function(add_python_test _NAME _PYSCRIPT)
+
+    # Make a test of the module using the python source file in the test
+    # directory.
+    add_test(${_NAME} ${${PROJECT_NAME}_TEST_COMMAND} ${${PROJECT_NAME}_TEST_SOURCE_DIR}/${_PYSCRIPT})
+
+    # Set the regex to use to recognize a failure since `python testfoo.py`
+    # does not seem to return non-zero with a test failure.
+    set_property(TEST ${_NAME} PROPERTY FAIL_REGULAR_EXPRESSION "ERROR\\:")
+
+endfunction(add_python_test)
 
 add_python_module(ndarray_test_module "${${PROJECT_NAME}_PYMOD_ADD_LIB_LIST}" ndarray_test_module.cpp)
 add_python_test(ndarray_test ndarray_test.py)
-
-add_custom_target(run-all-tests
-    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${${PROJECT_NAME}_RUN_ALL_TESTS_SCRIPT}
-        ${${PROJECT_NAME}_PYTEST_PYSCRIPT_LIST}
-
-    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-    DEPENDS ${${PROJECT_NAME}_PYTEST_MODULE_LIST}
-    COMMENT "Run all test scripts ..."
-    VERBATIM
-)
