@@ -34,7 +34,7 @@ class TestNdarray(unittest.TestCase):
                 a1 = ndarray_test_module.zeros(shape, dt)
                 a2 = v.reshape(a1.shape)
                 self.assertEqual(shape, a1.shape)
-                self.assert_((a1 == a2).all())
+                self.assertTrue((a1 == a2).all())
 
     def test_zeros_as_matrix(self):
         for dtp in self.all_types:
@@ -43,7 +43,7 @@ class TestNdarray(unittest.TestCase):
             v = np.matrix(np.zeros(shape, dtype=dtp))
             a1 = ndarray_test_module.zeros_as_matrix(shape, dt)
             self.assertEqual(shape, a1.shape)
-            self.assert_((a1 == v).all())
+            self.assertTrue((a1 == v).all())
             self.assertEqual(type(a1), type(v))
 
     def test_array(self):
@@ -57,8 +57,8 @@ class TestNdarray(unittest.TestCase):
             a1 = ndarray_test_module.array(a)
             a2 = ndarray_test_module.array(a, dt)
 
-            self.assert_((a1 == v).all())
-            self.assert_((a2 == v).all())
+            self.assertTrue((a1 == v).all())
+            self.assertTrue((a2 == v).all())
             for shape in ((60,),(6,10),(4,3,5),(2,2,3,5)):
                 a1 = a1.reshape(shape)
                 a2 = a2.reshape(shape)
