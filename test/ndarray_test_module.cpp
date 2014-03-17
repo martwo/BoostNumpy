@@ -1,3 +1,23 @@
+/**
+ * $Id$
+ *
+ * Copyright (C)
+ * 2014 - $Date$
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
+ * 2010-2012
+ *     Jim Bosch, Ankit Daftery
+ *
+ * @file test/ndarray_test_module.cpp
+ * @version $Revision$
+ * @date $Date$
+ * @author Martin Wolf <boostnumpy@martin-wolf.org>
+ * @brief This file implements a Python module for basic tests of the
+ *        boost::numpy::ndarray class.
+ *
+ *        This file is distributed under the Boost Software License,
+ *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+ *        http://www.boost.org/LICENSE_1_0.txt).
+ */
 #include <boost/python.hpp>
 #include <boost/numpy.hpp>
 
@@ -6,13 +26,26 @@ namespace np = boost::numpy;
 
 namespace test {
 
-np::ndarray zeros(bp::tuple shape, np::dtype dt) { return np::zeros(shape, dt); }
-np::ndarray array1(bp::object obj) { return np::array(obj); }
-np::ndarray array2(bp::object obj, np::dtype dt) { return np::array(obj, dt); }
-np::ndarray empty(bp::tuple shape, np::dtype dt) { return np::empty(shape, dt);}
-np::ndarray transpose(np::ndarray arr) { return arr.transpose(); }
-np::ndarray squeeze(np::ndarray arr) { return arr.squeeze(); }
-np::ndarray reshape(np::ndarray arr, bp::tuple shape) { return arr.reshape(shape);}
+static np::ndarray zeros(bp::tuple shape, np::dtype dt)
+{ return np::zeros(shape, dt); }
+
+static np::ndarray array1(bp::object obj)
+{ return np::array(obj); }
+
+static np::ndarray array2(bp::object obj, np::dtype dt)
+{ return np::array(obj, dt); }
+
+static np::ndarray empty(bp::tuple shape, np::dtype dt)
+{ return np::empty(shape, dt);}
+
+static np::ndarray transpose(np::ndarray arr)
+{ return arr.transpose(); }
+
+static np::ndarray squeeze(np::ndarray arr)
+{ return arr.squeeze(); }
+
+static np::ndarray reshape(np::ndarray arr, bp::tuple shape)
+{ return arr.reshape(shape);}
 
 }// namespace test
 
