@@ -24,6 +24,9 @@ function(add_python_test _NAME _PYSCRIPT)
 
 endfunction(add_python_test)
 
+add_python_module(dtype_test_module "${${PROJECT_NAME}_PYMOD_ADD_LIB_LIST}" dtype_test_module.cpp)
+add_python_test(dtype_test dtype_test.py)
+
 add_python_module(ndarray_test_module "${${PROJECT_NAME}_PYMOD_ADD_LIB_LIST}" ndarray_test_module.cpp)
 add_python_test(ndarray_test ndarray_test.py)
 
