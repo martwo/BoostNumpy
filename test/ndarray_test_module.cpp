@@ -22,38 +22,38 @@
 #include <boost/numpy.hpp>
 
 namespace bp = boost::python;
-namespace np = boost::numpy;
+namespace bn = boost::numpy;
 
 namespace test {
 
-static np::ndarray zeros(bp::tuple shape, np::dtype dt)
-{ return np::zeros(shape, dt); }
+static bn::ndarray zeros(bp::tuple shape, bn::dtype dt)
+{ return bn::zeros(shape, dt); }
 
-static np::ndarray array1(bp::object obj)
-{ return np::array(obj); }
+static bn::ndarray array1(bp::object obj)
+{ return bn::array(obj); }
 
-static np::ndarray array2(bp::object obj, np::dtype dt)
-{ return np::array(obj, dt); }
+static bn::ndarray array2(bp::object obj, bn::dtype dt)
+{ return bn::array(obj, dt); }
 
-static np::ndarray empty(bp::tuple shape, np::dtype dt)
-{ return np::empty(shape, dt);}
+static bn::ndarray empty(bp::tuple shape, bn::dtype dt)
+{ return bn::empty(shape, dt);}
 
-static np::ndarray transpose(np::ndarray arr)
+static bn::ndarray transpose(bn::ndarray arr)
 { return arr.transpose(); }
 
-static np::ndarray squeeze(np::ndarray arr)
+static bn::ndarray squeeze(bn::ndarray arr)
 { return arr.squeeze(); }
 
-static np::ndarray reshape(np::ndarray arr, bp::tuple shape)
+static bn::ndarray reshape(bn::ndarray arr, bp::tuple shape)
 { return arr.reshape(shape);}
 
 }// namespace test
 
 BOOST_PYTHON_MODULE(ndarray_test_module)
 {
-    np::initialize();
+    bn::initialize();
     bp::def("zeros",           &test::zeros);
-    bp::def("zeros_as_matrix", &test::zeros, np::as_matrix<>());
+    bp::def("zeros_as_matrix", &test::zeros, bn::as_matrix<>());
     bp::def("array",           &test::array1);
     bp::def("array",           &test::array2);
     bp::def("empty",           &test::empty);
