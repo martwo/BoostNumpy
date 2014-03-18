@@ -389,6 +389,15 @@ iter(
         BOOST_PP_REPEAT(N, BOOST_NUMPY_DETAIL_ITER__op_bcr, ~)
     };
 
+    /*
+    // This NDEBUG decision is made at compile time of the boost::numpy library
+    // itself and not when the user compiles its library against boost::numpy.
+    #ifndef NDEBUG
+        print_c_array(itershape, n_iter_axes);
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DETAIL_ITER__print_op_bcr, ~)
+    #endif
+    */
+
     npyiter_ = NpyIter_AdvancedNew(
           nop
         , op
