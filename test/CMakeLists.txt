@@ -32,3 +32,6 @@ add_python_test(ndarray_test ndarray_test.py)
 
 add_python_module(indexing_test_module "${${PROJECT_NAME}_PYMOD_ADD_LIB_LIST}" indexing_test_module.cpp)
 add_python_test(indexing_test indexing_test.py)
+
+add_python_module(dstream_test_module "${${PROJECT_NAME}_PYMOD_ADD_LIB_LIST}" dstream_test_module.cpp)
+add_python_test(dstream_test dstream_test.py)
