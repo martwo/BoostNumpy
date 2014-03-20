@@ -119,6 +119,8 @@ BOOST_PYTHON_MODULE(dstream_test_module)
 
     // Unary void-return functions.
     ds::def("unary_to_void__double", &test::unary_to_void<double>, bp::arg("v"));
+    ds::def("unary_to_void__explmapping__double", &test::unary_to_void<double>, bp::arg("v")
+        , (ds::scalar() >> ds::none()));
     ds::def("unary_to_void__allow_threads__double", &test::unary_to_void<double>, bp::arg("v")
         , ds::allow_threads());
     ds::def("unary_to_void__min_thread_size__double", &test::unary_to_void<double>, bp::arg("v")
@@ -126,6 +128,8 @@ BOOST_PYTHON_MODULE(dstream_test_module)
 
     // Binary void-return functions.
     ds::def("binary_to_void__double", &test::binary_to_void<double>, (bp::args("v1"),"v2"));
+    ds::def("binary_to_void__explmapping__double", &test::binary_to_void<double>, (bp::args("v1"),"v2")
+        , ((ds::scalar(), ds::scalar()) >> ds::none()));
     ds::def("binary_to_void__allow_threads__double", &test::binary_to_void<double>, (bp::args("v1"),"v2")
         , ds::allow_threads());
     ds::def("binary_to_void__min_thread_size__double", &test::binary_to_void<double>, (bp::args("v1"),"v2")

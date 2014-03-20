@@ -41,6 +41,14 @@ namespace boost {
 namespace numpy {
 namespace dstream {
 
+static
+mapping::detail::core_shape_tuple<0>::core_shapes<>
+none()
+{
+    return mapping::detail::core_shape_tuple<0>::core_shapes<>();
+}
+
+static
 mapping::detail::core_shape<0>::shape<>
 scalar()
 {
@@ -61,6 +69,7 @@ scalar()
 #define N BOOST_PP_ITERATION()
 
 template <BOOST_PP_ENUM_PARAMS_Z(1, N, int D)>
+static
 mapping::detail::core_shape<N>::shape<BOOST_PP_ENUM_PARAMS_Z(1, N, D)>
 array()
 {

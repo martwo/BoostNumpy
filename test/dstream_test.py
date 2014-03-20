@@ -21,6 +21,7 @@ class TestDstream(unittest.TestCase):
         a = np.arange(0,100000, dtype=np.float64)
 
         dstream_test_module.unary_to_void__double(a)
+        dstream_test_module.unary_to_void__explmapping__double(a)
         dstream_test_module.unary_to_void__allow_threads__double(a, nthreads=3)
         dstream_test_module.unary_to_void__min_thread_size__double(a, nthreads=3)
 
@@ -55,6 +56,7 @@ class TestDstream(unittest.TestCase):
         a = np.arange(0,100000, dtype=np.float64)
 
         dstream_test_module.binary_to_void__double(a, a)
+        dstream_test_module.binary_to_void__explmapping__double(a, a)
         dstream_test_module.binary_to_void__allow_threads__double(a, a, nthreads=3)
         dstream_test_module.binary_to_void__min_thread_size__double(a, a, nthreads=3)
 

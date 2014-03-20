@@ -52,6 +52,17 @@ struct out<0>
     };
 };
 
+template <>
+struct make_out_mapping<0>
+{
+    template <class CoreShapeTuple>
+    struct impl
+    {
+        typedef out<0>::core_shapes<>
+                type;
+    };
+};
+
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (4, (1, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/out.hpp>, 1))
 #include BOOST_PP_ITERATE()

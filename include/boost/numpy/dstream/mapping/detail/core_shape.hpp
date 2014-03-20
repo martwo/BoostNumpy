@@ -147,6 +147,18 @@ struct core_shape_tuple_base
 template <int LEN>
 struct core_shape_tuple;
 
+template <>
+struct core_shape_tuple<0>
+{
+    template <class Dummy = numpy::mpl::unspecified>
+    struct core_shapes
+      : core_shape_tuple_base<0>
+    {
+        typedef core_shapes<>
+                type;
+    };
+};
+
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 1))
 #include BOOST_PP_ITERATE()
