@@ -194,7 +194,7 @@ struct construct_result<OUT_ARITY>
     );
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_obj(z, n, data)          \
-    python::object BOOST_PP_CAT(out_obj,n) = (out_obj == python::object() ? python::object() : (MappingDefinition::out::arity == 1 ? out_obj : out_obj[0]));
+    python::object BOOST_PP_CAT(out_obj,n) = (out_obj == python::object() ? python::object() : (MappingDefinition::out::arity == 1 ? out_obj : out_obj[n]));
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_service(z, n, data)  \
     numpy::dstream::detail::output_array_service<loop_service_t, BOOST_PP_CAT(out_arr_def,n)> BOOST_PP_CAT(out_arr_service,n)(loop_service, BOOST_PP_CAT(out_obj,n));

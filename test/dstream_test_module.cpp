@@ -56,6 +56,17 @@ binary_to_T_mult(T v1, T v2)
     return v1*v2;
 }
 
+template <typename T>
+static
+std::vector<T>
+binary_to_vectorT(T v1, T v2)
+{
+    std::vector<T> vec(2);
+    vec[0] = v1;
+    vec[1] = v2;
+    return vec;
+}
+
 struct TestClass
 {
     template <typename T>
@@ -152,6 +163,8 @@ BOOST_PYTHON_MODULE(dstream_test_module)
         , ds::allow_threads());
     ds::def("binary_to_T_mult__min_thread_size__double", &test::binary_to_T_mult<double>, (bp::args("v1"),"v2")
         , ds::min_thread_size<32>());
+    ds::def("binary_to_vectorT__tuple__double", &test::binary_to_vectorT<double>, (bp::args("v1"),"v2")
+        , ((ds::scalar(), ds::scalar()) >> (ds::scalar(), ds::scalar())));
 
     bp::class_<test::TestClass, boost::shared_ptr<test::TestClass> >("TestClass")
         // Unary void-return methods.
