@@ -28,6 +28,9 @@
 #ifndef BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
 #define BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
 
+#include <sstream>
+#include <string>
+
 #include <boost/python.hpp>
 
 #include <boost/preprocessor/cat.hpp>
@@ -36,14 +39,31 @@
 #include <boost/preprocessor/punctuation/comma.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
+#include <boost/preprocessor/stringize.hpp>
 
 #include <boost/numpy/numpy_c_api.hpp>
+#include <boost/numpy/detail/logging.hpp>
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/types.hpp>
 
 namespace boost {
 namespace numpy {
 namespace detail {
+
+template <typename ArrElementT>
+std::string
+c_array_to_string(ArrElementT * arr, size_t size)
+{
+    std::stringstream ss;
+    ss << "[";
+    for(size_t i=0; i<size; ++i)
+    {
+        if(i) ss << ", ";
+        ss << arr[i];
+    }
+    ss << "]";
+    return ss.str();
+}
 
 //==============================================================================
 typedef npy_uint32 iter_operand_flags_t;
@@ -357,8 +377,8 @@ iter(
 #define BOOST_NUMPY_DETAIL_ITER__op_bcr(z, n, data)                            \
     BOOST_PP_COMMA_IF(n) BOOST_PP_CAT(op_,n).broadcasting_rules_
 
-#define BOOST_NUMPY_DETAIL_ITER__print_op_bcr(z, n, data) \
-    print_c_array(BOOST_PP_CAT(op_,n).broadcasting_rules_, n_iter_axes);
+#define BOOST_NUMPY_DETAIL_ITER__log_op_bcr(z, n, data) \
+    BOOST_NUMPY_LOG( BOOST_PP_STRINGIZE(BOOST_PP_CAT(op_,n)) << ".broadcasting_rules_: " << c_array_to_string(BOOST_PP_CAT(op_,n).broadcasting_rules_, n_iter_axes) )
 
 iter::
 iter(
@@ -389,14 +409,8 @@ iter(
         BOOST_PP_REPEAT(N, BOOST_NUMPY_DETAIL_ITER__op_bcr, ~)
     };
 
-    /*
-    // This NDEBUG decision is made at compile time of the boost::numpy library
-    // itself and not when the user compiles its library against boost::numpy.
-    #ifndef NDEBUG
-        print_c_array(itershape, n_iter_axes);
-        BOOST_PP_REPEAT(N, BOOST_NUMPY_DETAIL_ITER__print_op_bcr, ~)
-    #endif
-    */
+    BOOST_NUMPY_LOG("itershape: " << c_array_to_string(itershape, n_iter_axes))
+    BOOST_PP_REPEAT(N, BOOST_NUMPY_DETAIL_ITER__log_op_bcr, ~)
 
     npyiter_ = NpyIter_AdvancedNew(
           nop
@@ -417,8 +431,7 @@ iter(
     }
 }
 
-#undef BOOST_NUMPY_DETAIL_ITER__print_op_bcr
-
+#undef BOOST_NUMPY_DETAIL_ITER__log_op_bcr
 #undef BOOST_NUMPY_DETAIL_ITER__op_bcr
 #undef BOOST_NUMPY_DETAIL_ITER__op_dtype_ptr
 #undef BOOST_NUMPY_DETAIL_ITER__op_flags

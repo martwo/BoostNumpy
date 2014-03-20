@@ -45,6 +45,7 @@
 
 #include <boost/utility/enable_if.hpp>
 
+#include <boost/numpy/detail/logging.hpp>
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/mpl/unspecified.hpp>
 #include <boost/numpy/mpl/as_std_vector.hpp>
@@ -194,9 +195,8 @@ typename boost::lazy_enable_if<
 >::type
 operator,(CoreShapeLHS const &, CoreShapeRHS const &)
 {
-#ifndef NDEBUG
-    std::cout << "Creating cshape_tuple<2> type" << std::endl;
-#endif
+    BOOST_NUMPY_LOG("Creating core_shape_tuple<2> type")
+
     return core_shape_tuple<2>::core_shapes<CoreShapeLHS, CoreShapeRHS>();
 }
 
@@ -323,9 +323,9 @@ typename boost::lazy_enable_if<
 >::type
 operator,(CoreShapeTuple const &, CoreShape const &)
 {
-#ifndef NDEBUG
-    std::cout << "Creating core_shape_tuple<"<<N<<"> type" << std::endl;
-#endif
+    BOOST_NUMPY_LOG("Creating core_shape_tuple<"
+        << N << "> type via make_core_shape_tuple.")
+
     return typename make_core_shape_tuple<N>::impl<CoreShapeTuple,CoreShape>::type();
 }
 

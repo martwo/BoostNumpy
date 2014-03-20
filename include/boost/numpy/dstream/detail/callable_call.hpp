@@ -37,6 +37,7 @@
 
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/detail/iter.hpp>
+#include <boost/numpy/detail/logging.hpp>
 #include <boost/numpy/detail/pygil.hpp>
 #include <boost/numpy/dstream/array_definition.hpp>
 #include <boost/numpy/dstream/detail/input_array_service.hpp>
@@ -347,12 +348,10 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
 
             intptr_t const parallel_iter_size = n_tasks_per_thread * task_size;
 
-#ifndef NDEBUG
-            std::cout << "Launching " << nthreads << " threads with "
-                      << n_tasks_per_thread << " tasks per thread "
-                      << "and a task size of " << task_size << "."
-                      << std::endl;
-#endif
+            BOOST_NUMPY_LOG("Launching " << nthreads << " threads with "
+                 << n_tasks_per_thread << " tasks per thread "
+                 << "and a task size of " << task_size << ".")
+
             // Make nthreads - 1 copies of the iter object and store it inside
             // the vector. This will call NpyIter_Copy for each made copy.
             std::vector<numpy::detail::iter> iter_vec(nthreads - 1, iter);

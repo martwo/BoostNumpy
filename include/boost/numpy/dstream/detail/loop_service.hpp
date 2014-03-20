@@ -36,6 +36,7 @@
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 
+#include <boost/numpy/detail/logging.hpp>
 #include <boost/numpy/detail/max.hpp>
 #include <boost/numpy/dstream/detail/input_array_service.hpp>
 
@@ -116,9 +117,8 @@ struct loop_service_arity<N>
             // iteration.
             if(_loop_shape.size() == 0)
             {
-#ifndef NDEBUG
-                std::cout << "Do a virtual loop" << std::endl;
-#endif
+                BOOST_NUMPY_LOG("Do a virtual loop")
+
                 _is_virtual_loop = true;
                 _loop_shape.push_back(1);
                 #define BOOST_PP_LOCAL_MACRO(n) \

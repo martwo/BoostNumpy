@@ -51,6 +51,7 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
 
     list(APPEND ${PROJECT_NAME}_libboost_numpy_SOURCE_FILES
         src/boost/numpy/detail/iter.cpp
+        src/boost/numpy/detail/logging.cpp
         src/boost/numpy/dtype.cpp
         src/boost/numpy/matrix.cpp
         src/boost/numpy/ndarray.cpp

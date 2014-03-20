@@ -25,6 +25,7 @@
 #include <sstream>
 #include <vector>
 
+#include <boost/numpy/detail/logging.hpp>
 #include <boost/numpy/ndarray.hpp>
 
 namespace boost {
@@ -57,9 +58,7 @@ class input_array_service
         }
         if(shape_changed)
         {
-#ifndef NDEBUG
-            std::cout << "input_array_service: reshape array" << std::endl;
-#endif
+            BOOST_NUMPY_LOG("input_array_service: reshape array")
             arr_ = arr_.reshape(arr_shape_);
         }
 
