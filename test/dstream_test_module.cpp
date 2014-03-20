@@ -133,6 +133,8 @@ BOOST_PYTHON_MODULE(dstream_test_module)
 
     // Unary non-void-return functions.
     ds::def("unary_to_T_squared__double", &test::unary_to_T_squared<double>, bp::arg("v"));
+    ds::def("unary_to_T_squared__explmapping__double", &test::unary_to_T_squared<double>, bp::arg("v")
+        , (ds::scalar() >> ds::scalar()));
     ds::def("unary_to_T_squared__allow_threads__double", &test::unary_to_T_squared<double>, bp::arg("v")
         , ds::allow_threads());
     ds::def("unary_to_T_squared__min_thread_size__double", &test::unary_to_T_squared<double>, bp::arg("v")
@@ -140,6 +142,8 @@ BOOST_PYTHON_MODULE(dstream_test_module)
 
     // Binary non-void-return functions.
     ds::def("binary_to_T_mult__double", &test::binary_to_T_mult<double>, (bp::args("v1"),"v2"));
+    ds::def("binary_to_T_mult__explmapping__double", &test::binary_to_T_mult<double>, (bp::args("v1"),"v2")
+        , ((ds::scalar(), ds::scalar()) >> ds::scalar()));
     ds::def("binary_to_T_mult__allow_threads__double", &test::binary_to_T_mult<double>, (bp::args("v1"),"v2")
         , ds::allow_threads());
     ds::def("binary_to_T_mult__min_thread_size__double", &test::binary_to_T_mult<double>, (bp::args("v1"),"v2")

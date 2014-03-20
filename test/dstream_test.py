@@ -29,6 +29,9 @@ class TestDstream(unittest.TestCase):
         o = dstream_test_module.unary_to_T_squared__double(a)
         self.assertTrue((o == r).all())
 
+        o = dstream_test_module.unary_to_T_squared__explmapping__double(a)
+        self.assertTrue((o == r).all())
+
         o = dstream_test_module.unary_to_T_squared__allow_threads__double(a, nthreads=3)
         self.assertTrue((o == r).all())
 
@@ -58,6 +61,9 @@ class TestDstream(unittest.TestCase):
         r = a*a
 
         o = dstream_test_module.binary_to_T_mult__double(a, a)
+        self.assertTrue((o == r).all())
+
+        o = dstream_test_module.binary_to_T_mult__explmapping__double(a, a)
         self.assertTrue((o == r).all())
 
         o = dstream_test_module.binary_to_T_mult__allow_threads__double(a, a, nthreads=3)
