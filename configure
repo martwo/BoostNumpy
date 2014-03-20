@@ -7,6 +7,8 @@ parser = OptionParser()
 parser.add_option("", "--prefix", type="string", dest="prefix", default=".",
     help="The path where the software should get installed to. "
          "By default it installs into the build directory.", metavar="PATH")
+parser.add_option("", "--build_type", type="string", dest="build_type", default="Release",
+    help="The cmake build type. Possible values are: None, Debug, Release")
 (options, args) = parser.parse_args()
 
 print("Configuring boost_numpy ...")
@@ -14,4 +16,4 @@ print("    prefix=%s"%(options.prefix))
 
 system("rm -rf build")
 system("mkdir -p build")
-system("cd build && /usr/bin/env cmake -DCMAKE_INSTALL_PREFIX=\"%s\" .."%(options.prefix))
+system("cd build && /usr/bin/env cmake -DCMAKE_BUILD_TYPE=\"%s\" -DCMAKE_INSTALL_PREFIX=\"%s\" .."%(options.build_type, options.prefix))

@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
 
+# Choose CMAKE_BUILD_TYPE=Release if the user does not specify it.
+if(DEFINED CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel.")
+else()
+   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel.")
+endif()
+
 # Set BoostNumpy_BINARY_DIR and BoostNumpy_SOURCE_DIR cmake variables.
 project(BoostNumpy CXX)
 
