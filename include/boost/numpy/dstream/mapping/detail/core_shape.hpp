@@ -160,7 +160,7 @@ struct core_shape_tuple<0>
 };
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 1))
+    (4, (1, BOOST_NUMPY_LIMIT_MAX_INPUT_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 1))
 #include BOOST_PP_ITERATE()
 
 template <int ND>
@@ -205,7 +205,7 @@ struct make_core_shape_tuple;
 
 // Construct core_shape_tuples of length 3 and above.
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (3, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 3))
+    (4, (3, BOOST_NUMPY_LIMIT_MAX_INPUT_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/core_shape.hpp>, 3))
 #include BOOST_PP_ITERATE()
 
 template <class T>
