@@ -3,6 +3,7 @@ Dependencies
 
 BoostNumpy depends on the following libraries:
 
+- cmake (>= 2.8.3)
 - boost (including boost::python) (>= 1.38)
 - python (>= 2.6)
 - numpy (>= 1.6)

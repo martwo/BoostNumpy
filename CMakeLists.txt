@@ -1,3 +1,16 @@
+#
+# $Id$
+#
+# Copyright (C)
+# 2014 - $Date$
+#     Martin Wolf <boostnumpy@martin-wolf.org>
+#
+# This file implements cmake configuration for building the BoostNumpy tool.
+#
+# This file is distributed under the Boost Software License,
+# Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt).
+#
 cmake_minimum_required(VERSION 2.8.3)
 
 # Choose CMAKE_BUILD_TYPE=Release if the user does not specify it.
@@ -98,7 +111,7 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
     add_subdirectory(test)
 
     message(STATUS "Project \"${PROJECT_NAME}\" configured.")
-    message(STATUS "+    Now, type-in \"cd ${CMAKE_BINARY_DIR} && make && make install\"!")
+    message(STATUS "+    Now, type-in \"cd ${CMAKE_BINARY_DIR} && make && make test && make html && make install\"!")
     message(STATUS "+    \"${PROJECT_NAME}\" will be installed in ${CMAKE_INSTALL_PREFIX}.")
 
 endif(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)

@@ -1,3 +1,17 @@
+#
+# $Id$
+#
+# Copyright (C)
+# 2014 - $Date$
+#     Martin Wolf <boostnumpy@martin-wolf.org>
+#
+# This file implements cmake configuration for generating the BoostNumpy
+# documentation.
+#
+# This file is distributed under the Boost Software License,
+# Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt).
+#
 if(SPHINX_FOUND)
 
     add_custom_target(html
@@ -23,5 +37,14 @@ if(SPHINX_FOUND)
     )
 
 else()
-    message(STATUS "- Sphinx not found, cannot add doc-html target.")
+
+    add_custom_target(html
+        echo "WARNING: Sphinx is not installed. No documentation can be generated!"
+
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+        COMMENT "Generating HTML Documentation"
+    )
+
+    message(STATUS "- Sphinx not found, \"make html\" will do nothing at all.")
+
 endif()

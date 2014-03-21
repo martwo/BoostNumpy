@@ -1,4 +1,17 @@
-
+#
+# $Id$
+#
+# Copyright (C)
+# 2014 - $Date$
+#     Martin Wolf <boostnumpy@martin-wolf.org>
+#
+# This file implements cmake configuration for building the unit tests of the
+# BoostNumpy tool.
+#
+# This file is distributed under the Boost Software License,
+# Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt).
+#
 set(${PROJECT_NAME}_RUN_TEST_SCRIPT
     run_test.sh)
 configure_file(${${PROJECT_NAME}_RUN_TEST_SCRIPT}.in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${${PROJECT_NAME}_RUN_TEST_SCRIPT} @ONLY)
