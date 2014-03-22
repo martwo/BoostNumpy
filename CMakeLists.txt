@@ -74,7 +74,7 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
 
     list(APPEND ${PROJECT_NAME}_libboost_numpy_LIBRARIES
         ${PYTHON_LIBRARIES}
-        ${Boost_LIBRARIES}
+        ${BOOST_LIBRARIES}
     )
 
     include_directories(
