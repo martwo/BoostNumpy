@@ -18,7 +18,8 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
-#include <boost/cstdint.hpp>
+#include <stdint.h>
+//#include <boost/cstdint.hpp>
 #include <boost/python.hpp>
 #include <boost/numpy.hpp>
 
@@ -44,14 +45,22 @@ BOOST_PYTHON_MODULE(dtype_test_module)
     bp::def("equivalent", bn::dtype::equivalent);
 
     // integers, by number of bits
-    bp::def("accept_int8",   &test::accept<boost::int8_t>);
-    bp::def("accept_uint8",  &test::accept<boost::uint8_t>);
-    bp::def("accept_int16",  &test::accept<boost::int16_t>);
-    bp::def("accept_uint16", &test::accept<boost::uint16_t>);
-    bp::def("accept_int32",  &test::accept<boost::int32_t>);
-    bp::def("accept_uint32", &test::accept<boost::uint32_t>);
-    bp::def("accept_int64",  &test::accept<boost::int64_t>);
-    bp::def("accept_uint64", &test::accept<boost::uint64_t>);
+//     bp::def("accept_int8",   &test::accept<boost::int8_t>);
+//     bp::def("accept_uint8",  &test::accept<boost::uint8_t>);
+//     bp::def("accept_int16",  &test::accept<boost::int16_t>);
+//     bp::def("accept_uint16", &test::accept<boost::uint16_t>);
+//     bp::def("accept_int32",  &test::accept<boost::int32_t>);
+//     bp::def("accept_uint32", &test::accept<boost::uint32_t>);
+//     bp::def("accept_int64",  &test::accept<boost::int64_t>);
+//     bp::def("accept_uint64", &test::accept<boost::uint64_t>);
+    bp::def("accept_int8",   &test::accept<int8_t>);
+    bp::def("accept_uint8",  &test::accept<uint8_t>);
+    bp::def("accept_int16",  &test::accept<int16_t>);
+    bp::def("accept_uint16", &test::accept<uint16_t>);
+    bp::def("accept_int32",  &test::accept<int32_t>);
+    bp::def("accept_uint32", &test::accept<uint32_t>);
+    bp::def("accept_int64",  &test::accept<int64_t>);
+    bp::def("accept_uint64", &test::accept<uint64_t>);
 
     // integers, by C name according to NumPy
     bp::def("accept_bool_",  &test::accept<bool>);
