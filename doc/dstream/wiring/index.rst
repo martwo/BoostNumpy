@@ -22,6 +22,6 @@ most cases (see section
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    default_wiring_models

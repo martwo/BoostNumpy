@@ -10,7 +10,7 @@ return types into output mapping types, and C++ function argument types into
 core shape types.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    return_type_to_out_mapping
    arg_type_to_core_shape

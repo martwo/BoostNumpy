@@ -12,7 +12,7 @@ header file::
 
 This main header includes the basic header files like
 ``<boost/numpy/ndarray.hpp>``. Header files for additional BoostNumpy libraries
-like *dstream* need to be included separately.
+such like *dstream* need to be included separately.
 
 .. note::
 
