@@ -128,7 +128,7 @@ from_data_impl(
     dtype const &                    dt,
     std::vector<Py_intptr_t> const & shape,
     std::vector<Py_intptr_t> const & strides,
-    python::object const &           owner,
+    python::object const *           owner,
     bool                             writeable)
 {
     if(shape.size() != strides.size())
@@ -149,8 +149,8 @@ from_data_impl(
         flags = flags | ndarray::F_CONTIGUOUS;
     if(is_aligned(strides, itemsize))
         flags = flags | ndarray::ALIGNED;
-    if(owner == python::object())
-        flags = flags | ndarray::OWNDATA;
+    if(owner && (*owner) == python::object())
+      flags = flags | ndarray::OWNDATA;
 
     ndarray arr(python::detail::new_reference(
         PyArray_NewFromDescr(
@@ -162,7 +162,8 @@ from_data_impl(
             data,
             bn_ndarray_flags_to_npy_array_flags(flags),
             NULL)));
-    arr.set_base(owner);
+    if (owner)
+      arr.set_base(*owner);
     return arr;
 }
 
@@ -173,7 +174,7 @@ from_data_impl(
     dtype const &          dt,
     python::object const & shape,
     python::object const & strides,
-    python::object const & owner,
+    python::object const * owner,
     bool                   writeable)
 {
     std::vector<Py_intptr_t> shape_(python::len(shape));

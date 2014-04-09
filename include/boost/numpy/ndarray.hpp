@@ -355,7 +355,7 @@ from_data_impl(
     dtype const &                    dt,
     std::vector<Py_intptr_t> const & shape,
     std::vector<Py_intptr_t> const & strides,
-    python::object const &           owner,
+    python::object const *           owner,
     bool                             writeable);
 
 //______________________________________________________________________________
@@ -366,7 +366,7 @@ from_data_impl(
     dtype const &          dt,
     Container              shape,
     Container              strides,
-    python::object const & owner,
+    python::object const * owner,
     bool                   writeable,
     typename boost::enable_if< boost::is_integral<typename Container::value_type> >::type* enabled = NULL)
 {
@@ -382,7 +382,7 @@ from_data_impl(
     dtype const &          dt,
     python::object const & shape,
     python::object const & strides,
-    python::object const & owner,
+    python::object const * owner,
     bool                   writeable);
 
 }/*detail*/
@@ -415,7 +415,7 @@ from_data(
     dtype const &          dt,
     Container              shape,
     Container              strides,
-    python::object const & owner)
+    python::object const * owner)
 {
     return detail::from_data_impl(data, dt, shape, strides, owner, true);
 }
@@ -447,7 +447,7 @@ from_data(
     dtype const &          dt,
     Container              shape,
     Container              strides,
-    python::object const & owner)
+    python::object const * owner)
 {
     return detail::from_data_impl(const_cast<void*>(data), dt, shape, strides, owner, false);
 }
