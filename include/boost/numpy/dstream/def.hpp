@@ -494,12 +494,10 @@ class staticmethod_visitor<
       , m_f(f)
       , m_kwargs(kwargs)
       #if N
-      #define BOOST_PP_LOCAL_MACRO(n) \
-          , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
-      #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-      #include BOOST_PP_LOCAL_ITERATE()
-      #undef BOOST_PP_LOCAL_LIMITS
-      #undef BOOST_PP_LOCAL_MACRO
+          #define BOOST_NUMPY_DEF(z, n, data) \
+              , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
+          BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF, ~)
+          #undef BOOST_NUMPY_DEF
       #endif
     {}
 
