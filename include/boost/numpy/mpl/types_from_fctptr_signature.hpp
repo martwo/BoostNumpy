@@ -198,7 +198,8 @@ struct types_from_fctptr_signature_impl<
             in_type_vector;
 };
 
-#elif BOOST_PP_ITERATION_FLAGS() == 2
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 2
 
 template <class FTypes>
 struct all_fct_args_are_scalars_arity<N, FTypes>
@@ -223,7 +224,8 @@ struct all_fct_args_are_scalars_arity<N, FTypes>
     #undef BOOST_NUMPY_DEF_is_scalar
 };
 
-#endif // BOOST_PP_ITERATION_FLAGS
+#endif // BOOST_PP_ITERATION_FLAGS == 2
+#endif // BOOST_PP_ITERATION_FLAGS == 1
 
 #undef N
 

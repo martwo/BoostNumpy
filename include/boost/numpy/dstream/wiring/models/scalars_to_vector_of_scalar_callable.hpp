@@ -212,7 +212,8 @@ struct default_wiring_model_selector<
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/wiring/models/scalars_to_vector_of_scalar_callable.hpp>))
 #include BOOST_PP_ITERATE()
 
-#elif BOOST_PP_ITERATION_DEPTH() == 2
+#else
+#if BOOST_PP_ITERATION_DEPTH() == 2
 
 #define OUT_ARITY BOOST_PP_RELATIVE_ITERATION(1)
 #define IN_ARITY BOOST_PP_ITERATION()
@@ -406,6 +407,7 @@ struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
 #undef IN_ARITY
 #undef OUT_ARITY
 
-#endif // BOOST_PP_ITERATION_DEPTH
+#endif // BOOST_PP_ITERATION_DEPTH == 2
+#endif // BOOST_PP_ITERATION_DEPTH == 1
 
 #endif // BOOST_PP_IS_ITERATING

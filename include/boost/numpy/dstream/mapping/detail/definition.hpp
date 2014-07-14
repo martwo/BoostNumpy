@@ -293,7 +293,8 @@ struct all_mapping_arrays_are_scalars_arity<N, Mapping>
 
 #undef N
 
-#elif BOOST_PP_ITERATION_FLAGS() == 2
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 2
 
 #define N BOOST_PP_ITERATION()
 
@@ -315,6 +316,7 @@ struct mapping_array_select<Mapping, N>
 
 #undef N
 
-#endif // BOOST_PP_ITERATION_FLAGS
+#endif // BOOST_PP_ITERATION_FLAGS == 2
+#endif // BOOST_PP_ITERATION_FLAGS == 1
 
 #endif // BOOST_PP_IS_ITERATING

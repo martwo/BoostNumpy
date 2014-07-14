@@ -150,16 +150,19 @@ struct construct_result<OUT_ARITY>
 
 #undef OUT_ARITY
 
-#elif BOOST_PP_ITERATION_FLAGS() == 2
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 2
 
 // Loop over the InArity.
 #define BOOST_PP_ITERATION_PARAMS_2 \
     (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/detail/callable_call.hpp>))
 #include BOOST_PP_ITERATE()
 
-#endif // BOOST_PP_ITERATION_FLAGS
+#endif // BOOST_PP_ITERATION_FLAGS == 2
+#endif // BOOST_PP_ITERATION_FLAGS == 1
 
-#elif BOOST_PP_ITERATION_DEPTH() == 2
+#else
+#if BOOST_PP_ITERATION_DEPTH() == 2
 
 #define OUT_ARITY BOOST_PP_RELATIVE_ITERATION(1)
 #define IN_ARITY BOOST_PP_ITERATION()
@@ -456,6 +459,7 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
 #undef IN_ARITY
 #undef OUT_ARITY
 
-#endif // BOOST_PP_ITERATION_DEPTH
+#endif // BOOST_PP_ITERATION_DEPTH == 2
+#endif // BOOST_PP_ITERATION_DEPTH == 1
 
 #endif // BOOST_PP_IS_ITERATING

@@ -248,6 +248,8 @@ struct default_mapping_definition_selector<IN_ARITY>
                     BOOST_PP_CAT(in_core_shape_t,n);
         #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY, 1))
         #include BOOST_PP_LOCAL_ITERATE()
+        #undef BOOST_PP_LOCAL_LIMITS
+        #undef BOOST_PP_LOCAL_MACRO
         typedef mapping::detail::in<IN_ARITY>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_core_shape_t) >
                 in_mapping_t;
 
@@ -258,7 +260,8 @@ struct default_mapping_definition_selector<IN_ARITY>
 
 #undef IN_ARITY
 
-#elif BOOST_PP_ITERATION_FLAGS() == 2
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 2
 
 template <
       class F
@@ -364,7 +367,8 @@ void def_with_signature(
     def_with_ftypes(sc, name, f, (f_types_t*)NULL, kwargs BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
 }
 
-#elif BOOST_PP_ITERATION_FLAGS() == 3
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 3
 
 template <
       class F
@@ -402,7 +406,8 @@ def(
     def(sc, name, f, kwargs BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a));
 }
 
-#elif BOOST_PP_ITERATION_FLAGS() == 4
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 4
 
 template <
       class F
@@ -432,6 +437,8 @@ class method_visitor<
           , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
       #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
       #include BOOST_PP_LOCAL_ITERATE()
+      #undef BOOST_PP_LOCAL_LIMITS
+      #undef BOOST_PP_LOCAL_MACRO
       #endif
     {}
 
@@ -458,6 +465,8 @@ class method_visitor<
         BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
     #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
     #include BOOST_PP_LOCAL_ITERATE()
+    #undef BOOST_PP_LOCAL_LIMITS
+    #undef BOOST_PP_LOCAL_MACRO
     #endif
 };
 
@@ -489,6 +498,8 @@ class staticmethod_visitor<
           , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
       #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
       #include BOOST_PP_LOCAL_ITERATE()
+      #undef BOOST_PP_LOCAL_LIMITS
+      #undef BOOST_PP_LOCAL_MACRO
       #endif
     {}
 
@@ -516,10 +527,13 @@ class staticmethod_visitor<
         BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
     #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
     #include BOOST_PP_LOCAL_ITERATE()
+    #undef BOOST_PP_LOCAL_LIMITS
+    #undef BOOST_PP_LOCAL_MACRO
     #endif
 };
 
-#elif BOOST_PP_ITERATION_FLAGS() == 5
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 5
 
 template <
       class F
@@ -593,7 +607,11 @@ staticmethod(
     return visitor;
 }
 
-#endif // BOOST_PP_ITERATION_FLAGS
+#endif // BOOST_PP_ITERATION_FLAGS() == 5
+#endif // BOOST_PP_ITERATION_FLAGS() == 4
+#endif // BOOST_PP_ITERATION_FLAGS() == 3
+#endif // BOOST_PP_ITERATION_FLAGS() == 2
+#endif // BOOST_PP_ITERATION_FLAGS() == 1
 
 #undef N
 

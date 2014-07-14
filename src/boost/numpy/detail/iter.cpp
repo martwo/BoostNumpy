@@ -33,7 +33,8 @@ namespace detail {
 
 //______________________________________________________________________________
 // Generate the constructor definitions for the different input arities.
-#define BOOST_PP_ITERATION_PARAMS_1 (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/detail/iter.hpp>, 2))
+#define BOOST_PP_ITERATION_PARAMS_1 \
+    (4, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/detail/iter.hpp>, 2))
 #include BOOST_PP_ITERATE()
 
 //______________________________________________________________________________

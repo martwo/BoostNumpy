@@ -274,7 +274,8 @@ struct core_shape_tuple<N>
     };
 };
 
-#elif BOOST_PP_ITERATION_FLAGS() == 2
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 2
 
 template <>
 struct core_shape<N>
@@ -299,7 +300,8 @@ struct core_shape<N>
     #undef BOOST_NUMPY_DEF
 };
 
-#elif BOOST_PP_ITERATION_FLAGS() == 3
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 3
 
 template <>
 struct make_core_shape_tuple<N>
@@ -329,7 +331,9 @@ operator,(CoreShapeTuple const &, CoreShape const &)
     return typename make_core_shape_tuple<N>::impl<CoreShapeTuple,CoreShape>::type();
 }
 
-#endif
+#endif // BOOST_PP_ITERATION_FLAGS() == 3
+#endif // BOOST_PP_ITERATION_FLAGS() == 2
+#endif // BOOST_PP_ITERATION_FLAGS() == 1
 
 #undef N
 

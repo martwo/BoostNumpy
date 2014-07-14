@@ -343,7 +343,11 @@ class iter
 
 //==============================================================================
 // Constructor decleration for N operands.
-#elif BOOST_PP_ITERATION_FLAGS() == 1
+
+#else
+// BOOST_PP_IS_ITERATING is true
+
+#if BOOST_PP_ITERATION_FLAGS() == 1
 
 #define N BOOST_PP_ITERATION()
 
@@ -361,7 +365,9 @@ iter(
 
 //==============================================================================
 // Constructor definition for N operands.
-#elif BOOST_PP_ITERATION_FLAGS() == 2
+
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 2
 
 #define N BOOST_PP_ITERATION()
 
@@ -439,4 +445,6 @@ iter(
 
 #undef N
 
+#endif // BOOST_PP_ITERATION_FLAGS() == 2
+#endif // BOOST_PP_ITERATION_FLAGS() == 1
 #endif // !BOOST_PP_IS_ITERATING
