@@ -22,8 +22,8 @@
 #define BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_IN_HPP_INCLUDED
 
 #include <boost/preprocessor/iterate.hpp>
-#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 namespace boost {
 namespace numpy {
@@ -63,12 +63,10 @@ struct in<N>
         BOOST_STATIC_CONSTANT(unsigned, arity = N);
 
         // List all the core shape types as core_shape_tI.
-        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N, 1))
-        #define BOOST_PP_LOCAL_MACRO(n)                                        \
+        #define BOOST_NUMPY_DEF(z, n, data) \
             typedef typename BOOST_PP_CAT(CoreShape, n)::type BOOST_PP_CAT(core_shape_t,n);
-        #include BOOST_PP_LOCAL_ITERATE()
-        #undef BOOST_PP_LOCAL_MACRO
-        #undef BOOST_PP_LOCAL_LIMITS
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
     };
 };
 

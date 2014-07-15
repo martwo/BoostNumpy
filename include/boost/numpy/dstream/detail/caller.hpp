@@ -28,10 +28,10 @@
 #include <boost/preprocessor/dec.hpp>
 #include <boost/preprocessor/if.hpp>
 #include <boost/preprocessor/iterate.hpp>
-#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/repetition/enum_trailing_params.hpp>
 #include <boost/preprocessor/repetition/enum_trailing_binary_params.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/next.hpp>
@@ -151,10 +151,10 @@ struct caller_arity<N>
                     return 0;                                                  \
                 }
 
-            #define BOOST_PP_LOCAL_MACRO(i) BOOST_NUMPY_ARG_CONVERTER(i)
-            #define BOOST_PP_LOCAL_LIMITS (0, N-1) // The -1 is for the
-                                                   // return type.
-            #include BOOST_PP_LOCAL_ITERATE()
+            #define BOOST_NUMPY_DEF(z, n, data) \
+                BOOST_NUMPY_ARG_CONVERTER(n)
+            BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+            #undef BOOST_NUMPY_DEF
 
             #undef BOOST_NUMPY_ARG_CONVERTER
             #undef BOOST_NUMPY_NEXT

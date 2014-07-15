@@ -26,7 +26,6 @@
 #define BOOST_NUMPY_DSTREAM_MAPPING_DETAIL_CORE_SHAPE_HPP_INCLUDED
 
 #include <boost/preprocessor/iterate.hpp>
-#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
@@ -265,12 +264,10 @@ struct core_shape_tuple<N>
         typedef core_shapes<BOOST_PP_ENUM_PARAMS_Z(1, N, CoreShape)>
                 type;
 
-        #define BOOST_PP_LOCAL_MACRO(n) \
+        #define BOOST_NUMPY_DEF(z, n, data) \
             typedef BOOST_PP_CAT(CoreShape,n) BOOST_PP_CAT(core_shape_type_,n);
-        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-        #include BOOST_PP_LOCAL_ITERATE()
-        #undef BOOST_PP_LOCAL_LIMITS
-        #undef BOOST_PP_LOCAL_MACRO
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
     };
 };
 
@@ -292,10 +289,10 @@ struct core_shape<N>
         typedef core_shape_base< boost::mpl::vector< BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~) > >
                 base;
 
-        #define BOOST_PP_LOCAL_MACRO(n) \
+        #define BOOST_NUMPY_MACRO(z, n, data) \
             BOOST_STATIC_CONSTANT(int, BOOST_PP_CAT(dim,n) = BOOST_PP_CAT(Key,n));
-        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-        #include BOOST_PP_LOCAL_ITERATE()
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_MACRO, ~)
+        #undef BOOST_NUMPY_MACRO
     };
     #undef BOOST_NUMPY_DEF
 };

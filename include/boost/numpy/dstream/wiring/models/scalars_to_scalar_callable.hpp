@@ -30,7 +30,6 @@
 #include <boost/preprocessor/arithmetic/add.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/iteration/iterate.hpp>
-#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
@@ -232,10 +231,10 @@ struct scalars_to_scalar_callable_arity<IN_ARITY>
                 api;
 
         // Define the input array value types.
-        #define BOOST_PP_LOCAL_MACRO(n) \
-            typedef typename api::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
-        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
-        #include BOOST_PP_LOCAL_ITERATE()
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            typedef typename api::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n) ;
+        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
 
         /** The iterate method of the wiring model does the iteration and the
          *  actual wiring.
@@ -263,11 +262,11 @@ struct scalars_to_scalar_callable_arity<IN_ARITY>
                 while(size--)
                 {
                     // Construct references to the input array values.
-                    #define BOOST_PP_LOCAL_MACRO(n) \
+                    #define BOOST_NUMPY_DEF(z, n, data) \
                         BOOST_PP_CAT(in_arr_value_t,n) & BOOST_PP_CAT(in_arr_value,n) =\
-                            *reinterpret_cast<BOOST_PP_CAT(in_arr_value_t,n) *>(iter.get_data(MappingDefinition::out::arity + n));
-                    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
-                    #include BOOST_PP_LOCAL_ITERATE()
+                            *reinterpret_cast<BOOST_PP_CAT(in_arr_value_t,n) *>(iter.get_data(MappingDefinition::out::arity + n)) ;
+                    BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
 
                     // Call the scalar function (i.e. the to-be-exposed
                     // function) and implicitly convert between types, in case
@@ -299,10 +298,10 @@ struct scalars_to_scalar_callable_arity<IN_ARITY>
         // Define the output and input array value types.
         typedef typename api::template out_arr_value_type<0>::type
                 out_arr_value_t;
-        #define BOOST_PP_LOCAL_MACRO(n) \
-            typedef typename api::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n);
-        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
-        #include BOOST_PP_LOCAL_ITERATE()
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            typedef typename api::template in_arr_value_type<n>::type BOOST_PP_CAT(in_arr_value_t,n) ;
+        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
 
         template <class ClassT, class FCaller>
         static
@@ -322,11 +321,11 @@ struct scalars_to_scalar_callable_arity<IN_ARITY>
                     // Construct references to the output and input array
                     // values.
                     out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0));
-                    #define BOOST_PP_LOCAL_MACRO(n) \
+                    #define BOOST_NUMPY_DEF(z, n, data) \
                         BOOST_PP_CAT(in_arr_value_t,n) & BOOST_PP_CAT(in_arr_value,n) =\
-                            *reinterpret_cast<BOOST_PP_CAT(in_arr_value_t,n) *>(iter.get_data(MappingDefinition::out::arity + n));
-                    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY,1))
-                    #include BOOST_PP_LOCAL_ITERATE()
+                            *reinterpret_cast<BOOST_PP_CAT(in_arr_value_t,n) *>(iter.get_data(MappingDefinition::out::arity + n)) ;
+                    BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+                    #undef BOOST_NUMPY_DEF
 
                     // Call the scalar function (i.e. the to-be-exposed
                     // function) and implicitly convert between types, in case

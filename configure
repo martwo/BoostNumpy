@@ -16,5 +16,5 @@ print("    prefix=%s"%(options.prefix))
 
 system("rm -rf build")
 system("mkdir -p build")
-#system("cd build && /usr/bin/env cmake -DCMAKE_BUILD_TYPE=\"%s\" -DCMAKE_INSTALL_PREFIX=\"%s\" -DCMAKE_CXX_COMPILER=`which clang++` -DCMAKE_C_COMPILER=`which clang` .."%(options.build_type, options.prefix))
-system("cd build && /usr/bin/env cmake -DCMAKE_BUILD_TYPE=\"%s\" -DCMAKE_INSTALL_PREFIX=\"%s\" -DCMAKE_CXX_COMPILER=`which g++` -DCMAKE_C_COMPILER=`which gcc` .."%(options.build_type, options.prefix))
+system("cd build && /usr/bin/env cmake -DCMAKE_BUILD_TYPE=\"%s\" -DCMAKE_INSTALL_PREFIX=\"%s\" -DCMAKE_CXX_COMPILER=`which clang++` -DCMAKE_C_COMPILER=`which clang` .."%(options.build_type, options.prefix))
+#system("cd build && /usr/bin/env cmake -DCMAKE_BUILD_TYPE=\"%s\" -DCMAKE_INSTALL_PREFIX=\"%s\" -DCMAKE_CXX_COMPILER=`which g++` -DCMAKE_C_COMPILER=`which gcc` .."%(options.build_type, options.prefix))

@@ -243,13 +243,12 @@ struct default_mapping_definition_selector<IN_ARITY>
         typedef typename mapping::converter::detail::return_type_to_out_mapping<typename FTypes::return_type>::type
                 out_mapping_t;
 
-        #define BOOST_PP_LOCAL_MACRO(n) \
+        #define BOOST_NUMPY_DEF(z, n, data) \
             typedef typename mapping::converter::detail::arg_type_to_core_shape<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type \
                     BOOST_PP_CAT(in_core_shape_t,n);
-        #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(IN_ARITY, 1))
-        #include BOOST_PP_LOCAL_ITERATE()
-        #undef BOOST_PP_LOCAL_LIMITS
-        #undef BOOST_PP_LOCAL_MACRO
+        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+
         typedef mapping::detail::in<IN_ARITY>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_core_shape_t) >
                 in_mapping_t;
 
@@ -433,12 +432,10 @@ class method_visitor<
       , m_f(f)
       , m_kwargs(kwargs)
       #if N
-      #define BOOST_PP_LOCAL_MACRO(n) \
-          , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
-      #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-      #include BOOST_PP_LOCAL_ITERATE()
-      #undef BOOST_PP_LOCAL_LIMITS
-      #undef BOOST_PP_LOCAL_MACRO
+          #define BOOST_NUMPY_DEF(z, n, data) \
+              , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
+          BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+          #undef BOOST_NUMPY_DEF
       #endif
     {}
 
@@ -461,12 +458,10 @@ class method_visitor<
     F m_f;
     KW const & m_kwargs;
     #if N
-    #define BOOST_PP_LOCAL_MACRO(n) \
-        BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
-    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-    #include BOOST_PP_LOCAL_ITERATE()
-    #undef BOOST_PP_LOCAL_LIMITS
-    #undef BOOST_PP_LOCAL_MACRO
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
     #endif
 };
 
@@ -496,7 +491,7 @@ class staticmethod_visitor<
       #if N
           #define BOOST_NUMPY_DEF(z, n, data) \
               , BOOST_PP_CAT(m_a,n) ( BOOST_PP_CAT(a,n) )
-          BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF, ~)
+          BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
           #undef BOOST_NUMPY_DEF
       #endif
     {}
@@ -521,12 +516,10 @@ class staticmethod_visitor<
     F m_f;
     KW const & m_kwargs;
     #if N
-    #define BOOST_PP_LOCAL_MACRO(n) \
-        BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
-    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-    #include BOOST_PP_LOCAL_ITERATE()
-    #undef BOOST_PP_LOCAL_LIMITS
-    #undef BOOST_PP_LOCAL_MACRO
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            BOOST_PP_CAT(A,n) const & BOOST_PP_CAT(m_a,n) ;
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
     #endif
 };
 

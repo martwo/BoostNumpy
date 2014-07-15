@@ -32,9 +32,10 @@
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/iterate.hpp>
-#include <boost/preprocessor/iteration/local.hpp>
+//#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/numpy/detail/logging.hpp>
 #include <boost/numpy/detail/max.hpp>
@@ -121,10 +122,10 @@ struct loop_service_arity<N>
 
                 _is_virtual_loop = true;
                 _loop_shape.push_back(1);
-                #define BOOST_PP_LOCAL_MACRO(n) \
+                #define BOOST_NUMPY_DEF(z, n, data) \
                     BOOST_PP_CAT(in_arr_service_,n).prepend_loop_dimension();
-                #define BOOST_PP_LOCAL_LIMITS (0, N-1)
-                #include BOOST_PP_LOCAL_ITERATE()
+                BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+                #undef BOOST_NUMPY_DEF
             }
 
             // Set the broadcasting rules for all input arrays.

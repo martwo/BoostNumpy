@@ -35,7 +35,6 @@
 #include <boost/preprocessor/arithmetic/add.hpp>
 #include <boost/preprocessor/arithmetic/sub.hpp>
 #include <boost/preprocessor/iteration/iterate.hpp>
-#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/punctuation/comma.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
@@ -189,10 +188,10 @@ struct types_from_fctptr_signature_impl<
     BOOST_STATIC_CONSTANT(bool, is_mfp = is_mfp_t::value);
 
     // Define arg_type# sub-types.
-    #define BOOST_PP_LOCAL_MACRO(n) \
+    #define BOOST_NUMPY_DEF(z, n, data) \
         typedef typename boost::mpl::at<Signature, boost::mpl::long_<sig_arg_offset + n> >::type BOOST_PP_CAT(arg_type,n);
-    #define BOOST_PP_LOCAL_LIMITS (0, BOOST_PP_SUB(N,1))
-    #include BOOST_PP_LOCAL_ITERATE()
+    BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+    #undef BOOST_NUMPY_DEF
 
     typedef boost::mpl::vector< BOOST_PP_ENUM_PARAMS_Z(1, N, arg_type) >
             in_type_vector;
