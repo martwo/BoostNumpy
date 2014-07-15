@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+2014-07-15 version 0.1.1
+
+    - Replaced BOOST_PP_LOCAL_ITERATE by BOOST_PP_REPEAT in order to allow gcc
+      4.8.2 to compile with boost 1.54 without huge memory leaks and segfaults.
+      This improves also the compilation with clang 3.4.0, although here it's
+      not that dramaticlly.
+
 2014-03-24 version 0.1.0
 
     - Initial release.
