@@ -207,10 +207,19 @@ view(dtype const & dt) const
 //______________________________________________________________________________
 ndarray
 ndarray::
+flatten(std::string order) const
+{
+    return ndarray(python::detail::new_reference(
+        PyObject_CallMethod(this->ptr(), const_cast<char*>("flatten"), const_cast<char*>("(s)"), const_cast<char*>(order.c_str()))));
+}
+
+//______________________________________________________________________________
+ndarray
+ndarray::
 copy(std::string order) const
 {
     return ndarray(python::detail::new_reference(
-        PyObject_CallMethod(this->ptr(), const_cast<char*>("copy"), const_cast<char*>(order.c_str()))));
+        PyObject_CallMethod(this->ptr(), const_cast<char*>("copy"), const_cast<char*>("(s)"), const_cast<char*>(order.c_str()))));
 }
 
 //______________________________________________________________________________

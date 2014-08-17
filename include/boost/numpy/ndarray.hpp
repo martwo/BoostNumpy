@@ -97,6 +97,13 @@ class ndarray : public python::object
 
     //__________________________________________________________________________
     /**
+     * @brief Flattened copy of the array.
+     */
+    ndarray
+    flatten(std::string order="C") const;
+
+    //__________________________________________________________________________
+    /**
      * @brief Copies the array (deep for all non-object fields). The result
      *         array will have the given order ("C", "F", "A").
      */
