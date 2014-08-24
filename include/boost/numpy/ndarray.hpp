@@ -90,6 +90,16 @@ class ndarray : public python::object
 
     //__________________________________________________________________________
     /**
+     * @brief Copies the elements of the array into a std::vector. The
+     *        dtype constructed from the value_type must be equivalent to the
+     *        dtype of the array.
+     */
+    template<typename T>
+    std::vector<T>
+    as_vector() const;
+
+    //__________________________________________________________________________
+    /**
      * @brief Returns a view of the array with the given dtype.
      */
     ndarray
@@ -105,7 +115,7 @@ class ndarray : public python::object
     //__________________________________________________________________________
     /**
      * @brief Copies the array (deep for all non-object fields). The result
-     *         array will have the given order ("C", "F", "A").
+     *        array will have the given order ("C", "F", "A").
      */
     ndarray
     copy(std::string order="C") const;
@@ -566,6 +576,30 @@ operator&(ndarray::flags a, ndarray::flags b)
 }
 
 //______________________________________________________________________________
+template<typename T>
+std::vector<T>
+ndarray::
+as_vector() const
+{
+    // Check if the dtype of the given element type is equivalent to the
+    // dtype of this array.
+    dtype dt = detail::builtin_dtype<T>::get();
+    if(! dtype::equivalent(get_dtype(), dt))
+    {
+        PyErr_SetString(PyExc_TypeError,
+            "The given type is not equivalent to the array data type!");
+        python::throw_error_already_set();
+    }
+    const intptr_t N = get_size();
+
+    std::vector<T> vec(
+        reinterpret_cast<T *>(get_data())
+      , reinterpret_cast<T *>(get_data()) + N
+    );
+    return vec;
+}
+
+//______________________________________________________________________________
 template <typename R, typename T>
 typename enable_if< boost::mpl::and_< is_same<R, python::object>, is_base_of<python::object, T> >, python::object>::type
 ndarray::
@@ -629,7 +663,6 @@ operator=(ndarray::object_cref rhs)
  * \brief Checks if the given boost::python::object object is any scalar value
  *     (either a Python scalar or a numpy array scalar (i.e. nd=0).
  */
-inline
 bool
 is_any_scalar(python::object const & obj);
 

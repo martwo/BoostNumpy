@@ -149,8 +149,8 @@ from_data_impl(
         flags = flags | ndarray::F_CONTIGUOUS;
     if(is_aligned(strides, itemsize))
         flags = flags | ndarray::ALIGNED;
-    if(owner && (*owner) == python::object())
-      flags = flags | ndarray::OWNDATA;
+    if((!owner) || (owner && (*owner) == python::object()))
+        flags = flags | ndarray::OWNDATA;
 
     ndarray arr(python::detail::new_reference(
         PyArray_NewFromDescr(
@@ -162,8 +162,9 @@ from_data_impl(
             data,
             bn_ndarray_flags_to_npy_array_flags(flags),
             NULL)));
-    if (owner)
-      arr.set_base(*owner);
+    if(owner && (*owner) != python::object()) {
+        arr.set_base(*owner);
+    }
     return arr;
 }
 
@@ -255,14 +256,7 @@ set_base(python::object const & base)
         boost::python::throw_error_already_set();
     }
 #else
-    if(base != python::object())
-    {
-        PyArray_BASE((PyArrayObject*)this->ptr()) = base.ptr();
-    }
-    else
-    {
-        PyArray_BASE((PyArrayObject*)this->ptr()) = NULL;
-    }
+    PyArray_BASE((PyArrayObject*)this->ptr()) = base.ptr();
 #endif
 }
 
