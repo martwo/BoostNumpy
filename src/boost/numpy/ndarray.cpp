@@ -541,5 +541,14 @@ is_any_scalar(python::object const & obj)
     return PyArray_IsAnyScalar(obj.ptr());
 }
 
+//______________________________________________________________________________
+bool
+copy_into(ndarray & dst, ndarray const & src)
+{
+    return (! PyArray_CopyInto(
+                    reinterpret_cast<PyArrayObject*>(dst.ptr())
+                  , reinterpret_cast<PyArrayObject*>(src.ptr())));
+}
+
 }// namespace numpy
 }// namespace boost

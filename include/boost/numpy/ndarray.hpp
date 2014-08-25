@@ -666,6 +666,18 @@ operator=(ndarray::object_cref rhs)
 bool
 is_any_scalar(python::object const & obj);
 
+//______________________________________________________________________________
+/**
+ * \brief Copies the data from the source ndarray into the destination ndarray
+ *     using the PyArray_CopyInto C-API function.
+ *     It performs a data-type conversion if necessary. The shape of src must be
+ *     broadcastable to the shape of dest. The data areas of dest and src must
+ *     not overlap.
+ *     It returns true, after success and false otherwise.
+ */
+bool
+copy_into(ndarray & dst, ndarray const & src);
+
 }// namespace numpy
 }// namespace boost
 
