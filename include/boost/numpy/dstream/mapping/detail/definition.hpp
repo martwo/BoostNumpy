@@ -62,6 +62,8 @@ struct definition
     typedef OutMapping out;
     typedef InMapping in;
 
+    typedef definition<OutMapping, InMapping> type;
+
     typedef typename boost::mpl::if_c<
               out::arity
             , boost::mpl::false_

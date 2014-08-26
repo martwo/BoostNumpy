@@ -83,17 +83,16 @@ struct select_arg_type_to_core_shape
               , typename numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
               >::type
             >::type
-
             type;
 };
 
 template <class T>
 struct arg_type_to_core_shape
-  : select_arg_type_to_core_shape<T>::type
+  : select_arg_type_to_core_shape<T>
 {
-    typedef typename select_arg_type_to_core_shape<T>::type
+    typedef select_arg_type_to_core_shape<T>
             base;
-    typedef typename base::type
+    typedef typename base::type::type
             type;
 };
 

@@ -76,7 +76,7 @@ namespace detail {
  *  function's output and input types. It uses the mapping converters for
  *  converting the output and input types to output and input mapping types.
  */
-template <unsigned InArity>
+template <unsigned InArity, class FTypes>
 struct default_mapping_definition_selector;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
@@ -93,9 +93,9 @@ struct default_selectors
     // Choose the mapping definition: Either the user defined
     // one, or the default one based on the argument and return types of the
     // to-be-exposed function.
-    typedef typename boost::mpl::if_<
-                  boost::is_same<UserMappingDefinition, numpy::mpl::unspecified>
-                , typename default_mapping_definition_selector<FTypes::arity>::template select<FTypes>::type
+    typedef typename boost::mpl::eval_if<
+                  typename boost::is_same<UserMappingDefinition, numpy::mpl::unspecified>::type
+                , typename default_mapping_definition_selector<FTypes::arity, FTypes>::select
                 , UserMappingDefinition
                 >::type
             mapping_definition_t;
@@ -232,10 +232,9 @@ class staticmethod_visitor;
 
 #define IN_ARITY BOOST_PP_ITERATION()
 
-template <>
-struct default_mapping_definition_selector<IN_ARITY>
+template <class FTypes>
+struct default_mapping_definition_selector<IN_ARITY, FTypes>
 {
-    template <class FTypes>
     struct select
     {
         // Construct a boost::numpy::dstream::mapping::detail::out type based on
