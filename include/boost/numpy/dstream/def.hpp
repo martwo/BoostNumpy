@@ -57,9 +57,9 @@
 #include <boost/numpy/dstream/detail/def_helper.hpp>
 #include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape.hpp>
 #include <boost/numpy/dstream/mapping/converter/return_type_to_out_mapping.hpp>
+#include <boost/numpy/dstream/wiring.hpp>
 
 // Include all built-in wiring models.
-#include <boost/numpy/dstream/wiring/default_wiring_model_selector_fwd.hpp>
 #include <boost/numpy/dstream/wiring/models/scalars_to_scalar_callable.hpp>
 #include <boost/numpy/dstream/wiring/models/scalars_to_vector_of_scalar_callable.hpp>
 
@@ -100,7 +100,7 @@ struct default_selectors
                 >::type
             mapping_definition_t;
 
-    typedef typename wiring::default_wiring_model_selector<mapping_definition_t, FTypes>::type
+    typedef typename wiring::default_wiring_model_selector<UserMappingDefinition, FTypes>::type
             wiring_model_selector_t;
 
     typedef default_thread_ability
