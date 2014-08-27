@@ -22,7 +22,10 @@
 
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/if.hpp>
+#include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/is_scalar.hpp>
+
+#include <boost/python/tuple.hpp>
 
 #include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
 #include <boost/numpy/dstream/dim.hpp>
@@ -69,6 +72,14 @@ struct std_vector_of_scalar_to_core_shape
             type;
 };
 
+template <class T, class Enable=void>
+struct boost_python_tuple_to_core_shape
+  : arg_type_to_core_shape_type
+{
+    typedef mapping::detail::core_shape<1>::shape< dim::I >
+            type;
+};
+
 template <class T>
 struct select_arg_type_to_core_shape
 {
@@ -80,7 +91,12 @@ struct select_arg_type_to_core_shape
                 typename numpy::mpl::is_std_vector_of_scalar<T>::type
               , std_vector_of_scalar_to_core_shape<T>
 
-              , typename numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
+              , typename boost::mpl::if_<
+                  typename boost::is_same<T, boost::python::tuple>::type
+                , boost_python_tuple_to_core_shape<T>
+
+                , typename numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
+                >::type
               >::type
             >::type
             type;
