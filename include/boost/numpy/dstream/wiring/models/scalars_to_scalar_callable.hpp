@@ -127,14 +127,6 @@ struct scalars_to_scalar_callable_impl_select
             type;
 };
 
-template <class MappingDefinition, class FTypes>
-struct scalars_to_scalar_callable
-  : scalars_to_scalar_callable_impl_select<MappingDefinition, FTypes>::type
-{
-    typedef scalars_to_scalar_callable<MappingDefinition, FTypes>
-            type;
-};
-
 }// namespace detail
 
 struct scalars_to_scalar_callable
@@ -146,7 +138,7 @@ struct scalars_to_scalar_callable
     >
     struct select
     {
-        typedef detail::scalars_to_scalar_callable<MappingDefinition, FTypes>
+        typedef typename detail::scalars_to_scalar_callable_impl_select<MappingDefinition, FTypes>::type
                 type;
     };
 };
