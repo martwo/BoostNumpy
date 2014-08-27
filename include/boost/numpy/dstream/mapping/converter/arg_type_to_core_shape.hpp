@@ -29,7 +29,11 @@
 
 #include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
 #include <boost/numpy/dstream/dim.hpp>
+
 #include <boost/numpy/dstream/mapping/detail/core_shape.hpp>
+
+// Include some provided converters.
+#include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape/std_vector_of_bp_object.hpp>
 
 namespace boost {
 namespace numpy {
@@ -37,16 +41,8 @@ namespace dstream {
 namespace mapping {
 namespace converter {
 
-namespace detail {
-
-struct arg_type_to_core_shape_type
-{};
-
-}// namespace detail
-
 template <class T, class Enable=void>
 struct arg_type_to_core_shape
-  : detail::arg_type_to_core_shape_type
 {
     // The arg_type_to_core_shape needs to be specialized.
     // Trigger a compilation error with a meaningful message.
@@ -58,7 +54,6 @@ namespace detail {
 
 template <class T, class Enable=void>
 struct scalar_to_core_shape
-  : arg_type_to_core_shape_type
 {
     typedef mapping::detail::core_shape<0>::shape<>
             type;
@@ -66,15 +61,6 @@ struct scalar_to_core_shape
 
 template <class T, class Enable=void>
 struct std_vector_of_scalar_to_core_shape
-  : arg_type_to_core_shape_type
-{
-    typedef mapping::detail::core_shape<1>::shape< dim::I >
-            type;
-};
-
-template <class T, class Enable=void>
-struct boost_python_tuple_to_core_shape
-  : arg_type_to_core_shape_type
 {
     typedef mapping::detail::core_shape<1>::shape< dim::I >
             type;
@@ -91,24 +77,16 @@ struct select_arg_type_to_core_shape
                 typename numpy::mpl::is_std_vector_of_scalar<T>::type
               , std_vector_of_scalar_to_core_shape<T>
 
-              , typename boost::mpl::if_<
-                  typename boost::is_same<T, boost::python::tuple>::type
-                , boost_python_tuple_to_core_shape<T>
-
-                , typename numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
-                >::type
+              , numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
               >::type
             >::type
-            type;
+            apply;
 };
 
 template <class T>
 struct arg_type_to_core_shape
-  : select_arg_type_to_core_shape<T>
 {
-    typedef select_arg_type_to_core_shape<T>
-            base;
-    typedef typename base::type::type
+    typedef typename select_arg_type_to_core_shape<T>::apply::type
             type;
 };
 
