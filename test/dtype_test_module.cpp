@@ -81,4 +81,7 @@ BOOST_PYTHON_MODULE(dtype_test_module)
         bp::def("accept_longdouble",  &test::accept<long double>);
         bp::def("accept_clongdouble", &test::accept< std::complex<long double> >);
     }
+
+    // objects
+    bp::def("accept_object", &test::accept<bp::object>);
 }

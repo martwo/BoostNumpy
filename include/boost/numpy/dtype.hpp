@@ -121,7 +121,7 @@ struct is_intish
 };
 
 //______________________________________________________________________________
-template <typename T, bool is_integral=is_intish<T>::value>
+template <typename T, bool is_integral>
 struct builtin_dtype;
 
 template <typename T>
@@ -157,12 +157,21 @@ struct builtin_dtype<bool, true>
     static dtype get();
 };
 
+template <>
+struct builtin_dtype<boost::python::object, false>
+{
+    static dtype get();
+};
+
 }// namespace detail
 
 template <typename T>
 dtype
 dtype::
-get_builtin() { return detail::builtin_dtype<T>::get(); }
+get_builtin()
+{
+    return detail::builtin_dtype<T, detail::is_intish<T>::value>::get();
+}
 
 }// namespace numpy
 }// namespace boost

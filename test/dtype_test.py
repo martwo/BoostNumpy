@@ -64,5 +64,8 @@ class TestDtype(unittest.TestCase):
             self.assertEquivalent(dtype_test_module.accept_longdouble(f(np.pi)), np.dtype(f))
             self.assertEquivalent(dtype_test_module.accept_clongdouble(c(1+2j)), np.dtype(c))
 
+    def test_object(self):
+        self.assertEquivalent(dtype_test_module.accept_object(object()), np.dtype(np.object_))
+
 if(__name__ == "__main__"):
     unittest.main()

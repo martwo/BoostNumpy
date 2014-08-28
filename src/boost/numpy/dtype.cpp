@@ -83,6 +83,15 @@ get()
 }
 
 //______________________________________________________________________________
+//
+dtype
+builtin_dtype<boost::python::object, false>::
+get()
+{
+    return DTYPE_FROM_CODE(NPY_OBJECT);
+}
+
+//______________________________________________________________________________
 template <int bits, bool is_unsigned>
 struct builtin_int_dtype;
 

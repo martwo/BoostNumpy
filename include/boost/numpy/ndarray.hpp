@@ -583,7 +583,7 @@ as_vector() const
 {
     // Check if the dtype of the given element type is equivalent to the
     // dtype of this array.
-    dtype dt = detail::builtin_dtype<T>::get();
+    dtype dt = dtype::get_builtin<T>();
     if(! dtype::equivalent(get_dtype(), dt))
     {
         PyErr_SetString(PyExc_TypeError,
