@@ -306,6 +306,9 @@ void def_with_ftypes_and_mapping_definition(
     );
 }
 
+// FIXME: Here comes the intermediate function template handling the
+//        null_mapping_definition.
+
 template <
       class F
     , class FTypes
@@ -326,6 +329,12 @@ void def_with_ftypes(
 
     typedef dstream::detail::def_helper<
                   typename default_selectors_t::mapping_definition_t
+                  // FIXME: Use a null_mapping_definition here and introduce a
+                  // new function template that gets the
+                  // default_mapping_definition when the user did not provide
+                  // a mapping definition, i.e.
+                  // def_helper_t::get_mapping_definition() returns the
+                  // null_mapping_definition.
                 , typename default_selectors_t::wiring_model_selector_t
                 , typename default_selectors_t::thread_ability_selector_t
                 BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
