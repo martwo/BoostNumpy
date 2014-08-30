@@ -27,6 +27,10 @@
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/if.hpp>
+#include <boost/type_traits/is_scalar.hpp>
+#include <boost/type_traits/remove_reference.hpp>
+
+#include <boost/numpy/mpl/is_std_vector.hpp>
 
 namespace boost {
 namespace numpy {
@@ -44,44 +48,6 @@ struct arg_from_core_shape_data
     // Trigger a compilation error with a meaningful message.
     BOOST_MPL_ASSERT_MSG(false,
         THE_arg_from_core_shape_data_CONVERTER_NEED_TO_BE_SPECIALIZED_FOR_FUNCTION_ARGUMENT_TYPE_FctArgT_AND_ARRAY_DATA_TYPE_ArrDataHoldingT, (FctArgT, ArrDataHoldingT));
-};
-
-template <class FctArgT, class ArrDataHoldingT, class Enable=void>
-struct boost_python_object_arg_from_core_shape_data
-{
-    typedef boost_python_object_arg_from_core_shape_data<FctArgT, ArrDataHoldingT, Enable>
-            type;
-
-    // The boost_python_object_arg_from_core_shape_data needs to be specialized.
-    // Trigger a compilation error with a meaningful message.
-    BOOST_MPL_ASSERT_MSG(false,
-        THE_boost_python_object_arg_from_core_shape_data_CONVERTER_NEED_TO_BE_SPECIALIZED_FOR_FUNCTION_ARGUMENT_TYPE_FctArgT_AND_ARRAY_DATA_HOLDING_TYPE_ArrDataHoldingT, (FctArgT, ArrDataHoldingT));
-};
-
-template <class FctArgT, class ArrDataHoldingT, class Enable=void>
-struct std_vector_of_boost_python_object_arg_from_core_shape_data
-{
-    typedef std_vector_of_boost_python_object_arg_from_core_shape_data<FctArgT, ArrDataHoldingT, Enable>
-            type;
-
-    // The std_vector_of_boost_python_object_arg_from_core_shape_data needs to
-    // be specialized.
-    // Trigger a compilation error with a meaningful message.
-    BOOST_MPL_ASSERT_MSG(false,
-        THE_std_vector_of_boost_python_object_arg_from_core_shape_data_CONVERTER_NEED_TO_BE_SPECIALIZED_FOR_FUNCTION_ARGUMENT_TYPE_FctArgT_AND_ARRAY_DATA_HOLDING_TYPE_ArrDataHoldingT, (FctArgT, ArrDataHoldingT));
-};
-
-template <class FctArgT, class ArrDataHoldingT, class Enable=void>
-struct std_vector_of_scalar_arg_from_core_shape_data
-{
-    typedef std_vector_of_scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT, Enable>
-            type;
-
-    // The std_vector_of_boost_python_object_arg_from_core_shape_data needs to
-    // be specialized.
-    // Trigger a compilation error with a meaningful message.
-    BOOST_MPL_ASSERT_MSG(false,
-        THE_std_vector_of_scalar_arg_from_core_shape_data_CONVERTER_NEED_TO_BE_SPECIALIZED_FOR_FUNCTION_ARGUMENT_TYPE_FctArgT_AND_ARRAY_DATA_HOLDING_TYPE_ArrDataHoldingT, (FctArgT, ArrDataHoldingT));
 };
 
 namespace detail {
@@ -155,18 +121,8 @@ struct bp_object_arg_from_core_shape_data
     typedef typename boost::mpl::eval_if<
               typename is_same<ArrDataHoldingT, python::object>::type
             , bp_object_arg_from_bp_object_core_shape_data<FctArgT>
-            , ::boost::numpy::dstream::wiring::converter::boost_python_object_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
-            >::type
-            type;
-};
 
-template <class FctArgT, class ArrDataHoldingT>
-struct std_vector_of_bp_object_arg_from_core_shape_data
-{
-    typedef typename boost::mpl::eval_if<
-              typename is_same<ArrDataHoldingT, python::object>::type
-            , std_vector_of_bp_object_arg_from_bp_object_core_shape_data<FctArgT>
-            , ::boost::numpy::dstream::wiring::converter::std_vector_of_boost_python_object_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+            , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
             >::type
             type;
 };
@@ -239,9 +195,42 @@ struct std_vector_of_scalar_arg_from_core_shape_data
     typedef typename boost::mpl::eval_if<
               typename is_same<typename remove_reference<typename bare_arg_t::value_type>::type, ArrDataHoldingT>::type
             , std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ArrDataHoldingT>
-            , ::boost::numpy::dstream::wiring::converter::std_vector_of_scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+
+            , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
             >::type
             type;
+};
+
+template <class FctArgT, class ArrDataHoldingT>
+struct std_vector_of_bp_object_arg_from_core_shape_data
+{
+    typedef typename boost::mpl::eval_if<
+              typename is_same<ArrDataHoldingT, python::object>::type
+            , std_vector_of_bp_object_arg_from_bp_object_core_shape_data<FctArgT>
+
+            , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+            >::type
+            type;
+};
+
+template <class FctArgT, class ArrDataHoldingT>
+struct std_vector_arg_from_core_shape_data
+{
+    // Select the special case for the vector's value type.
+    typedef typename FctArgT::value_type
+            vector_value_type;
+    typedef typename boost::mpl::eval_if<
+               typename is_scalar<typename remove_reference<vector_value_type>::type>::type
+             , std_vector_of_scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+
+             , typename boost::mpl::eval_if<
+                 typename is_same<vector_value_type, python::object>::type
+               , std_vector_of_bp_object_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+
+               , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+               >::type
+             >::type
+             type;
 };
 
 //------------------------------------------------------------------------------
@@ -261,15 +250,10 @@ struct select_arg_from_core_shape_data_converter
               , scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
 
               , typename boost::mpl::eval_if<
-                  typename numpy::mpl::is_std_vector_of_scalar<bare_arg_t>::type
-                , std_vector_of_scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+                  typename numpy::mpl::is_std_vector<bare_arg_t>::type
+                , std_vector_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
 
-                , typename boost::mpl::eval_if<
-                    typename numpy::mpl::is_std_vector_of<bare_arg_t, python::object>::type
-                  , std_vector_of_bp_object_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
-
-                  , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
-                  >::type
+                , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
                 >::type
               >::type
             >::type
@@ -277,7 +261,6 @@ struct select_arg_from_core_shape_data_converter
 };
 
 }// namespace detail
-
 }// namespace converter
 }// namespace wiring
 }// namespace dstream
