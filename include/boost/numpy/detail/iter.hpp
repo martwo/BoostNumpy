@@ -224,7 +224,7 @@ class iter
      */
     inline
     intptr_t
-    get_item_size(int i)
+    get_item_size(size_t i)
     {
         return descr_ptr_array_ptr_[i]->elsize;
     }
