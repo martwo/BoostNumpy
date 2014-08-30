@@ -34,24 +34,13 @@ struct wiring_model_type
 struct wiring_model_selector_type
 {};
 
+namespace detail {
+
 struct null_wiring_model_selector
   : wiring_model_selector_type
 {};
 
-// This wiring model selector selects the null_wiring_model_selector which is
-// just a place holder when the MappingDefinition is unspecified.
-template <class MappingDefinition, class FTypes>
-struct default_wiring_model_selector<
-    MappingDefinition
-  , FTypes
-  , typename enable_if<
-        typename boost::is_same<MappingDefinition, numpy::mpl::unspecified>::type
-    >::type
->
-{
-    typedef null_wiring_model_selector
-            type;
-};
+}// namespace detail
 
 //==============================================================================
 /**

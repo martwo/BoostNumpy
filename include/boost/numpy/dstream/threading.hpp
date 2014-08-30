@@ -42,6 +42,14 @@ struct thread_ability_type
   : thread_ability_selector_type
 {};
 
+namespace detail {
+
+struct null_thread_ability_selector
+  : thread_ability_selector_type
+{};
+
+}// namespace detail
+
 template <bool b>
 struct threads_allowed
   : boost::mpl::bool_<b>

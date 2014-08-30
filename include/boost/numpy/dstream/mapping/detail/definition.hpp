@@ -52,6 +52,13 @@ struct mapping_definition_type
 
 namespace detail {
 
+struct null_definition
+  : mapping_definition_type
+{
+    typedef null_definition
+            type;
+};
+
 template <
       class OutMapping
     , class InMapping

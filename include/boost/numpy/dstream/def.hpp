@@ -55,6 +55,7 @@
 #include <boost/numpy/dstream/detail/callable.hpp>
 #include <boost/numpy/dstream/detail/caller.hpp>
 #include <boost/numpy/dstream/detail/def_helper.hpp>
+#include <boost/numpy/dstream/mapping.hpp>
 #include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape.hpp>
 #include <boost/numpy/dstream/mapping/converter/return_type_to_out_mapping.hpp>
 #include <boost/numpy/dstream/wiring.hpp>
@@ -86,21 +87,14 @@ struct default_mapping_definition_selector;
 //==============================================================================
 template <
       class FTypes
-    , class UserMappingDefinition
+    , class MappingDefinition
 >
 struct default_selectors
 {
-    // Choose the mapping definition: Either the user defined
-    // one, or the default one based on the argument and return types of the
-    // to-be-exposed function.
-    typedef typename boost::mpl::eval_if<
-                  typename boost::is_same<UserMappingDefinition, numpy::mpl::unspecified>::type
-                , typename default_mapping_definition_selector<FTypes::arity, FTypes>::select
-                , UserMappingDefinition
-                >::type
+    typedef MappingDefinition
             mapping_definition_t;
 
-    typedef typename wiring::default_wiring_model_selector<UserMappingDefinition, FTypes>::type
+    typedef typename wiring::default_wiring_model_selector<MappingDefinition, FTypes>::type
             wiring_model_selector_t;
 
     typedef default_thread_ability
@@ -306,8 +300,43 @@ void def_with_ftypes_and_mapping_definition(
     );
 }
 
-// FIXME: Here comes the intermediate function template handling the
-//        null_mapping_definition.
+template <
+      class F
+    , class FTypes
+    , class KW
+    , class MappingDefinition
+    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
+>
+void def_with_ftypes_selecting_mapping_definition(
+      python::scope const& sc
+    , char const* name
+    , F f
+    , FTypes *
+    , KW const & kwargs
+    , MappingDefinition const &
+    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
+)
+{
+    // Choose the mapping definition: Either the user defined
+    // one, or the default one based on the argument and return types of the
+    // to-be-exposed function.
+    typedef typename boost::mpl::eval_if<
+                  typename boost::is_same<MappingDefinition, mapping::detail::null_definition>::type
+                , typename default_mapping_definition_selector<FTypes::arity, FTypes>::select
+                , MappingDefinition
+                >::type
+            mapping_definition_t;
+
+    def_with_ftypes_and_mapping_definition(
+          sc
+        , name
+        , f
+        , (FTypes*)NULL
+        , kwargs
+        , mapping_definition_t()
+        BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a)
+    );
+}
 
 template <
       class F
@@ -324,25 +353,16 @@ void def_with_ftypes(
     BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
 )
 {
-    typedef default_selectors<FTypes, numpy::mpl::unspecified>
-            default_selectors_t;
-
     typedef dstream::detail::def_helper<
-                  typename default_selectors_t::mapping_definition_t
-                  // FIXME: Use a null_mapping_definition here and introduce a
-                  // new function template that gets the
-                  // default_mapping_definition when the user did not provide
-                  // a mapping definition, i.e.
-                  // def_helper_t::get_mapping_definition() returns the
-                  // null_mapping_definition.
-                , typename default_selectors_t::wiring_model_selector_t
-                , typename default_selectors_t::thread_ability_selector_t
+                  mapping::detail::null_definition
+                , wiring::detail::null_wiring_model_selector
+                , threading::detail::null_thread_ability_selector
                 BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
             >
             def_helper_t;
     def_helper_t const helper = def_helper_t(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
 
-    def_with_ftypes_and_mapping_definition(
+    def_with_ftypes_selecting_mapping_definition(
           sc
         , name
         , f
