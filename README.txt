@@ -30,7 +30,15 @@ Example::
     }
 
 The square function in Python will accept a numpy array as input and will return
-a numpy array as output. The C++ function will be called for every entry in the
+a numpy array as output::
+
+    import numpy as np
+    import my_py_module
+
+    arr = np.array([1, 2, 3])
+    out = my_py_module.square(arr)
+
+The C++ function will be called for every entry in the
 given input numpy array. Furthermore, the Python function will have an addition
 optional argument named "out=None" in order to pass an already existing output
 numpy array to the function.
