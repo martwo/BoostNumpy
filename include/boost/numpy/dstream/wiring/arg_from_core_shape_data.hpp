@@ -62,6 +62,7 @@ struct bp_object_arg_from_bp_object_core_shape_data
     typedef typename remove_reference<arg_t>::type
             bare_arg_t;
 
+    static
     arg_t
     apply(
         numpy::detail::iter &         iter
@@ -78,6 +79,102 @@ struct bp_object_arg_from_bp_object_core_shape_data
     }
 };
 
+template <class FctArgT, class ArrDataHoldingT>
+struct bp_object_arg_from_core_shape_data
+{
+    typedef typename boost::mpl::eval_if<
+              typename is_same<ArrDataHoldingT, python::object>::type
+            , bp_object_arg_from_bp_object_core_shape_data<FctArgT>
+
+            , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+            >::type
+            type;
+};
+
+template <class FctArgT, class ArrDataHoldingT>
+struct scalar_arg_from_core_shape_data
+{
+    typedef scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+            type;
+
+    typedef FctArgT
+            arg_t;
+    typedef typename remove_reference<arg_t>::type
+            bare_arg_t;
+
+    static
+    arg_t
+    apply(
+        numpy::detail::iter &         iter
+      , size_t                        iter_op_idx
+      , std::vector<intptr_t> const & core_shape
+    )
+    {
+        arg_t arr_value = *reinterpret_cast<bare_arg_t *>(iter.get_data(iter_op_idx));
+        return arr_value;
+    }
+};
+
+//------------------------------------------------------------------------------
+
+template <class FctArgT, class ArrDataHoldingT>
+struct std_vector_of_scalar_arg_from_scalar_core_shape_data
+{
+    typedef std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ArrDataHoldingT>
+            type;
+
+    typedef FctArgT
+            arg_t;
+    typedef typename remove_reference<FctArgT>::type
+            vector_t;
+
+    typedef typename remove_reference<typename vector_t::value_type>::type
+            vector_bare_value_type;
+
+    // Note: The function argument type (i.e. std::vector) cannot be a
+    //       reference but the scalar values can be references to the actual
+    //       stored data.
+    static
+    arg_t
+    apply(
+        numpy::detail::iter &         iter
+      , size_t                        iter_op_idx
+      , std::vector<intptr_t> const & core_shape
+    )
+    {
+        if(core_shape.size() != 1)
+        {
+            PyErr_SetString(PyExc_ValueError,
+                "The core shape of the argument array must be of dimension 1!");
+            python::throw_error_already_set();
+        }
+        intptr_t const N = core_shape[0];
+        intptr_t const op_item_stride = iter.get_item_size(iter_op_idx);
+        vector_t v;
+        v.reserve(N);
+        for(intptr_t i=0; i<N; ++i)
+        {
+            vector_bare_value_type * value_ptr = reinterpret_cast<vector_bare_value_type *>(iter.get_data(iter_op_idx) + i*op_item_stride);
+            v.push_back(*value_ptr);
+        }
+        return v;
+    }
+};
+
+template <class FctArgT, class ArrDataHoldingT>
+struct std_vector_of_scalar_arg_from_core_shape_data
+{
+    typedef typename remove_reference<FctArgT>::type
+            bare_arg_t;
+    typedef typename boost::mpl::eval_if<
+              typename is_same<typename remove_reference<typename bare_arg_t::value_type>::type, ArrDataHoldingT>::type
+            , std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ArrDataHoldingT>
+
+            , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
+            >::type
+            type;
+};
+
 template <class FctArgT>
 struct std_vector_of_bp_object_arg_from_bp_object_core_shape_data
 {
@@ -88,6 +185,7 @@ struct std_vector_of_bp_object_arg_from_bp_object_core_shape_data
     typedef typename remove_reference<arg_t>::type
             bare_arg_t;
 
+    static
     arg_t
     apply(
         numpy::detail::iter &         iter
@@ -116,92 +214,6 @@ struct std_vector_of_bp_object_arg_from_bp_object_core_shape_data
 };
 
 template <class FctArgT, class ArrDataHoldingT>
-struct bp_object_arg_from_core_shape_data
-{
-    typedef typename boost::mpl::eval_if<
-              typename is_same<ArrDataHoldingT, python::object>::type
-            , bp_object_arg_from_bp_object_core_shape_data<FctArgT>
-
-            , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
-            >::type
-            type;
-};
-
-template <class FctArgT, class ArrDataHoldingT>
-struct scalar_arg_from_core_shape_data
-{
-    typedef scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
-            type;
-    typedef FctArgT
-            arg_t;
-    typedef typename remove_reference<arg_t>::type
-            bare_arg_t;
-
-    arg_t
-    apply(
-        numpy::detail::iter &         iter
-      , size_t                        iter_op_idx
-      , std::vector<intptr_t> const & core_shape
-    )
-    {
-        arg_t arr_value = *reinterpret_cast<bare_arg_t *>(iter.get_data(iter_op_idx));
-        return arr_value;
-    }
-};
-
-//------------------------------------------------------------------------------
-
-template <class FctArgT, class ArrDataHoldingT>
-struct std_vector_of_scalar_arg_from_scalar_core_shape_data
-{
-    typedef std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ArrDataHoldingT>
-            type;
-    typedef FctArgT
-            arg_t;
-    typedef typename remove_reference<FctArgT>::type
-            bare_arg_t;
-
-    arg_t
-    apply(
-        numpy::detail::iter &         iter
-      , size_t                        iter_op_idx
-      , std::vector<intptr_t> const & core_shape
-    )
-    {
-        if(core_shape.size() != 1)
-        {
-            PyErr_SetString(PyExc_ValueError,
-                "The core shape of the argument array must be of dimension 1!");
-            python::throw_error_already_set();
-        }
-        intptr_t const N = core_shape[0];
-        intptr_t const op_item_stride = iter.get_item_size(iter_op_idx);
-        bare_arg_t v;
-        v.reserve(N);
-        for(intptr_t i=0; i<N; ++i)
-        {
-            typename bare_arg_t::value_type * value_ptr = reinterpret_cast<typename bare_arg_t::value_type *>(iter.get_data(iter_op_idx) + i*op_item_stride);
-            v.push_back(*value_ptr);
-        }
-        return v;
-    }
-};
-
-template <class FctArgT, class ArrDataHoldingT>
-struct std_vector_of_scalar_arg_from_core_shape_data
-{
-    typedef typename remove_reference<FctArgT>::type
-            bare_arg_t;
-    typedef typename boost::mpl::eval_if<
-              typename is_same<typename remove_reference<typename bare_arg_t::value_type>::type, ArrDataHoldingT>::type
-            , std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ArrDataHoldingT>
-
-            , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
-            >::type
-            type;
-};
-
-template <class FctArgT, class ArrDataHoldingT>
 struct std_vector_of_bp_object_arg_from_core_shape_data
 {
     typedef typename boost::mpl::eval_if<
@@ -214,23 +226,31 @@ struct std_vector_of_bp_object_arg_from_core_shape_data
 };
 
 template <class FctArgT, class ArrDataHoldingT>
-struct std_vector_arg_from_core_shape_data
+struct select_std_vector_arg_from_core_shape_data
 {
     // Select the special case for the vector's value type.
     typedef typename FctArgT::value_type
             vector_value_type;
-    typedef typename boost::mpl::eval_if<
+
+    typedef typename boost::mpl::if_<
                typename is_scalar<typename remove_reference<vector_value_type>::type>::type
              , std_vector_of_scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
 
-             , typename boost::mpl::eval_if<
+             , typename boost::mpl::if_<
                  typename is_same<vector_value_type, python::object>::type
                , std_vector_of_bp_object_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
 
                , ::boost::numpy::dstream::wiring::converter::arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
                >::type
              >::type
-             type;
+             apply;
+};
+
+template <class FctArgT, class ArrDataHoldingT>
+struct std_vector_arg_from_core_shape_data
+{
+    typedef typename select_std_vector_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>::apply::type
+            type;
 };
 
 //------------------------------------------------------------------------------
