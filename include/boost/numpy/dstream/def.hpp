@@ -86,23 +86,6 @@ struct default_mapping_definition_selector;
 
 //==============================================================================
 template <
-      class FTypes
-    , class MappingDefinition
->
-struct default_selectors
-{
-    typedef MappingDefinition
-            mapping_definition_t;
-
-    typedef typename wiring::default_wiring_model_selector<MappingDefinition, FTypes>::type
-            wiring_model_selector_t;
-
-    typedef default_thread_ability
-            thread_ability_selector_t;
-};
-
-//==============================================================================
-template <
       class F
     , class FTypes
     , class KW
@@ -122,14 +105,42 @@ void create_and_add_py_function(
     , ThreadAbilitySelector const &
 )
 {
+    // Choose the mapping definition: Either the user defined
+    // one, or the default one based on the argument and return types of the
+    // to-be-exposed function.
+    typedef typename boost::mpl::eval_if<
+              typename boost::is_same<MappingDefinition, mapping::detail::null_definition>::type
+            , default_mapping_definition_selector<FTypes::arity, FTypes>
+            , MappingDefinition
+            >::type
+            mapping_definition_t;
+
+    // Now that the mapping definition is fixed, we can choose the wiring model
+    // selector. Either the user provided one or the default one.
+    typedef typename boost::mpl::eval_if<
+              typename boost::is_same<WiringModelSelector, wiring::detail::null_wiring_model_selector>::type
+            , wiring::default_wiring_model_selector<mapping_definition_t, FTypes>
+            , WiringModelSelector
+            >::type
+            wiring_model_selector_t;
+
+    // Finally, choose the thread ability selector. Either the user provided one
+    // or the default one.
+    typedef typename boost::mpl::eval_if<
+              typename boost::is_same<ThreadAbilitySelector, threading::detail::null_thread_ability_selector>::type
+            , default_thread_ability
+            , ThreadAbilitySelector
+            >::type
+            thread_ability_t;
+
     // Construct a callable object and a caller object that takes that callable
     // object as argument, so it can call this callable.
     typedef callable<
                   F
                 , FTypes
-                , MappingDefinition
-                , WiringModelSelector::template select
-                , typename ThreadAbilitySelector::type
+                , mapping_definition_t
+                , wiring_model_selector_t::template select
+                , thread_ability_t
             >
             callable_t;
 
@@ -229,114 +240,28 @@ class staticmethod_visitor;
 template <class FTypes>
 struct default_mapping_definition_selector<IN_ARITY, FTypes>
 {
-    struct select
-    {
-        // Construct a boost::numpy::dstream::mapping::detail::out type based on
-        // the FTypes::return_type type.
-        typedef typename mapping::converter::detail::return_type_to_out_mapping<typename FTypes::return_type>::type
-                out_mapping_t;
+    // Construct a boost::numpy::dstream::mapping::detail::out type based on
+    // the FTypes::return_type type.
+    typedef typename mapping::converter::detail::return_type_to_out_mapping<typename FTypes::return_type>::type
+            out_mapping_t;
 
-        #define BOOST_NUMPY_DEF(z, n, data) \
-            typedef typename mapping::converter::detail::arg_type_to_core_shape<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type \
-                    BOOST_PP_CAT(in_core_shape_t,n);
-        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
-        #undef BOOST_NUMPY_DEF
+    #define BOOST_NUMPY_DEF(z, n, data) \
+        typedef typename mapping::converter::detail::arg_type_to_core_shape<typename FTypes:: BOOST_PP_CAT(arg_type,n) >::type \
+                BOOST_PP_CAT(in_core_shape_t,n);
+    BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DEF, ~)
+    #undef BOOST_NUMPY_DEF
 
-        typedef mapping::detail::in<IN_ARITY>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_core_shape_t) >
-                in_mapping_t;
+    typedef mapping::detail::in<IN_ARITY>::core_shapes< BOOST_PP_ENUM_PARAMS_Z(1, IN_ARITY, in_core_shape_t) >
+            in_mapping_t;
 
-        typedef mapping::detail::definition<out_mapping_t, in_mapping_t>
-                type;
-    };
+    typedef mapping::detail::definition<out_mapping_t, in_mapping_t>
+            type;
 };
 
 #undef IN_ARITY
 
 #else
 #if BOOST_PP_ITERATION_FLAGS() == 2
-
-template <
-      class F
-    , class FTypes
-    , class KW
-    , class MappingDefinition
-    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
->
-void def_with_ftypes_and_mapping_definition(
-      python::scope const& sc
-    , char const* name
-    , F f
-    , FTypes *
-    , KW const & kwargs
-    , MappingDefinition const &
-    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
-)
-{
-    // At this point we have a mapping definition selected (either a default
-    // one or the user specified one). Now we select the default wiring model
-    // selector based on the fixed mapping definition and the function's types.
-    typedef default_selectors<FTypes, MappingDefinition>
-            default_selectors_t;
-
-    typedef def_helper<
-                  typename default_selectors_t::mapping_definition_t
-                , typename default_selectors_t::wiring_model_selector_t
-                , typename default_selectors_t::thread_ability_selector_t
-                BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
-            >
-            def_helper_t;
-    def_helper_t const helper = def_helper_t(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
-
-    create_and_add_py_function(
-          sc
-        , name
-        , f
-        , (FTypes*)NULL
-        , kwargs
-        , helper.get_doc()
-        , helper.get_mapping_definition()
-        , helper.get_wiring_model_selector()
-        , helper.get_thread_ability_selector()
-    );
-}
-
-template <
-      class F
-    , class FTypes
-    , class KW
-    , class MappingDefinition
-    BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, class A)
->
-void def_with_ftypes_selecting_mapping_definition(
-      python::scope const& sc
-    , char const* name
-    , F f
-    , FTypes *
-    , KW const & kwargs
-    , MappingDefinition const &
-    BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
-)
-{
-    // Choose the mapping definition: Either the user defined
-    // one, or the default one based on the argument and return types of the
-    // to-be-exposed function.
-    typedef typename boost::mpl::eval_if<
-                  typename boost::is_same<MappingDefinition, mapping::detail::null_definition>::type
-                , typename default_mapping_definition_selector<FTypes::arity, FTypes>::select
-                , MappingDefinition
-                >::type
-            mapping_definition_t;
-
-    def_with_ftypes_and_mapping_definition(
-          sc
-        , name
-        , f
-        , (FTypes*)NULL
-        , kwargs
-        , mapping_definition_t()
-        BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a)
-    );
-}
 
 template <
       class F
@@ -353,23 +278,27 @@ void def_with_ftypes(
     BOOST_PP_ENUM_TRAILING_BINARY_PARAMS_Z(1, N, A, const & a)
 )
 {
+    // We use the def_helper template to determine if the user has provided
+    // additional information.
     typedef dstream::detail::def_helper<
-                  mapping::detail::null_definition
-                , wiring::detail::null_wiring_model_selector
-                , threading::detail::null_thread_ability_selector
-                BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
+              mapping::detail::null_definition
+            , wiring::detail::null_wiring_model_selector
+            , threading::detail::null_thread_ability_selector
+            BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, A)
             >
             def_helper_t;
     def_helper_t const helper = def_helper_t(BOOST_PP_ENUM_PARAMS_Z(1, N, a));
 
-    def_with_ftypes_selecting_mapping_definition(
+    create_and_add_py_function(
           sc
         , name
         , f
         , (FTypes*)NULL
         , kwargs
+        , helper.get_doc()
         , helper.get_mapping_definition()
-        BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, N, a)
+        , helper.get_wiring_model_selector()
+        , helper.get_thread_ability_selector()
     );
 }
 
