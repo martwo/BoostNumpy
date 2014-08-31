@@ -146,6 +146,13 @@ struct fct_return_is_std_vector_of_scalar
             type;
 };
 
+template <class FTypes, unsigned Idx>
+struct fct_arg_type
+{
+    typedef typename boost::mpl::at< typename FTypes::in_type_vector, boost::mpl::long_<Idx> >::type
+            type;
+};
+
 }// namespace mpl
 }// namespace numpy
 }// namespace boost
