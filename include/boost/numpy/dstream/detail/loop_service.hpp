@@ -32,7 +32,6 @@
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/iterate.hpp>
-//#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_binary_params.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
@@ -96,6 +95,28 @@ struct loop_service_arity<N>
     class loop_service
     {
       public:
+        //----------------------------------------------------------------------
+        // Define a boost::mpl::bool_ type specifying if any input array is an
+        // an object array. This information could be needed to set iterator
+        // flags correctly.
+        // Note: By default, boost::mpl::or_ has only a maximal arity of 5, so
+        //       we have to construct a nested sequence of boost::mpl::or_<.,.>
+        //       with always, two arguments.
+        #define BOOST_NUMPY_DEF_pre_or(z, n, data) \
+            typename boost::mpl::or_<
+        #define BOOST_NUMPY_DEF_arr_dtype_is_bp_object(n) \
+            boost::is_same<typename BOOST_PP_CAT(InArrDef,n)::value_type, python::object>
+        #define BOOST_NUMPY_DEF_post_or(z, n, data) \
+            BOOST_PP_COMMA() BOOST_NUMPY_DEF_arr_dtype_is_bp_object(BOOST_PP_ADD(n,1)) >::type
+        typedef BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF_pre_or, ~)
+                BOOST_NUMPY_DEF_arr_dtype_is_bp_object(0)
+                BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF_post_or, ~)
+                object_arrays_are_involved;
+        #undef BOOST_NUMPY_DEF_post_or
+        #undef BOOST_NUMPY_DEF_arr_dtype_is_bp_object
+        #undef BOOST_NUMPY_DEF_pre_or
+        //----------------------------------------------------------------------
+
         #define BOOST_NUMPY_DEF(z, n, data) \
             BOOST_PP_COMMA_IF(n) BOOST_PP_CAT(_in_arr_service_,n) ( BOOST_PP_CAT(in_arr_service_,n) )
         loop_service( BOOST_PP_ENUM_BINARY_PARAMS_Z(1, N, input_array_service< InArrDef, > & in_arr_service_) )

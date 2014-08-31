@@ -168,7 +168,8 @@ struct construct_result<OUT_ARITY>
 #define IN_ARITY BOOST_PP_ITERATION()
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_def(z, n, data) \
-    typedef array_definition< typename MappingDefinition::in::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::api::template in_arr_value_type<n>::type> BOOST_PP_CAT(in_arr_def,n);
+    typedef array_definition< typename MappingDefinition::in::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::api::template in_arr_value_type<n>::type> \
+            BOOST_PP_CAT(in_arr_def,n);
 
 #define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_def(z, n, data) \
     typedef array_definition< typename MappingDefinition::out::BOOST_PP_CAT(core_shape_t,n), typename WiringModel::api::template out_arr_value_type<n>::type> BOOST_PP_CAT(out_arr_def,n);
@@ -296,7 +297,7 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
                 , numpy::detail::iter::flags::BUFFERED
                 , numpy::detail::iter::flags::DELAY_BUFALLOC
                 >::type::value;
-            iter_flags |= WiringModel::api::iter_flags::type::value;
+            iter_flags |= WiringModel::api::template iter_flags<loop_service_t>::type::value;
 
             // Define other iterator properties.
             numpy::order_t order = WiringModel::api::order;
@@ -314,6 +315,16 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
                 BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, OUT_ARITY, out_arr_iter_op)
                 BOOST_PP_ENUM_TRAILING_PARAMS_Z(1, IN_ARITY, in_arr_iter_op)
             );
+
+            bool keep_gil = false;
+            if(iter.iteration_needs_api())
+            {
+                // The iterator needs the Python API, so we can't release the
+                // Python GIL. Thus, we cannot start several threads. So
+                // override the nthreads variable.
+                nthreads = 1;
+                keep_gil = true;
+            }
 
             // Determine how many iterations/tasks each thread needs to perform.
             // This is done by rounding up loop_size / nthreads. This
@@ -362,12 +373,12 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             // Initialize the iterators for their specific range of iteration.
             iter.init_ranged_iteration(0, parallel_iter_size);
             std::vector<boost::numpy::detail::iter>::iterator it;
-            std::vector<boost::numpy::detail::iter>::iterator iter_vec_end = iter_vec.end();
+            std::vector<boost::numpy::detail::iter>::iterator const iter_vec_end = iter_vec.end();
             intptr_t istart = parallel_iter_size;
             for(it=iter_vec.begin(); it!=iter_vec_end; ++it)
             {
-                boost::numpy::detail::iter & iter_ = *it;
-                iter_.init_ranged_iteration(istart, std::min(istart + parallel_iter_size, iter_size));
+                boost::numpy::detail::iter & piter = *it;
+                piter.init_ranged_iteration(istart, std::min(istart + parallel_iter_size, iter_size));
                 istart += parallel_iter_size;
             }
 
@@ -384,10 +395,13 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             //       variable WITHOUT a mutex.
             bool thread_error_flag = false;
 
-            // Release the Python GIL to allow threads.
-            // Note: No Python API calls are allowed after that and before
-            //       pygil.acquire() is called again.
-            pygil.release();
+            if(! keep_gil)
+            {
+                // Release the Python GIL to allow threads.
+                // Note: No Python API calls are allowed after that and before
+                //       pygil.acquire() is called again.
+                pygil.release();
+            }
 
             // Create threads for the second, third, fourth, etc. iterator and
             // add them to a boost::thread_group object.
@@ -428,8 +442,11 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
             // Join all the threads.
             threads.join_all();
 
-            // Acquire the python GIL again.
-            pygil.acquire();
+            if(! keep_gil)
+            {
+                // Acquire the python GIL again.
+                pygil.acquire();
+            }
 
             // Check if any thread failed.
             if(thread_error_flag)

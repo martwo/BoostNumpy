@@ -122,6 +122,14 @@ init_ranged_iteration(intptr_t istart, intptr_t iend)
 }
 
 //______________________________________________________________________________
+bool
+iter::
+iteration_needs_api()
+{
+    return NpyIter_IterationNeedsAPI(npyiter_);
+}
+
+//______________________________________________________________________________
 intptr_t
 iter::
 get_iter_size() const

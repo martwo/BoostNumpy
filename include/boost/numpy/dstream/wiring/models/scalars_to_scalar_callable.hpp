@@ -96,6 +96,7 @@ struct scalars_to_scalar_callable_api
                 type;
     };
 
+    template <class LoopService>
     struct iter_flags
     {
         typedef typename numpy::detail::iter::flags::DONT_NEGATE_STRIDES

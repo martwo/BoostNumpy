@@ -139,6 +139,7 @@ class iter
     /**
      * \brief The destructor deallocates the internal numpy iterator object.
      */
+    virtual
     ~iter();
 
     //__________________________________________________________________________
@@ -179,6 +180,16 @@ class iter
      */
     void
     init_ranged_iteration(intptr_t istart, intptr_t iend);
+
+    //__________________________________________________________________________
+    /**
+     * \brief Checks if the iteration needs the Python API. If true, the Python
+     *        global interpreter lock (GIL) may not released during the
+     *        iteration.
+     * \internal Calls the NpyIter_IterationNeedsAPI numpy function.
+     */
+    bool
+    iteration_needs_api();
 
     //__________________________________________________________________________
     /**
