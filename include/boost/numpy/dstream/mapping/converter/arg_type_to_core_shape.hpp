@@ -69,15 +69,22 @@ struct std_vector_of_scalar_to_core_shape
 template <class T>
 struct select_arg_type_to_core_shape
 {
+    typedef typename remove_reference<T>::type
+            bare_t;
+
+    // Note: We need to use the if_ template here. If we would use the eval_if
+    //       template, always one of the two if blocks (of each if !!) gets
+    //       evaluated. But the evaluation must happen AFTER the converter was
+    //       selected.
     typedef typename boost::mpl::if_<
-              typename is_scalar<typename remove_reference<T>::type>::type
+              typename is_scalar<bare_t>::type
             , scalar_to_core_shape<T>
 
             , typename boost::mpl::if_<
-                typename numpy::mpl::is_std_vector_of_scalar<T>::type
+                typename numpy::mpl::is_std_vector_of_scalar<bare_t>::type
               , std_vector_of_scalar_to_core_shape<T>
 
-              , numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
+              , ::boost::numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
               >::type
             >::type
             apply;
