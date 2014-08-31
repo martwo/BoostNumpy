@@ -241,15 +241,15 @@ struct select_arg_from_core_shape_data_converter
     typedef typename remove_reference<FctArgT>::type
             bare_arg_t;
 
-    typedef typename boost::mpl::eval_if<
+    typedef typename boost::mpl::if_<
               typename is_same<bare_arg_t, python::object>::type
             , bp_object_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
 
-            , typename boost::mpl::eval_if<
+            , typename boost::mpl::if_<
                 typename boost::mpl::and_< typename is_scalar<bare_arg_t>::type, typename is_same<bare_arg_t, ArrDataHoldingT>::type >::type
               , scalar_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
 
-              , typename boost::mpl::eval_if<
+              , typename boost::mpl::if_<
                   typename numpy::mpl::is_std_vector<bare_arg_t>::type
                 , std_vector_arg_from_core_shape_data<FctArgT, ArrDataHoldingT>
 
@@ -257,6 +257,13 @@ struct select_arg_from_core_shape_data_converter
                 >::type
               >::type
             >::type
+            apply;
+};
+
+template <class FctArgT, class ArrDataHoldingT>
+struct arg_from_core_shape_data_converter
+{
+    typedef typename select_arg_from_core_shape_data_converter<FctArgT, ArrDataHoldingT>::apply::type
             type;
 };
 

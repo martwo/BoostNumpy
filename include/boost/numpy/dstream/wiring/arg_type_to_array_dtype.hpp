@@ -13,7 +13,7 @@
  * \brief This file defines the arg_type_to_array_dtype converter template that
  *        should translate a C++ function argument type to a C++ data type which
  *        should be used to construct the ndarray's dtype object (via the
- *        boost::numpy::dtype::get_builtin< converter_result >() function).
+ *        boost::numpy::dtype::get_builtin< converter::type >() function).
  *
  *        This file is distributed under the Boost Software License,
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -48,21 +48,6 @@ struct arg_type_to_array_dtype
 namespace detail {
 
 template <class T>
-struct scalar_arg_type_to_array_dtype
-{
-    typedef typename remove_reference<T>::type
-            bare_t;
-    typedef bare_t
-            type;
-};
-
-struct bp_object_arg_type_to_array_dtype
-{
-    typedef python::object
-            type;
-};
-
-template <class T>
 struct std_vector_arg_type_to_array_dtype
 {
     typedef typename remove_reference<T>::type
@@ -71,34 +56,28 @@ struct std_vector_arg_type_to_array_dtype
             vector_bare_value_type;
 
     typedef typename boost::mpl::eval_if<
-              typename is_scalar<vector_bare_value_type>::type
-            , scalar_arg_type_to_array_dtype<vector_bare_value_type>
-
-            , typename boost::mpl::eval_if<
-                typename is_same<vector_bare_value_type, python::object>::type
-              , bp_object_arg_type_to_array_dtype
-
-              , ::boost::numpy::dstream::wiring::converter::arg_type_to_array_dtype<T>
-              >::type
+              typename numpy::mpl::is_std_vector<vector_bare_value_type>::type
+            , std_vector_arg_type_to_array_dtype<vector_bare_value_type>
+            , boost::mpl::identity<vector_bare_value_type>
             >::type
             type;
 };
 
 template <class T>
-struct arg_type_to_array_dtype
+struct select_arg_type_to_array_dtype
 {
     typedef typename remove_reference<T>::type
             bare_t;
 
-    typedef typename boost::mpl::eval_if<
+    typedef typename boost::mpl::if_<
               typename is_scalar<bare_t>::type
-            , scalar_arg_type_to_array_dtype<T>
+            , boost::mpl::identity<bare_t>
 
-            , typename boost::mpl::eval_if<
+            , typename boost::mpl::if_<
                 typename is_same<bare_t, python::object>::type
-              , bp_object_arg_type_to_array_dtype
+              , boost::mpl::identity<python::object>
 
-              , typename boost::mpl::eval_if<
+              , typename boost::mpl::if_<
                   typename numpy::mpl::is_std_vector<bare_t>::type
                 , std_vector_arg_type_to_array_dtype<T>
 
@@ -106,6 +85,13 @@ struct arg_type_to_array_dtype
                 >::type
               >::type
             >::type
+            apply;
+};
+
+template <class T>
+struct arg_type_to_array_dtype
+{
+    typedef typename select_arg_type_to_array_dtype<T>::apply::type
             type;
 };
 
