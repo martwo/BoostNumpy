@@ -215,8 +215,11 @@ struct construct_result<OUT_ARITY>
         , BOOST_PP_CAT(out_arr_service,n).get_arr_bcr_data()                   \
     );
 
-#define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__arr_core_shapes(z, n, arr_service) \
-    core_shapes.push_back( BOOST_PP_CAT(arr_service,n).get_arr_core_shape() );
+#define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_core_shapes(z, n, arr_service) \
+    out_core_shapes.push_back( BOOST_PP_CAT(arr_service,n).get_arr_core_shape() );
+
+#define BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_core_shapes(z, n, arr_service) \
+    in_core_shapes.push_back( BOOST_PP_CAT(arr_service,n).get_arr_core_shape() );
 
 template <>
 struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
@@ -382,11 +385,12 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
                 istart += parallel_iter_size;
             }
 
-            // Construct core_shapes vector holding the lengths of all
-            // dimensions.
-            std::vector< std::vector<intptr_t> > core_shapes;
-            BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__arr_core_shapes, out_arr_service)
-            BOOST_PP_REPEAT(IN_ARITY,  BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__arr_core_shapes, in_arr_service)
+            // Construct core_shapes vectors for output and input arrays holding
+            // the lengths of all their dimensions.
+            std::vector< std::vector<intptr_t> > out_core_shapes;
+            BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_core_shapes, out_arr_service)
+            std::vector< std::vector<intptr_t> > in_core_shapes;
+            BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_core_shapes, in_arr_service)
 
             // Create an error flag that indicates if an error occurred for any
             // thread.
@@ -414,7 +418,8 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
                         , boost::ref(self)
                         , boost::cref(f_caller)
                         , boost::ref(*it)
-                        , boost::cref(core_shapes)
+                        , boost::cref(out_core_shapes)
+                        , boost::cref(in_core_shapes)
                         , boost::ref(thread_error_flag)
                     );
                     threads.add_thread(t);
@@ -435,7 +440,8 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
                   self
                 , f_caller
                 , iter
-                , core_shapes
+                , out_core_shapes
+                , in_core_shapes
                 , thread_error_flag
             );
 
@@ -461,7 +467,8 @@ struct callable_call_outin_arity<OUT_ARITY, IN_ARITY>
     };
 };
 
-#undef BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__arr_core_shapes
+#undef BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__in_arr_core_shapes
+#undef BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_core_shapes
 #undef BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_iter_op
 #undef BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_iter_op_flags
 #undef BOOST_NUMPY_DSTREAM_DETAIL_CALLABLE_CALL__out_arr_service

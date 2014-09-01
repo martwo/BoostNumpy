@@ -257,7 +257,8 @@ struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
               ClassT & self
             , FCaller const & f_caller
             , numpy::detail::iter & iter
-            , std::vector< std::vector<intptr_t> > const & core_shapes
+            , std::vector< std::vector<intptr_t> > const & out_core_shapes
+            , std::vector< std::vector<intptr_t> > const & in_core_shapes
             , bool & error_flag
         )
         {
@@ -342,7 +343,8 @@ struct scalars_to_vector_of_scalar_callable_arity<OUT_ARITY, IN_ARITY>
               ClassT & self
             , FCaller const & f_caller
             , numpy::detail::iter & iter
-            , std::vector< std::vector<intptr_t> > const & core_shapes
+            , std::vector< std::vector<intptr_t> > const & out_core_shapes
+            , std::vector< std::vector<intptr_t> > const & in_core_shapes
             , bool & error_flag
         )
         {
