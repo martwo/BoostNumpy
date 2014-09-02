@@ -18,12 +18,19 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
+#if !BOOST_PP_IS_ITERATING
+
 #ifndef BOOST_NUMPY_DSTREAM_WIRING_RETURN_TO_CORE_SHAPE_DATA_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_WIRING_RETURN_TO_CORE_SHAPE_DATA_HPP_INCLUDED
 
 #include <stdint.h>
 
+#include <iostream>
 #include <vector>
+
+#include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/mpl/and.hpp>
@@ -32,6 +39,7 @@
 
 #include <boost/type_traits/remove_reference.hpp>
 
+#include <boost/numpy/limits.hpp>
 #include <boost/numpy/detail/iter.hpp>
 #include <boost/numpy/dstream/mapping/detail/definition.hpp>
 
@@ -118,7 +126,12 @@ struct std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, 1>
 
         intptr_t const out_op_value_stride = iter.get_item_size(0);
         intptr_t const N = out_core_shapes[0][0];
-        BOOST_ASSERT(N == result.size());
+        if(result.size() != N)
+        {
+            std::cerr << "The length of the result vector "
+                      << "("<<result.size()<<") must be " << N << "!";
+            return false;
+        }
         for(intptr_t i=0; i<N; ++i)
         {
             out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0) + i*out_op_value_stride);
@@ -128,8 +141,9 @@ struct std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, 1>
     }
 };
 
-// FIXME: Here come all the OutArity specializations for the 1-dimensional
-//        function result.
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (2, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/return_to_core_shape_data.hpp>, 1))
+#include BOOST_PP_ITERATE()
 
 template <class OutMapping, class RT>
 struct select_std_vector_of_scalar_return_to_core_shape_data
@@ -137,7 +151,30 @@ struct select_std_vector_of_scalar_return_to_core_shape_data
     // At this point we know that RT is std::vector<scalar_type>, i.e. the
     // function's result is 1-dimensional. Now we need to distribute the result
     // values according to the out mapping arity.
-    typedef std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, OutMapping::arity>
+    //
+    // If the output arity is 1, the core shape of the output array must be
+    // 1-dimensional, otherwise all output arrays have to have a scalar core
+    // shape, otherwise it's not intuitive how to distribute the scalar values.
+    // Thus, the user needs to provide a converter in such cases.
+    typedef mapping::detail::out_mapping<OutMapping>
+            out_mapping_utils;
+
+    typedef typename boost::mpl::if_<
+              typename out_mapping_utils::template arity_is_equal_to<1>::type
+            , typename boost::mpl::if_<
+                typename out_mapping_utils::template array<0>::is_1d::type
+              , std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, 1>
+
+              , ::boost::numpy::dstream::wiring::converter::return_to_core_shape_data<OutMapping, RT>
+              >::type
+
+            , typename boost::mpl::if_<
+                typename out_mapping_utils::all_arrays_are_scalars::type
+              , std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, OutMapping::arity>
+
+              , ::boost::numpy::dstream::wiring::converter::return_to_core_shape_data<OutMapping, RT>
+              >::type
+            >::type
             apply;
 };
 
@@ -167,6 +204,7 @@ struct nested_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, Nes
       , std::vector< std::vector<intptr_t> > const & out_core_shapes
     )
     {
+        // FIXME
         return true;
     }
 };
@@ -278,3 +316,53 @@ struct return_to_core_shape_data_converter
 }// namespace boost
 
 #endif // ! BOOST_NUMPY_DSTREAM_WIRING_RETURN_TO_CORE_SHAPE_DATA_HPP_INCLUDED
+#else
+
+#if BOOST_PP_ITERATION_FLAGS() == 1
+
+#define OUT_ARITY BOOST_PP_ITERATION()
+
+template <class OutMapping, class RT>
+struct std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, OUT_ARITY>
+{
+    // This implementation is used to put the 1-dimensional result into the
+    // OUT_ARITY scalar output arrays.
+
+    typedef std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, OUT_ARITY>
+            type;
+
+    template <class WiringModelAPI>
+    static
+    bool
+    apply(
+        RT result
+      , numpy::detail::iter & iter
+      , std::vector< std::vector<intptr_t> > const & out_core_shapes
+    )
+    {
+        // Check if the number of scalar values match the output arity.
+        if(result.size() != OUT_ARITY)
+        {
+            std::cerr << "The size of the return vector "
+                      << "("<< result.size() <<") does not match the output "
+                      << "arity ("<< OUT_ARITY <<")!";
+            return false;
+        }
+
+        #define BOOST_NUMPY_DSTREAM_DEF(z, n, data)                                     \
+            typedef typename WiringModelAPI::template out_arr_value_type<n>::type       \
+                    BOOST_PP_CAT(out_arr_value_t,n);                                    \
+            BOOST_PP_CAT(out_arr_value_t,n) & BOOST_PP_CAT(out_arr_value,n) =           \
+                *reinterpret_cast<BOOST_PP_CAT(out_arr_value_t,n) *>(iter.get_data(n)); \
+            BOOST_PP_CAT(out_arr_value,n) = BOOST_PP_CAT(out_arr_value_t,n)(result[n]);
+        BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_DEF, ~)
+        #undef BOOST_NUMPY_DSTREAM_DEF
+        return true;
+    }
+};
+
+#undef OUT_ARITY
+
+#endif // BOOST_PP_ITERATION_FLAGS() == 1
+
+#endif // BOOST_PP_IS_ITERATING
