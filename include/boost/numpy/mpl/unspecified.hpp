@@ -23,7 +23,11 @@ namespace boost {
 namespace numpy {
 namespace mpl {
 
-struct unspecified {};
+struct unspecified
+{
+    typedef unspecified
+            type;
+};
 
 }/*namespace mpl*/
 }/*namespace numpy*/
