@@ -129,7 +129,8 @@ struct std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, 1>
         if(result.size() != N)
         {
             std::cerr << "The length of the result vector "
-                      << "("<<result.size()<<") must be " << N << "!";
+                      << "("<<result.size()<<") must be " << N << "!"
+                      << std::endl;
             return false;
         }
         for(intptr_t i=0; i<N; ++i)
@@ -165,17 +166,17 @@ struct select_std_vector_of_scalar_return_to_core_shape_data
                 typename out_mapping_utils::template array<0>::is_1d::type
               , std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, 1>
 
-              , ::boost::numpy::dstream::wiring::converter::return_to_core_shape_data<OutMapping, RT>
+              , numpy::mpl::unspecified
               >::type
 
             , typename boost::mpl::if_<
                 typename out_mapping_utils::all_arrays_are_scalars::type
               , std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, OutMapping::arity>
 
-              , ::boost::numpy::dstream::wiring::converter::return_to_core_shape_data<OutMapping, RT>
+              , numpy::mpl::unspecified
               >::type
             >::type
-            apply;
+            type;
 };
 
 //------------------------------------------------------------------------------
@@ -205,21 +206,12 @@ struct nested_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, Nes
     )
     {
         // FIXME
-        return true;
+        return false;
     }
 };
 
 // FIXME: Here come all the OutArity specializations for the ND-dimensional
 //        function result.
-
-template <class OutMapping, class RT, class NestedRT, unsigned ND>
-struct select_nested_std_vector_of_scalar_return_to_core_shape_data
-{
-    // At this point we know that RT is
-    // std::vector< std::vector< ... scalar ... > >.
-    typedef nested_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, NestedRT, ND, OutMapping::arity>
-            apply;
-};
 
 template <class OutMapping, class RT, class NestedRT, unsigned ND>
 struct nested_std_vector_return_to_core_shape_data
@@ -231,13 +223,15 @@ struct nested_std_vector_return_to_core_shape_data
 
     typedef typename boost::mpl::if_<
               typename is_scalar<vector_bare_value_type>::type
-            , typename select_nested_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, NestedRT, ND>::apply
+              // At this point we know that RT is
+              // std::vector< std::vector< ... scalar ... > >.
+            , nested_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, NestedRT, ND, OutMapping::arity>
 
-            , typename boost::mpl::if_<
+            , typename boost::mpl::eval_if<
                 typename numpy::mpl::is_std_vector<vector_value_type>::type
-              , typename nested_std_vector_return_to_core_shape_data<OutMapping, RT, vector_value_type, ND+1>::type
+              , nested_std_vector_return_to_core_shape_data<OutMapping, RT, vector_value_type, ND+1>
 
-              , ::boost::numpy::dstream::wiring::converter::return_to_core_shape_data<OutMapping, RT>
+              , numpy::mpl::unspecified
               >::type
             >::type
             type;
@@ -253,25 +247,18 @@ struct std_vector_return_to_core_shape_data
 
     typedef typename boost::mpl::if_<
               typename is_scalar<vector_bare_value_type>::type
-            , typename select_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT>::apply
+            , typename select_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT>::type
 
             // Check if the std::vector's value type is a std::vector again, and
             // if so, keep track of the number of dimensions.
             , typename boost::mpl::if_<
                 typename numpy::mpl::is_std_vector<vector_value_type>::type
-              , typename nested_std_vector_return_to_core_shape_data<OutMapping, RT, vector_value_type, 2>::type
+              , nested_std_vector_return_to_core_shape_data<OutMapping, RT, vector_value_type, 2>
 
-              , ::boost::numpy::dstream::wiring::converter::return_to_core_shape_data<OutMapping, RT>
+              , numpy::mpl::unspecified
               >::type
             >::type
             type;
-};
-
-template <class OutMapping, class RT>
-struct select_std_vector_return_to_core_shape_data
-{
-    typedef typename std_vector_return_to_core_shape_data<OutMapping, RT>::type
-            apply;
 };
 
 template <class OutMapping, class RT>
@@ -293,18 +280,24 @@ struct select_return_to_core_shape_data_converter
 
             , typename boost::mpl::if_<
                 typename numpy::mpl::is_std_vector<bare_rt>::type
-              , typename select_std_vector_return_to_core_shape_data<OutMapping, RT>::apply
+              , std_vector_return_to_core_shape_data<OutMapping, RT>
 
-              , ::boost::numpy::dstream::wiring::converter::return_to_core_shape_data<OutMapping, RT>
+              , numpy::mpl::unspecified
               >::type
             >::type
-            apply;
+            type;
 };
 
 template <class OutMapping, class RT>
 struct return_to_core_shape_data_converter
 {
-    typedef typename select_return_to_core_shape_data_converter<OutMapping, RT>::apply::type
+    typedef typename select_return_to_core_shape_data_converter<OutMapping, RT>::type
+            builtin_converter_selector;
+    typedef typename boost::mpl::eval_if<
+              is_same<typename builtin_converter_selector::type, numpy::mpl::unspecified>
+            , ::boost::numpy::dstream::wiring::converter::return_to_core_shape_data<OutMapping, RT>
+            , builtin_converter_selector
+            >::type
             type;
 };
 
@@ -345,7 +338,7 @@ struct std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, OUT_ARITY>
         {
             std::cerr << "The size of the return vector "
                       << "("<< result.size() <<") does not match the output "
-                      << "arity ("<< OUT_ARITY <<")!";
+                      << "arity ("<< OUT_ARITY <<")!" << std::endl;
             return false;
         }
 
