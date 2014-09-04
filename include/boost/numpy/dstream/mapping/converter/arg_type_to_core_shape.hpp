@@ -27,13 +27,10 @@
 
 #include <boost/python/tuple.hpp>
 
-#include <boost/numpy/mpl/is_std_vector_of_scalar.hpp>
+#include <boost/numpy/mpl/is_std_vector.hpp>
 #include <boost/numpy/dstream/dim.hpp>
 
 #include <boost/numpy/dstream/mapping/detail/core_shape.hpp>
-
-// Include some provided converters.
-#include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape/std_vector_of_bp_object.hpp>
 
 namespace boost {
 namespace numpy {
@@ -52,17 +49,34 @@ struct arg_type_to_core_shape
 
 namespace detail {
 
-template <class T, class Enable=void>
-struct scalar_to_core_shape
+template <class T>
+struct scalar_arg_type_to_core_shape
 {
     typedef mapping::detail::core_shape<0>::shape<>
             type;
 };
 
-template <class T, class Enable=void>
-struct std_vector_of_scalar_to_core_shape
+template <class T>
+struct std_vector_arg_type_to_core_shape
 {
-    typedef mapping::detail::core_shape<1>::shape< dim::I >
+    typedef typename remove_reference<T>::type
+            vector_t;
+    typedef typename vector_t::value_type
+            vector_value_t;
+    typedef typename remove_reference<vector_value_t>::type
+            vector_bare_value_t;
+
+    typedef typename boost::mpl::if_<
+              typename is_scalar<vector_bare_value_t>::type
+            , mapping::detail::core_shape<1>::shape< dim::I >
+
+            , typename boost::mpl::if_<
+                typename is_same<vector_bare_value_t, python::object>::type
+              , mapping::detail::core_shape<1>::shape< dim::I >
+
+              , numpy::mpl::unspecified
+              >::type
+            >::type
             type;
 };
 
@@ -78,22 +92,33 @@ struct select_arg_type_to_core_shape
     //       selected.
     typedef typename boost::mpl::if_<
               typename is_scalar<bare_t>::type
-            , scalar_to_core_shape<T>
+            , scalar_arg_type_to_core_shape<T>
 
             , typename boost::mpl::if_<
-                typename numpy::mpl::is_std_vector_of_scalar<bare_t>::type
-              , std_vector_of_scalar_to_core_shape<T>
+                typename is_same<bare_t, python::object>::type
+              , scalar_arg_type_to_core_shape<T>
 
-              , ::boost::numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
+              , typename boost::mpl::if_<
+                  typename numpy::mpl::is_std_vector<bare_t>::type
+                , std_vector_arg_type_to_core_shape<T>
+
+                , numpy::mpl::unspecified
+                >::type
               >::type
             >::type
-            apply;
+            type;
 };
 
 template <class T>
 struct arg_type_to_core_shape
 {
-    typedef typename select_arg_type_to_core_shape<T>::apply::type
+    typedef typename select_arg_type_to_core_shape<T>::type
+            builtin_converter_selector;
+    typedef typename boost::mpl::eval_if<
+              is_same<typename builtin_converter_selector::type, numpy::mpl::unspecified>
+            , ::boost::numpy::dstream::mapping::converter::arg_type_to_core_shape<T>
+            , builtin_converter_selector
+            >::type
             type;
 };
 
