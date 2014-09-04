@@ -45,8 +45,6 @@ meta-functions for a particular return type, or a class of types. The example
 below illustrates how to convert a ``std::vector< std::vector<double> >`` return
 type to an output mapping with one 2-dimensional MxN output array. ::
 
-    #include <boost/numpy/dstream/mapping/converter/return_type_to_out_mapping_fwd.hpp>
-
     namespace boost {
     namespace numpy {
     namespace dstream {
@@ -54,7 +52,9 @@ type to an output mapping with one 2-dimensional MxN output array. ::
     namespace converter {
 
     template <class T>
-    struct return_type_to_out_mapping<T, typename enable_if< is_same< T, std::vector< std::vector<double> > > >::type>
+    struct return_type_to_out_mapping<T
+      , typename enable_if< is_same< T, std::vector< std::vector<double> > > >::type
+    >
       : detail::return_type_to_out_mapping_type
     {
         typedef mapping::detail::out<1>::core_shapes< mapping::detail::core_shape<2>::shape< dim::M, dim::N > >

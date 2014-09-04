@@ -43,8 +43,6 @@ The example below illustrates how to convert a
 ``std::vector< std::vector<double> >`` argument type to a 2-dimensional MxN core
 shape. ::
 
-    #include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape_fwd.hpp>
-
     namespace boost {
     namespace numpy {
     namespace dstream {
@@ -52,7 +50,9 @@ shape. ::
     namespace converter {
 
     template <class T>
-    struct arg_type_to_core_shape<T, typename enable_if< is_same< T, std::vector< std::vector<double> > > >::type>
+    struct arg_type_to_core_shape<T
+      , typename enable_if< is_same< T, std::vector< std::vector<double> > > >::type
+    >
     {
         typedef mapping::detail::core_shape<2>::shape< dim::M, dim::N >
                 type;
