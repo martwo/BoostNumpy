@@ -143,7 +143,7 @@ struct std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, 1>
 };
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (2, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/return_to_core_shape_data.hpp>, 1))
+    (4, (2, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>, 1))
 #include BOOST_PP_ITERATE()
 
 template <class OutMapping, class RT>

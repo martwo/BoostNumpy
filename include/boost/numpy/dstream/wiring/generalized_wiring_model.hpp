@@ -28,10 +28,10 @@
 
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
 #include <boost/numpy/dstream/wiring.hpp>
-#include <boost/numpy/dstream/wiring/arg_from_core_shape_data.hpp>
-#include <boost/numpy/dstream/wiring/arg_type_to_array_dtype.hpp>
-#include <boost/numpy/dstream/wiring/return_type_to_array_dtype.hpp>
-#include <boost/numpy/dstream/wiring/return_to_core_shape_data.hpp>
+#include <boost/numpy/dstream/wiring/converter/arg_from_core_shape_data.hpp>
+#include <boost/numpy/dstream/wiring/converter/arg_type_to_array_dtype.hpp>
+#include <boost/numpy/dstream/wiring/converter/return_type_to_array_dtype.hpp>
+#include <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>
 
 namespace boost {
 namespace numpy {
