@@ -217,19 +217,19 @@ template <class OutMapping, class RT, class NestedRT, unsigned ND>
 struct nested_std_vector_return_to_core_shape_data
 {
     typedef typename NestedRT::value_type
-            vector_value_type;
-    typedef typename remove_reference<vector_value_type>::type
-            vector_bare_value_type;
+            vector_value_t;
+    typedef typename remove_reference<vector_value_t>::type
+            vector_bare_value_t;
 
     typedef typename boost::mpl::if_<
-              typename is_scalar<vector_bare_value_type>::type
+              typename is_scalar<vector_bare_value_t>::type
               // At this point we know that RT is
               // std::vector< std::vector< ... scalar ... > >.
             , nested_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT, NestedRT, ND, OutMapping::arity>
 
             , typename boost::mpl::eval_if<
-                typename numpy::mpl::is_std_vector<vector_value_type>::type
-              , nested_std_vector_return_to_core_shape_data<OutMapping, RT, vector_value_type, ND+1>
+                typename numpy::mpl::is_std_vector<vector_value_t>::type
+              , nested_std_vector_return_to_core_shape_data<OutMapping, RT, vector_value_t, ND+1>
 
               , numpy::mpl::unspecified
               >::type
@@ -240,20 +240,22 @@ struct nested_std_vector_return_to_core_shape_data
 template <class OutMapping, class RT>
 struct std_vector_return_to_core_shape_data
 {
-    typedef typename RT::value_type
-            vector_value_type;
-    typedef typename remove_reference<vector_value_type>::type
-            vector_bare_value_type;
+    typedef typename remove_reference<RT>::type
+            vector_t;
+    typedef typename vector_t::value_type
+            vector_value_t;
+    typedef typename remove_reference<vector_value_t>::type
+            vector_bare_value_t;
 
     typedef typename boost::mpl::if_<
-              typename is_scalar<vector_bare_value_type>::type
+              typename is_scalar<vector_bare_value_t>::type
             , typename select_std_vector_of_scalar_return_to_core_shape_data<OutMapping, RT>::type
 
             // Check if the std::vector's value type is a std::vector again, and
             // if so, keep track of the number of dimensions.
             , typename boost::mpl::if_<
-                typename numpy::mpl::is_std_vector<vector_value_type>::type
-              , nested_std_vector_return_to_core_shape_data<OutMapping, RT, vector_value_type, 2>
+                typename numpy::mpl::is_std_vector<vector_value_t>::type
+              , nested_std_vector_return_to_core_shape_data<OutMapping, RT, vector_value_t, 2>
 
               , numpy::mpl::unspecified
               >::type
