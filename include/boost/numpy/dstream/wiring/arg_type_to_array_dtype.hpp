@@ -51,14 +51,27 @@ template <class T>
 struct std_vector_arg_type_to_array_dtype
 {
     typedef typename remove_reference<T>::type
-            bare_t;
-    typedef typename remove_reference<typename bare_t::value_type>::type
-            vector_bare_value_type;
+            vector_t;
+    typedef typename vector_t::value_type
+            vector_value_t;
+    typedef typename remove_reference<vector_value_t>::type
+            vector_bare_value_t;
 
-    typedef typename boost::mpl::eval_if<
-              typename numpy::mpl::is_std_vector<vector_bare_value_type>::type
-            , std_vector_arg_type_to_array_dtype<vector_bare_value_type>
-            , boost::mpl::identity<vector_bare_value_type>
+    typedef typename boost::mpl::if_<
+              typename is_scalar<vector_bare_value_t>::type
+            , vector_bare_value_t
+
+            , typename boost::mpl::if_<
+                typename is_same<vector_bare_value_t, python::object>::type
+              , python::object
+
+              , typename boost::mpl::eval_if<
+                  typename numpy::mpl::is_std_vector<vector_bare_value_t>::type
+                , std_vector_arg_type_to_array_dtype<vector_bare_value_t>
+
+                , numpy::mpl::unspecified
+                >::type
+              >::type
             >::type
             type;
 };
@@ -81,17 +94,23 @@ struct select_arg_type_to_array_dtype
                   typename numpy::mpl::is_std_vector<bare_t>::type
                 , std_vector_arg_type_to_array_dtype<T>
 
-                , ::boost::numpy::dstream::wiring::converter::arg_type_to_array_dtype<T>
+                , numpy::mpl::unspecified
                 >::type
               >::type
             >::type
-            apply;
+            type;
 };
 
 template <class T>
 struct arg_type_to_array_dtype
 {
-    typedef typename select_arg_type_to_array_dtype<T>::apply::type
+    typedef typename select_arg_type_to_array_dtype<T>::type
+            builtin_converter_selector;
+    typedef typename boost::mpl::eval_if<
+              is_same<typename builtin_converter_selector::type, numpy::mpl::unspecified>
+            , ::boost::numpy::dstream::wiring::converter::arg_type_to_array_dtype<T>
+            , builtin_converter_selector
+            >::type
             type;
 };
 
