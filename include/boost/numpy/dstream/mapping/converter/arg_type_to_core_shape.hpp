@@ -17,8 +17,14 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
+#if !BOOST_PP_IS_ITERATING
+
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_ARG_TYPE_TO_CORE_SHAPE_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_ARG_TYPE_TO_CORE_SHAPE_HPP_INCLUDED
+
+#include <boost/preprocessor/arithmetic/add.hpp>
+#include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/if.hpp>
@@ -56,29 +62,13 @@ struct scalar_arg_type_to_core_shape
             type;
 };
 
-template <class T>
-struct std_vector_arg_type_to_core_shape
-{
-    typedef typename remove_reference<T>::type
-            vector_t;
-    typedef typename vector_t::value_type
-            vector_value_t;
-    typedef typename remove_reference<vector_value_t>::type
-            vector_bare_value_t;
+template <class T, unsigned nd>
+struct std_vector_arg_type_to_core_shape;
 
-    typedef typename boost::mpl::if_<
-              typename is_scalar<vector_bare_value_t>::type
-            , mapping::detail::core_shape<1>::shape< dim::I >
-
-            , typename boost::mpl::if_<
-                typename is_same<vector_bare_value_t, python::object>::type
-              , mapping::detail::core_shape<1>::shape< dim::I >
-
-              , numpy::mpl::unspecified
-              >::type
-            >::type
-            type;
-};
+// Define nd specializations for dimensions J to Z, i.e. up to 18 dimensions.
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (1, 18, <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape.hpp>, 1))
+#include BOOST_PP_ITERATE()
 
 template <class T>
 struct select_arg_type_to_core_shape
@@ -100,7 +90,7 @@ struct select_arg_type_to_core_shape
 
               , typename boost::mpl::if_<
                   typename numpy::mpl::is_std_vector<bare_t>::type
-                , std_vector_arg_type_to_core_shape<T>
+                , std_vector_arg_type_to_core_shape<T, 1>
 
                 , numpy::mpl::unspecified
                 >::type
@@ -123,7 +113,6 @@ struct arg_type_to_core_shape
 };
 
 }// namespace detail
-
 }// namespace converter
 }// namespace mapping
 }// namespace dstream
@@ -131,3 +120,46 @@ struct arg_type_to_core_shape
 }// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_ARG_TYPE_TO_CORE_SHAPE_HPP_INCLUDED
+#else
+
+#if BOOST_PP_ITERATION_FLAGS() == 1
+
+#define ND BOOST_PP_ITERATION()
+
+template <class T>
+struct std_vector_arg_type_to_core_shape<T, ND>
+{
+    typedef typename remove_reference<T>::type
+            vector_t;
+    typedef typename vector_t::value_type
+            vector_value_t;
+    typedef typename remove_reference<vector_value_t>::type
+            vector_bare_value_t;
+
+    #define BOOST_NUMPY_DSTREAM_DEF(z, n, data) \
+        BOOST_PP_COMMA_IF(n) dim::I - n
+    typedef typename boost::mpl::if_<
+              typename is_scalar<vector_bare_value_t>::type
+            , mapping::detail::core_shape<ND>::shape< BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_DEF, ~) >
+
+            , typename boost::mpl::if_<
+                typename is_same<vector_bare_value_t, python::object>::type
+              , mapping::detail::core_shape<ND>::shape< BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_DEF, ~) >
+
+              , typename boost::mpl::eval_if<
+                  typename numpy::mpl::is_std_vector<vector_bare_value_t>::type
+                , std_vector_arg_type_to_core_shape<T, BOOST_PP_ADD(ND, 1)>
+
+                , numpy::mpl::unspecified
+                >::type
+              >::type
+            >::type
+            type;
+    #undef BOOST_NUMPY_DSTREAM_DEF
+};
+
+#undef ND
+
+#endif // BOOST_PP_ITERATION_FLAGS() == 1
+
+#endif // BOOST_PP_IS_ITERATING
