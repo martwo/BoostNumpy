@@ -195,6 +195,13 @@ struct mapping_array_select;
     (4, (0, BOOST_NUMPY_LIMIT_MAX_INPUT_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/definition.hpp>, 2))
 #include BOOST_PP_ITERATE()
 
+template <class InMapping, unsigned idx>
+struct in_mapping_array_select;
+
+#define BOOST_PP_ITERATION_PARAMS_1 \
+    (4, (0, BOOST_PP_SUB(BOOST_NUMPY_LIMIT_INPUT_ARITY, 1), <boost/numpy/dstream/mapping/detail/definition.hpp>, 3))
+#include BOOST_PP_ITERATE()
+
 template <class InMapping>
 struct in_mapping
 {
@@ -202,6 +209,13 @@ struct in_mapping
     {
         typedef typename all_mapping_arrays_are_scalars_arity<InMapping::arity, InMapping>::type
                 type;
+    };
+
+    template <unsigned idx>
+    struct array
+    {
+        typedef typename in_mapping_array_select<InMapping, idx>::type
+                core_shape_t;
     };
 };
 
@@ -325,6 +339,21 @@ struct mapping_array_select<Mapping, N>
 
 #undef N
 
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 3
+
+#define IDX BOOST_PP_ITERATION()
+
+template <class InMapping>
+struct in_mapping_array_select<InMapping, IDX>
+{
+    typedef typename InMapping::BOOST_PP_CAT(core_shape_t,IDX)
+            type;
+};
+
+#undef IDX
+
+#endif // BOOST_PP_ITERATION_FLAGS == 3
 #endif // BOOST_PP_ITERATION_FLAGS == 2
 #endif // BOOST_PP_ITERATION_FLAGS == 1
 
