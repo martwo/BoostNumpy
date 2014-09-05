@@ -22,7 +22,9 @@
 #ifndef BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_RETURN_TYPE_TO_OUT_MAPPING_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_MAPPING_CONVERTER_RETURN_TYPE_TO_OUT_MAPPING_HPP_INCLUDED
 
+#include <boost/preprocessor/arithmetic/add.hpp>
 #include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/if.hpp>
@@ -66,17 +68,10 @@ struct scalar_return_type_to_out_mapping
             type;
 };
 
-template <class T>
-struct std_vector_of_scalar_return_type_to_out_mapping
-{
-    typedef mapping::detail::out<1>::core_shapes< mapping::detail::core_shape<1>::shape< dim::I > >
-            type;
-};
-
 template <class T, unsigned nd>
 struct std_vector_return_type_to_out_mapping;
 
-// Define ND specializations for dimensions J to Z, i.e. up to 18 dimensions.
+// Define nd specializations for dimensions J to Z, i.e. up to 18 dimensions.
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
     (4, (1, 18, <boost/numpy/dstream/mapping/converter/return_type_to_out_mapping.hpp>, 1))
 #include BOOST_PP_ITERATE()
@@ -161,7 +156,7 @@ struct std_vector_return_type_to_out_mapping<T, ND>
 
               , typename boost::mpl::eval_if<
                   typename numpy::mpl::is_std_vector<vector_bare_value_t>::type
-                , std_vector_return_type_to_out_mapping<vector_bare_value_t, ND+1>
+                , std_vector_return_type_to_out_mapping<vector_bare_value_t, BOOST_PP_ADD(ND, 1)>
 
                 , numpy::mpl::unspecified
                 >::type
