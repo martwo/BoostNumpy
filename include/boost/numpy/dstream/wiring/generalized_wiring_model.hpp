@@ -190,6 +190,7 @@ struct generalized_wiring_model_arity<IN_ARITY>
         #define BOOST_NUMPY_DSTREAM_DEF(z, n, data)                            \
             typedef typename converter::detail::arg_from_core_shape_data_converter< \
                       typename numpy::mpl::fct_arg_type<FTypes, n>::type       \
+                    , typename mapping::detail::in_mapping<typename MappingDefinition::in>::template array<n>::core_shape_t \
                     , typename api::template in_arr_value_type<n>::type        \
                     >::type                                                    \
                     BOOST_PP_CAT(arg_converter_t,n);
@@ -245,6 +246,7 @@ struct generalized_wiring_model_arity<IN_ARITY>
         #define BOOST_NUMPY_DSTREAM_DEF(z, n, data)                            \
             typedef typename converter::detail::arg_from_core_shape_data_converter< \
                       typename numpy::mpl::fct_arg_type<FTypes, n>::type       \
+                    , typename mapping::detail::in_mapping<typename MappingDefinition::in>::template array<n>::core_shape_t \
                     , typename api::template in_arr_value_type<n>::type        \
                     >::type                                                    \
                     BOOST_PP_CAT(arg_converter_t,n);
