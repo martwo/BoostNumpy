@@ -23,6 +23,7 @@
 #ifndef BOOST_NUMPY_DSTREAM_WIRING_RETURN_TYPE_TO_ARRAY_DTYPE_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_WIRING_RETURN_TYPE_TO_ARRAY_DTYPE_HPP_INCLUDED
 
+#include <boost/mpl/assert.hpp>
 #include <boost/mpl/identity.hpp>
 #include <boost/mpl/if.hpp>
 
@@ -53,13 +54,26 @@ struct std_vector_return_type_to_array_dtype
 {
     typedef typename remove_reference<RT>::type
             vector_t;
-    typedef typename remove_reference<typename vector_t::value_type>::type
-            vector_bare_value_type;
+    typedef typename vector_t::value_type
+            vector_value_t;
+    typedef typename remove_reference<vector_value_t>::type
+            vector_bare_value_t;
 
-    typedef typename boost::mpl::eval_if<
-              typename numpy::mpl::is_std_vector<vector_bare_value_type>::type
-            , std_vector_return_type_to_array_dtype<OutMapping, vector_bare_value_type, idx>
-            , boost::mpl::identity<vector_bare_value_type>
+    typedef typename boost::mpl::if_<
+              typename is_scalar<vector_bare_value_t>::type
+            , vector_bare_value_t
+
+            , typename boost::mpl::if_<
+                typename is_same<vector_bare_value_t, python::object>::type
+              , python::object
+
+              , typename boost::mpl::eval_if<
+                  typename numpy::mpl::is_std_vector<vector_bare_value_t>::type
+                , std_vector_return_type_to_array_dtype<OutMapping, vector_bare_value_t, idx>
+
+                , numpy::mpl::unspecified
+                >::type
+              >::type
             >::type
             type;
 };
@@ -82,17 +96,23 @@ struct select_return_type_to_array_dtype
                   typename numpy::mpl::is_std_vector<bare_rt>::type
                 , std_vector_return_type_to_array_dtype<OutMapping, RT, idx>
 
-                , ::boost::numpy::dstream::wiring::converter::return_type_to_array_dtype<OutMapping, RT, idx>
+                , numpy::mpl::unspecified
                 >::type
               >::type
             >::type
-            apply;
+            type;
 };
 
 template <class OutMapping, class RT, unsigned idx>
 struct return_type_to_array_dtype
 {
-    typedef typename select_return_type_to_array_dtype<OutMapping, RT, idx>::apply::type
+    typedef typename select_return_type_to_array_dtype<OutMapping, RT, idx>::type
+            builtin_converter_selector;
+    typedef typename boost::mpl::eval_if<
+              is_same<typename builtin_converter_selector::type, numpy::mpl::unspecified>
+            , ::boost::numpy::dstream::wiring::converter::return_type_to_array_dtype<OutMapping, RT, idx>
+            , builtin_converter_selector
+            >::type
             type;
 };
 
