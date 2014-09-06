@@ -241,6 +241,16 @@ struct is_1d<numpy::mpl::unspecified>
             type;
 };
 
+template <class T, unsigned nd>
+struct is_core_shape_of_dim
+{
+    typedef typename boost::mpl::and_<
+                typename is_core_shape<T>::type
+              , typename boost::mpl::equal_to<typename T::base::nd, boost::mpl::integral_c<unsigned, nd> >::type
+            >::type
+            type;
+};
+
 }// namespace detail
 }// namespace mapping
 }// namespace dstream
