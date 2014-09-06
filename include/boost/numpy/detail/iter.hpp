@@ -28,6 +28,7 @@
 #ifndef BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
 #define BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
 
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -299,6 +300,58 @@ class iter
             data_ptr_array_ptr_[iop] += n[iop] * inner_loop_stride_array_ptr_[iop];
         }
     }
+
+    //__________________________________________________________________________
+    /**
+     * \brief Retrieves the stides of the specified iteration axis for all
+     *        iterator operands.
+     * \internal Calls NpyIter_GetAxisStrideArray for the specified axis.
+     */
+    std::vector<intptr_t>
+    get_iteration_axis_strides(int axis);
+
+    //__________________________________________________________________________
+    /**
+     * \brief Retrieves the fixed inner loop stide for each iterator operand.
+     *        If the inner loop stide for an operand is not fixed, it will have
+     *        the value std::numeric_limits<intptr_t>::max().
+     * \internal Calls NpyIter_GetInnerFixedStrideArray.
+     */
+    std::vector<intptr_t>
+    get_inner_loop_fixed_strides();
+
+    //__________________________________________________________________________
+    /**
+     * \brief Retrieves the fixed inner loop stride of the specified iterator
+     *        operand. If the inner loop stide is not fixed, it will have
+     *        the value std::numeric_limits<intptr_t>::max().
+     */
+    intptr_t
+    get_inner_loop_fixed_stride(size_t op_idx)
+    {
+        return get_inner_loop_fixed_strides()[op_idx];
+    }
+
+    //__________________________________________________________________________
+    /**
+     * \brief Checks if the inner loop stride of the specified iterator operand
+     *        is fixed during the entire iteration.
+     */
+    bool
+    is_inner_loop_stride_fixed(size_t op_idx)
+    {
+        return (! (get_inner_loop_fixed_stride(op_idx) == std::numeric_limits<intptr_t>::max()));
+    }
+
+    //__________________________________________________________________________
+    /**
+     * \brief Returns the ndarray object of the specified iterator operand.
+     * \note The returned array is owned by the iterator, thus this object
+     *       should get out of scope before the iter object itself gets
+     *       destroyed. Otherwise bad things could happen.
+     */
+    ndarray
+    get_operand(size_t op_idx);
 
   protected:
     /**

@@ -145,6 +145,40 @@ get_nop() const
     return NpyIter_GetNOp(npyiter_);
 }
 
+//______________________________________________________________________________
+std::vector<intptr_t>
+iter::
+get_iteration_axis_strides(int axis)
+{
+    int const nop = get_nop();
+    intptr_t * axis_strides_carray = NpyIter_GetAxisStrideArray(npyiter_, axis);
+    std::vector<intptr_t> axis_strides(nop, 0);
+    for(int i=0; i<nop; ++i)
+    {
+        axis_strides[i] = axis_strides_carray[i];
+    }
+    return axis_strides;
+}
+
+//______________________________________________________________________________
+std::vector<intptr_t>
+iter::
+get_inner_loop_fixed_strides()
+{
+    std::vector<intptr_t> strides(get_nop(), 0);
+    NpyIter_GetInnerFixedStrideArray(npyiter_, &strides.front());
+    return strides;
+}
+
+//______________________________________________________________________________
+ndarray
+iter::
+get_operand(size_t op_idx)
+{
+    PyArrayObject** op_carray = NpyIter_GetOperandArray(npyiter_);
+    return ndarray(python::detail::borrowed_reference(op_carray[op_idx]));
+}
+
 }// namespace detail
 }// namespace numpy
 }// namespace boost
