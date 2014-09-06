@@ -183,6 +183,8 @@ struct std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, Ar
     }
 };
 
+
+
 template <class FctArgT, class ScalarT, class CoreShape, class ArrDataHoldingT, unsigned nd>
 struct std_vector_of_scalar_arg_from_core_shape_data
 {
@@ -269,10 +271,12 @@ struct std_vector_of_bp_object_arg_from_core_shape_data
 
 //------------------------------------------------------------------------------
 
-template <class ArgT, class CoreShape, class ArrDataHoldingT, unsigned nd>
+template <class ArgT, class NestedVectorT, class CoreShape, class ArrDataHoldingT, unsigned nd>
 struct std_vector_arg_from_core_shape_data
 {
-    typedef typename ArgT::value_type
+    typedef typename remove_reference<NestedVectorT>::type
+            bare_vector_t;
+    typedef typename bare_vector_t::value_type
             vector_value_t;
     typedef typename remove_reference<vector_value_t>::type
             vector_bare_value_t;
@@ -287,7 +291,7 @@ struct std_vector_arg_from_core_shape_data
 
               , typename boost::mpl::eval_if<
                   typename numpy::mpl::is_std_vector<vector_bare_value_t>::type
-                , std_vector_arg_from_core_shape_data<ArgT, CoreShape, ArrDataHoldingT, nd+1>
+                , std_vector_arg_from_core_shape_data<ArgT, vector_value_t, CoreShape, ArrDataHoldingT, nd+1>
 
                 , numpy::mpl::unspecified
                 >::type
@@ -314,7 +318,7 @@ struct select_arg_from_core_shape_data_converter
 
               , typename boost::mpl::eval_if<
                   typename numpy::mpl::is_std_vector<bare_arg_t>::type
-                , std_vector_arg_from_core_shape_data<FctArgT, CoreShape, ArrDataHoldingT, 1>
+                , std_vector_arg_from_core_shape_data<FctArgT, FctArgT, CoreShape, ArrDataHoldingT, 1>
 
                 , numpy::mpl::unspecified
                 >::type

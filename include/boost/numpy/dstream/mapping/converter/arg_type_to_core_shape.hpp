@@ -148,7 +148,7 @@ struct std_vector_arg_type_to_core_shape<T, ND>
 
               , typename boost::mpl::eval_if<
                   typename numpy::mpl::is_std_vector<vector_bare_value_t>::type
-                , std_vector_arg_type_to_core_shape<T, BOOST_PP_ADD(ND, 1)>
+                , std_vector_arg_type_to_core_shape<vector_bare_value_t, BOOST_PP_ADD(ND, 1)>
 
                 , numpy::mpl::unspecified
                 >::type
