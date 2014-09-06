@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 
+#include <cstring>
 #include <vector>
 
 #include <boost/mpl/and.hpp>
@@ -210,6 +211,21 @@ class ndarray : public python::object
      */
     intptr_t const *
     get_strides() const;
+
+    //__________________________________________________________________________
+    /**
+     * \brief Returns the strides of the array as a std::vector<intptr_t>
+     *        object.
+     */
+    std::vector<intptr_t>
+    get_strides_vector() const
+    {
+        int const nd = this->get_nd();
+        intptr_t const * strides = this->get_strides();
+        std::vector<intptr_t> strides_vec(nd);
+        memcpy(&strides_vec.front(), strides, nd*sizeof(intptr_t));
+        return strides_vec;
+    }
 
     //__________________________________________________________________________
     /**
