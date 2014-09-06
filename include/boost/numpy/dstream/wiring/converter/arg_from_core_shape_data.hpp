@@ -24,6 +24,8 @@
 
 #include <vector>
 
+#include <boost/preprocessor/stringize.hpp>
+
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/if.hpp>
@@ -183,7 +185,61 @@ struct std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, Ar
     }
 };
 
+#define ND 2
+template <class FctArgT, class ScalarT, class ArrDataHoldingT>
+struct std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, ND>
+{
+    typedef std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, ND>
+            type;
 
+    typedef FctArgT
+            arg_t;
+    typedef typename remove_reference<arg_t>::type
+            vector_t;
+
+    static
+    arg_t
+    apply(
+        numpy::detail::iter &         iter
+      , size_t                        iter_op_idx
+      , std::vector<intptr_t> const & core_shape
+    )
+    {
+        if(core_shape.size() != ND)
+        {
+            PyErr_SetString(PyExc_ValueError,
+                "The core shape of the argument array must be of dimension "
+                BOOST_PP_STRINGIZE(ND) "!");
+            python::throw_error_already_set();
+        }
+
+        // Get the strides of the argument ndarray. Note: This contains the
+        // strides for all dimensions, i.e. also for the loop dimensions.
+        // The strides for the core dimensions are the last entries in this
+        // vector.
+        std::vector<intptr_t> strides = iter.get_operand(iter_op_idx).get_strides_vector();
+        size_t const all_nd = strides.size();
+
+        vector_t v0;
+        for(intptr_t i0=0; i0<core_shape[0]; ++i0)
+        {
+            std::vector<ScalarT> v1;
+            for(intptr_t i1=0; i1<core_shape[1]; ++i1)
+            {
+                #define BOOST_NUMPY_DEF_value_offset(z, n, data)\
+                    BOOST_PP_IF(n,+,) BOOST_PP_CAT(i,n)*strides[all_nd - BOOST_PP_SUB(ND,n)]
+                intptr_t const value_offset = BOOST_PP_REPEAT(ND, BOOST_NUMPY_DEF_value_offset, ~) ;
+                #undef BOOST_NUMPY_DEF_value_offset
+                ArrDataHoldingT & value = *reinterpret_cast<ArrDataHoldingT *>(iter.get_data(iter_op_idx) + value_offset);
+                v1.push_back(value);
+            }
+            v0.push_back(v1);
+        }
+
+        return v0;
+    }
+};
+#undef ND
 
 template <class FctArgT, class ScalarT, class CoreShape, class ArrDataHoldingT, unsigned nd>
 struct std_vector_of_scalar_arg_from_core_shape_data
