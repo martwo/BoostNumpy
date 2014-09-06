@@ -19,11 +19,16 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
+#if !BOOST_PP_IS_ITERATING
+
 #ifndef BOOST_NUMPY_DSTREAM_WIRING_ARG_FROM_CORE_SHAPE_DATA_HPP_INCLUDED
 #define BOOST_NUMPY_DSTREAM_WIRING_ARG_FROM_CORE_SHAPE_DATA_HPP_INCLUDED
 
 #include <vector>
 
+#include <boost/preprocessor/arithmetic/sub.hpp>
+#include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
 #include <boost/mpl/and.hpp>
@@ -76,7 +81,6 @@ struct bp_object_arg_from_bp_object_core_shape_data
         // The array operand is suppost to be an object array. That means, it
         // stores pointer values to PyObject instances.
         uintptr_t * data = reinterpret_cast<uintptr_t*>(iter.get_data(iter_op_idx));
-
         boost::python::object obj(boost::python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*data)));
         return obj;
     }
@@ -144,102 +148,13 @@ struct scalar_arg_from_core_shape_data
 template <class FctArgT, class ScalarT, class ArrDataHoldingT, unsigned nd>
 struct std_vector_of_scalar_arg_from_scalar_core_shape_data;
 
-template <class FctArgT, class ScalarT, class ArrDataHoldingT>
-struct std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, 1>
-{
-    typedef std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, 1>
-            type;
+template <class ArgT, unsigned nd>
+struct std_vector_of_bp_object_arg_from_bp_object_core_shape_data;
 
-    typedef FctArgT
-            arg_t;
-    typedef typename remove_reference<arg_t>::type
-            vector_t;
-
-    // Note: The function argument type (i.e. std::vector) cannot be a
-    //       reference but the scalar values can be references to the actual
-    //       stored data.
-    static
-    arg_t
-    apply(
-        numpy::detail::iter &         iter
-      , size_t                        iter_op_idx
-      , std::vector<intptr_t> const & core_shape
-    )
-    {
-        if(core_shape.size() != 1)
-        {
-            PyErr_SetString(PyExc_ValueError,
-                "The core shape of the argument array must be of dimension 1!");
-            python::throw_error_already_set();
-        }
-        intptr_t const N = core_shape[0];
-        intptr_t const op_item_stride = iter.get_item_size(iter_op_idx);
-        vector_t v;
-        v.reserve(N);
-        for(intptr_t i=0; i<N; ++i)
-        {
-            ArrDataHoldingT & value = *reinterpret_cast<ArrDataHoldingT *>(iter.get_data(iter_op_idx) + i*op_item_stride);
-            v.push_back(value);
-        }
-        return v;
-    }
-};
-
-#define ND 2
-template <class FctArgT, class ScalarT, class ArrDataHoldingT>
-struct std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, ND>
-{
-    typedef std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, ND>
-            type;
-
-    typedef FctArgT
-            arg_t;
-    typedef typename remove_reference<arg_t>::type
-            vector_t;
-
-    static
-    arg_t
-    apply(
-        numpy::detail::iter &         iter
-      , size_t                        iter_op_idx
-      , std::vector<intptr_t> const & core_shape
-    )
-    {
-        if(core_shape.size() != ND)
-        {
-            PyErr_SetString(PyExc_ValueError,
-                "The core shape of the argument array must be of dimension "
-                BOOST_PP_STRINGIZE(ND) "!");
-            python::throw_error_already_set();
-        }
-
-        // Get the strides of the argument ndarray. Note: This contains the
-        // strides for all dimensions, i.e. also for the loop dimensions.
-        // The strides for the core dimensions are the last entries in this
-        // vector.
-        std::vector<intptr_t> strides = iter.get_operand(iter_op_idx).get_strides_vector();
-        size_t const all_nd = strides.size();
-
-        vector_t v0;
-        for(intptr_t i0=0; i0<core_shape[0]; ++i0)
-        {
-            std::vector<ScalarT> v1;
-            for(intptr_t i1=0; i1<core_shape[1]; ++i1)
-            {
-                #define BOOST_NUMPY_DEF_value_offset(z, n, data)\
-                    BOOST_PP_IF(n,+,) BOOST_PP_CAT(i,n)*strides[all_nd - BOOST_PP_SUB(ND,n)]
-                intptr_t const value_offset = BOOST_PP_REPEAT(ND, BOOST_NUMPY_DEF_value_offset, ~) ;
-                #undef BOOST_NUMPY_DEF_value_offset
-                ArrDataHoldingT & value = *reinterpret_cast<ArrDataHoldingT *>(iter.get_data(iter_op_idx) + value_offset);
-                v1.push_back(value);
-            }
-            v0.push_back(v1);
-        }
-
-        return v0;
-    }
-};
-#undef ND
+// Define nd specializations for dimensions J to Z, i.e. up to 18 dimensions.
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (1, 18, <boost/numpy/dstream/wiring/converter/arg_from_core_shape_data.hpp>, 1))
+#include BOOST_PP_ITERATE()
 
 template <class FctArgT, class ScalarT, class CoreShape, class ArrDataHoldingT, unsigned nd>
 struct std_vector_of_scalar_arg_from_core_shape_data
@@ -260,48 +175,6 @@ struct std_vector_of_scalar_arg_from_core_shape_data
             , numpy::mpl::unspecified
             >::type
             type;
-};
-
-//------------------------------------------------------------------------------
-
-template <class ArgT, unsigned nd>
-struct std_vector_of_bp_object_arg_from_bp_object_core_shape_data;
-
-template <class ArgT>
-struct std_vector_of_bp_object_arg_from_bp_object_core_shape_data<ArgT, 1>
-{
-    typedef std_vector_of_bp_object_arg_from_bp_object_core_shape_data<ArgT, 1>
-            type;
-
-    typedef ArgT
-            arg_t;
-
-    static
-    arg_t
-    apply(
-        numpy::detail::iter &         iter
-      , size_t                        iter_op_idx
-      , std::vector<intptr_t> const & core_shape
-    )
-    {
-        if(core_shape.size() != 1)
-        {
-            PyErr_SetString(PyExc_ValueError,
-                "The core shape of the argument array must be of dimension 1!");
-            python::throw_error_already_set();
-        }
-        intptr_t const N = core_shape[0];
-        intptr_t const op_item_stride = iter.get_item_size(iter_op_idx);
-        std::vector<python::object> v;
-        v.reserve(N);
-        for(intptr_t i=0; i<N; ++i)
-        {
-            uintptr_t * data = reinterpret_cast<uintptr_t*>(iter.get_data(iter_op_idx) + i*op_item_stride);
-            boost::python::object obj(boost::python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*data)));
-            v.push_back(obj);
-        }
-        return v;
-    }
 };
 
 template <class ArgT, class CoreShape, class ArrDataHoldingT, unsigned nd>
@@ -404,3 +277,102 @@ struct arg_from_core_shape_data_converter
 }// namespace boost
 
 #endif // !BOOST_NUMPY_DSTREAM_WIRING_ARG_FROM_CORE_SHAPE_DATA_HPP_INCLUDED
+#else
+
+#if BOOST_PP_ITERATION_FLAGS() == 1
+
+#define ND BOOST_PP_ITERATION()
+
+#define BOOST_NUMPY_DSTREAM_vec_def_p1(z, n, data) std::vector<
+#define BOOST_NUMPY_DSTREAM_vec_def_p2(z, n, data) >
+
+#define BOOST_NUMPY_DSTREAM_for_dim_begin(z, n, nd) \
+    BOOST_PP_REPEAT(BOOST_PP_SUB(nd,n), BOOST_NUMPY_DSTREAM_vec_def_p1, ~) \
+    ScalarT \
+    BOOST_PP_REPEAT(BOOST_PP_SUB(nd,n), BOOST_NUMPY_DSTREAM_vec_def_p2, ~) \
+    BOOST_PP_CAT(v,n); \
+    BOOST_PP_CAT(v,n).reserve(core_shape[n]); \
+    for(intptr_t BOOST_PP_CAT(i,n)=0; BOOST_PP_CAT(i,n)<core_shape[n]; ++BOOST_PP_CAT(i,n)) {
+
+#define BOOST_NUMPY_DSTREAM_for_dim_end(z, n, nd) \
+    BOOST_PP_CAT(v, BOOST_PP_SUB(BOOST_PP_SUB(nd,n),1)).push_back( \
+        BOOST_PP_CAT(v,BOOST_PP_SUB(nd,n))); }
+
+#define BOOST_NUMPY_DSTREAM_value_offset(z, n, _op_nd)\
+    BOOST_PP_IF(n,+,) BOOST_PP_CAT(i,n)*strides[_op_nd - BOOST_PP_SUB(ND,n)]
+
+template <class FctArgT, class ScalarT, class ArrDataHoldingT>
+struct std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, ND>
+{
+    typedef std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, ND>
+            type;
+
+    typedef FctArgT
+            arg_t;
+
+    static
+    arg_t
+    apply(
+        numpy::detail::iter &         iter
+      , size_t                        iter_op_idx
+      , std::vector<intptr_t> const & core_shape
+    )
+    {
+        // Get the strides of the argument ndarray. Note: This contains the
+        // strides for all dimensions, i.e. also for the loop dimensions.
+        // The strides for the core dimensions are the last entries in this
+        // vector.
+        std::vector<intptr_t> strides = iter.get_operand(iter_op_idx).get_strides_vector();
+        size_t const op_nd = strides.size();
+
+        BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_begin, ND)
+        ArrDataHoldingT & BOOST_PP_CAT(v,ND) = *reinterpret_cast<ArrDataHoldingT *>(iter.get_data(iter_op_idx) + BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_value_offset, op_nd));
+        BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_end, ND)
+
+        return v0;
+    }
+};
+
+template <class ArgT>
+struct std_vector_of_bp_object_arg_from_bp_object_core_shape_data<ArgT, ND>
+{
+    typedef std_vector_of_bp_object_arg_from_bp_object_core_shape_data<ArgT, ND>
+            type;
+
+    typedef ArgT
+            arg_t;
+
+    typedef python::object
+            ScalarT;
+
+    static
+    arg_t
+    apply(
+        numpy::detail::iter &         iter
+      , size_t                        iter_op_idx
+      , std::vector<intptr_t> const & core_shape
+    )
+    {
+        std::vector<intptr_t> strides = iter.get_operand(iter_op_idx).get_strides_vector();
+        size_t const op_nd = strides.size();
+
+        BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_begin, ND)
+        uintptr_t * data = reinterpret_cast<uintptr_t*>(iter.get_data(iter_op_idx) + BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_value_offset, op_nd));
+        boost::python::object BOOST_PP_CAT(v,ND)(boost::python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*data)));
+        BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_end, ND)
+
+        return v0;
+    }
+};
+
+#undef BOOST_NUMPY_DSTREAM_value_offset
+#undef BOOST_NUMPY_DSTREAM_for_dim_end
+#undef BOOST_NUMPY_DSTREAM_for_dim_begin
+#undef BOOST_NUMPY_DSTREAM_vec_def_p2
+#undef BOOST_NUMPY_DSTREAM_vec_def_p1
+
+#undef ND
+
+#endif // BOOST_PP_ITERATION_FLAGS() == 1
+
+#endif // BOOST_PP_IS_ITERATING
