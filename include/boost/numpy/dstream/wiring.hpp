@@ -28,7 +28,7 @@ namespace numpy {
 namespace dstream {
 namespace wiring {
 
-struct wiring_model_type
+struct wiring_model_type // DEPRECATED
 {};
 
 struct wiring_model_selector_type
@@ -43,6 +43,7 @@ struct null_wiring_model_selector
 }// namespace detail
 
 //==============================================================================
+// DEPRECATED
 /**
  * @brief The wiring_model_base template provides a base for a certain
  *        wiring model. Wiring is the part that defines what C++ (member)
