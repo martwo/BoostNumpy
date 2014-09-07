@@ -184,6 +184,23 @@ struct all_mapping_arrays_are_scalars_arity<1, Mapping>
             type;
 };
 
+template <class Mapping, unsigned nd, unsigned arity>
+struct all_mapping_arrays_have_dim_arity;
+
+template <class Mapping, unsigned nd>
+struct all_mapping_arrays_have_dim_arity<Mapping, nd, 0>
+{
+    typedef boost::mpl::bool_<false>
+            type;
+};
+
+template <class Mapping, unsigned nd>
+struct all_mapping_arrays_have_dim_arity<Mapping, nd, 1>
+{
+    typedef typename is_core_shape_of_dim< typename Mapping::core_shape_t0, nd >::type
+            type;
+};
+
 #define BOOST_PP_ITERATION_PARAMS_1 \
     (4, (2, BOOST_NUMPY_LIMIT_MAX_INPUT_OUTPUT_ARITY, <boost/numpy/dstream/mapping/detail/definition.hpp>, 1))
 #include BOOST_PP_ITERATE()
@@ -258,6 +275,13 @@ struct out_mapping
                 type;
     };
 
+    template <unsigned nd>
+    struct all_arrays_have_dim
+    {
+        typedef typename all_mapping_arrays_have_dim_arity<OutMapping, nd, OutMapping::arity>::type
+                type;
+    };
+
     template <unsigned Idx>
     struct array
     {
@@ -273,6 +297,13 @@ struct out_mapping
         struct is_1d
         {
             typedef typename numpy::dstream::mapping::detail::is_1d<array_type>::type
+                    type;
+        };
+
+        template<unsigned nd>
+        struct has_dim
+        {
+            typedef typename numpy::dstream::mapping::detail::is_core_shape_of_dim<array_type, nd>::type
                     type;
         };
     };
@@ -297,10 +328,10 @@ struct all_mapping_arrays_are_scalars_arity<N, Mapping>
     // By default, boost::mpl::and_ has only a maximal arity of 5, so we have
     // to construct a sequence of boost::mpl::and_<.,.> with always, two
     // arguments.
-    #define BOOST_NUMPY_DEF_is_same(n) \
-        boost::is_same< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
     #define BOOST_NUMPY_DEF_pre_and(z, n, data) \
         typename boost::mpl::and_<
+    #define BOOST_NUMPY_DEF_is_same(n) \
+        boost::is_same< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , core_shape<0>::shape<> >
     #define BOOST_NUMPY_DEF_post_and(z, n, data) \
         BOOST_PP_COMMA() BOOST_NUMPY_DEF_is_same(BOOST_PP_ADD(n,1)) >::type
 
@@ -310,8 +341,31 @@ struct all_mapping_arrays_are_scalars_arity<N, Mapping>
             type;
 
     #undef BOOST_NUMPY_DEF_post_and
-    #undef BOOST_NUMPY_DEF_pre_and
     #undef BOOST_NUMPY_DEF_is_same
+    #undef BOOST_NUMPY_DEF_pre_and
+};
+
+template <class Mapping, unsigned nd>
+struct all_mapping_arrays_have_dim_arity<Mapping, nd, N>
+{
+    // By default, boost::mpl::and_ has only a maximal arity of 5, so we have
+    // to construct a sequence of boost::mpl::and_<.,.> with always, two
+    // arguments.
+    #define BOOST_NUMPY_DEF_pre_and(z, n, data) \
+        typename boost::mpl::and_<
+    #define BOOST_NUMPY_DEF_is_core_shape_of_dim(n, nd) \
+        typename is_core_shape_of_dim< typename Mapping:: BOOST_PP_CAT(core_shape_t,n) , nd >::type
+    #define BOOST_NUMPY_DEF_post_and(z, n, nd) \
+        BOOST_PP_COMMA() BOOST_NUMPY_DEF_is_core_shape_of_dim(BOOST_PP_ADD(n,1), nd) >::type
+
+    typedef BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF_pre_and, ~)
+            BOOST_NUMPY_DEF_is_core_shape_of_dim(0, nd)
+            BOOST_PP_REPEAT(BOOST_PP_SUB(N,1), BOOST_NUMPY_DEF_post_and, nd)
+            type;
+
+    #undef BOOST_NUMPY_DEF_post_and
+    #undef BOOST_NUMPY_DEF_is_core_shape_of_dim
+    #undef BOOST_NUMPY_DEF_pre_and
 };
 
 #undef N

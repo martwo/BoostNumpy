@@ -248,8 +248,6 @@ struct is_1d<numpy::mpl::unspecified>
             type;
 };
 
-
-
 }// namespace detail
 }// namespace mapping
 }// namespace dstream
