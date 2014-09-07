@@ -29,7 +29,7 @@ namespace detail {
 
 template <typename T>
 std::string
-pprint_shape(std::vector<T> const & v)
+pprint_shape(std::vector<T> const & v) // This function name is DEPRECATED.
 {
     typename std::vector<T>::const_iterator it;
     typename std::vector<T>::const_iterator const v_begin = v.begin();
@@ -45,6 +45,13 @@ pprint_shape(std::vector<T> const & v)
     os << ")";
 
     return os.str();
+}
+
+template <typename T>
+std::string
+std_vector_to_string(std::vector<T> const & v)
+{
+    return pprint_shape<T>(v);
 }
 
 }// namespace detail
