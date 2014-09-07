@@ -43,6 +43,9 @@ namespace detail {
 template <class MappingDefinition, class FTypes>
 struct generalized_wiring_model_api
 {
+    typedef MappingDefinition
+            mapping_definition_t;
+
     template <unsigned Idx>
     struct out_arr_value_type
     {
@@ -256,7 +259,8 @@ struct generalized_wiring_model_arity<IN_ARITY>
         // Define the return value converter type, that will be used to transfer
         // the function's return data into the output arrays.
         typedef typename converter::detail::return_to_core_shape_data_converter<
-                  typename MappingDefinition::out
+                  api
+                , typename MappingDefinition::out
                 , typename FTypes::return_type
                 >::type
                 return_to_core_shape_data_t;
@@ -280,7 +284,7 @@ struct generalized_wiring_model_arity<IN_ARITY>
                 intptr_t size = iter.get_inner_loop_size();
                 while(size--)
                 {
-                    if(! return_to_core_shape_data_t::template apply<api>(
+                    if(! return_to_core_shape_data_t::apply(
                           f_caller.call(
                                 self
                               , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF__in_arr_value, ~)
