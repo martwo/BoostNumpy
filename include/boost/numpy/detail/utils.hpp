@@ -49,7 +49,7 @@ pprint_shape(std::vector<T> const & v) // This function name is DEPRECATED.
 
 template <typename T>
 std::string
-std_vector_to_string(std::vector<T> const & v)
+shape_vector_to_string(std::vector<T> const & v)
 {
     return pprint_shape<T>(v);
 }
