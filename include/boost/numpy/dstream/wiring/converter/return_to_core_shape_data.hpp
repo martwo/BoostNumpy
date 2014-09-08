@@ -29,8 +29,13 @@
 #include <vector>
 
 #include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/control/if.hpp>
+#include <boost/preprocessor/comparison/greater.hpp>
+#include <boost/preprocessor/facilities/empty.hpp>
 #include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/punctuation/comma.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
+#include <boost/preprocessor/repetition/repeat_from_to.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/mpl/and.hpp>
@@ -66,41 +71,13 @@ struct return_to_core_shape_data
 namespace detail {
 
 template <class VectorT, unsigned axis>
-bool
-multidim_std_vector_has_aligned_axis(VectorT const & v);
+struct multidim_std_vector_has_fixed_length_axis;
 
-template <class VectorT>
-bool
-multidim_std_vector_has_aligned_axis<0>(VectorT const & v)
-{
-    v.size()
-}
-
-template <class VectorT, unsigned nd>
-std::vector<intptr_t>
-get_multidim_std_vector_shape(VectorT const & v);
-
-template <class VectorT>
-std::vector<intptr_t>
-get_multidim_std_vector_shape<VectorT, 1>(VectorT const & v)
-{
-    std::vector<intptr_t> shape(1);
-    shape[0] = v.size();
-
-    return shape;
-}
-
-template <class VectorT>
-std::vector<intptr_t>
-get_multidim_std_vector_shape<VectorT, 2>(VectorT const & v)
-{
-    std::vector<intptr_t> shape(2);
-    shape[0] = v.size();
-    shape[1] = v[0].size();
-
-
-    return shape;
-}
+// Define specializations for axis = 1 .. 17 for multi-dimensional vectors of
+// up to 18 dimensions, i.e. dim::I to dim::Z.
+#define BOOST_PP_ITERATION_PARAMS_1                                            \
+    (4, (1, 17, <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>, 1))
+#include BOOST_PP_ITERATE()
 
 //------------------------------------------------------------------------------
 // The scalar_return_to_core_shape_data_impl template is used to put the
@@ -150,7 +127,7 @@ struct select_scalar_return_to_core_shape_data_impl
             is_scalar_out_array;
 
     // Check if the output array has a scalar data holding type.
-    typedef typename is_scalar<WiringModelAPI::template out_arr_value_type<0>::type>::type
+    typedef typename is_scalar<typename WiringModelAPI::template out_arr_value_type<0>::type>::type
             is_scalar_out_array_data_type;
 
     typedef typename boost::mpl::if_<
@@ -167,6 +144,9 @@ struct select_scalar_return_to_core_shape_data_impl
 };
 
 //------------------------------------------------------------------------------
+template <class VectorT, unsigned nd>
+struct get_multidim_std_vector_shape;
+
 // The std_vector_of_scalar_return_to_core_shape_data_impl template is used to
 // put the function's result data from a n-dimensional std::vector of scalar
 // type into out_arity output arrays.
@@ -176,13 +156,13 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl;
 // Define specializations for dimensions I to Z, i.e. 18 dimensions for
 // out_arity = 1.
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (1, 18, <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>, 1))
+    (4, (1, 18, <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>, 2))
 #include BOOST_PP_ITERATE()
 
 // Define specializations for dimensions I to Z, i.e. 18 dimensions for
 // out_arity >= 2.
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (4, (2, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>, 2))
+    (4, (2, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>, 3))
 #include BOOST_PP_ITERATE()
 
 template <class WiringModelAPI, class OutMapping, class RT, unsigned nd, unsigned out_arity>
@@ -259,7 +239,7 @@ struct std_vector_return_to_core_shape_data
 
     typedef typename boost::mpl::if_<
               typename is_scalar<vector_bare_value_t>::type
-            , typename select_std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, OutMapping::arity, ND>::type
+            , typename select_std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, OutMapping::arity>::type
 
               // TODO: Add check for bp::object vector value type.
             // Check if the std::vector's value type is a std::vector again, and
@@ -320,10 +300,90 @@ struct return_to_core_shape_data_converter
 
 #endif // ! BOOST_NUMPY_DSTREAM_WIRING_RETURN_TO_CORE_SHAPE_DATA_HPP_INCLUDED
 #else
-
 #if BOOST_PP_ITERATION_FLAGS() == 1
 
+#define AXIS BOOST_PP_ITERATION()
+
+#define BOOST_NUMPY_DSTREAM_null_item(z, n, data) [0]
+#define BOOST_NUMPY_DSTREAM_trailing_dim(_axis) \
+    BOOST_PP_REPEAT(BOOST_PP_SUB(_axis,1), BOOST_NUMPY_DSTREAM_null_item, ~)
+
+// Assumes, that the vector has at least AXIS+1 dimensions.
+template <class VectorT>
+struct multidim_std_vector_has_fixed_length_axis<VectorT, AXIS>
+{
+    static
+    bool
+    apply(VectorT const & v)
+    {
+        intptr_t const naxes = v BOOST_NUMPY_DSTREAM_trailing_dim(AXIS) .size();
+
+        for(int i=1; i<naxes; ++i)
+        {
+            if(v BOOST_NUMPY_DSTREAM_trailing_dim(AXIS) [i].size !=
+               v BOOST_NUMPY_DSTREAM_trailing_dim(AXIS) [0].size()
+              )
+            { return false; }
+        }
+
+        return true;
+    }
+};
+
+#undef BOOST_NUMPY_DSTREAM_trailing_dim
+#undef BOOST_NUMPY_DSTREAM_null_item
+
+#undef AXIS
+
+#else
+#if BOOST_PP_ITERATION_FLAGS() == 2
+
 #define ND BOOST_PP_ITERATION()
+
+#define BOOST_NUMPY_DSTREAM_null_item(z, n, data) [0]
+#define BOOST_NUMPY_DSTREAM_trailing_dim(_nd) \
+    BOOST_PP_REPEAT(BOOST_PP_SUB(_nd,1), BOOST_NUMPY_DSTREAM_null_item, ~)
+
+#define BOOST_NUMPY_DSTREAM_fill_shape(z, n, data) \
+    shape [n] = v BOOST_NUMPY_DSTREAM_trailing_dim(BOOST_PP_ADD(n,1)) .size();
+
+#define BOOST_NUMPY_DSTREAM_check_for_fixed_length_axis(z, _axis, _v) \
+    assert( multidim_std_vector_has_fixed_length_axis<VectorT BOOST_PP_COMMA() _axis>::apply(_v) );
+
+template <class VectorT>
+struct get_multidim_std_vector_shape<VectorT, ND>
+{
+    static
+    std::vector<intptr_t>
+    apply(VectorT const & v)
+    {
+        BOOST_PP_REPEAT_FROM_TO(1, ND, BOOST_NUMPY_DSTREAM_check_for_fixed_length_axis, v)
+
+        std::vector<intptr_t> shape(ND);
+        BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_fill_shape, ~)
+
+        return shape;
+    }
+};
+
+#undef BOOST_NUMPY_DSTREAM_check_for_fixed_length_axis
+#undef BOOST_NUMPY_DSTREAM_fill_shape
+#undef BOOST_NUMPY_DSTREAM_trailing_dim
+#undef BOOST_NUMPY_DSTREAM_null_item
+
+
+
+#define BOOST_NUMPY_DSTREAM_for_dim_begin(z, n, data) \
+    for(intptr_t BOOST_PP_CAT(i,n)=0; BOOST_PP_CAT(i,n)<out_core_shapes[0][n]; ++BOOST_PP_CAT(i,n)) {
+
+#define BOOST_NUMPY_DSTREAM_for_dim_end(z, n, data) \
+    }
+
+#define BOOST_NUMPY_DSTREAM_value_offset(z, n, _op_nd) \
+    + BOOST_PP_CAT(i,n)*strides[_op_nd - BOOST_PP_SUB(ND,n)]
+
+#define BOOST_NUMPY_DSTREAM_result_accessor(z, n, data) \
+    [BOOST_PP_CAT(i,n)]
 
 template <class WiringModelAPI, class OutMapping, class RT>
 struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, 1>
@@ -349,40 +409,47 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
     {
         BOOST_ASSERT((out_core_shapes.size() == 1 && out_core_shapes[0].size() == ND));
 
-        std::vector<intptr_t> const out_op_value_strides = iter.get_operand(0).get_strides_vector();
+        std::vector<intptr_t> const strides = iter.get_operand(0).get_strides_vector();
+        size_t const op_nd = strides.size();
 
         // Check if the shape of the function result matches the shape of the
         // output array.
-        std::vector<intptr_t> const result_shape = get_multidim_std_vector_shape<vector_t, ND>(result);
+        std::vector<intptr_t> const result_shape = get_multidim_std_vector_shape<vector_t, ND>::apply(result);
         if(result_shape != out_core_shapes[0])
         {
-            std::cerr << "The shape of the function's "<<ND<<"-dimensional "
-                      << "result vector "
-                      << numpy::detail::std_vector_to_string<intptr_t>(result_shape)
-                      << " must be "
-                      << numpy::detail::std_vector_to_string<intptr_t>(out_core_shapes[0]) << "!"
+            std::cerr << "The shape "
+                      << numpy::detail::shape_vector_to_string<intptr_t>(result_shape)
+                      << " of the function's "<<ND<<"-dimensional result"
+                      << " vector must be "
+                      << numpy::detail::shape_vector_to_string<intptr_t>(out_core_shapes[0])
+                      << "!"
                       << std::endl;
             return false;
         }
-        //FIXME for multi dim.
-        for(intptr_t i=0; i<N; ++i)
-        {
-            out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0) + i*out_op_value_stride);
-            out_arr_value = out_arr_value_t(result[i]);
-        }
+
+        BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_begin, ND)
+        out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0) BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_value_offset, op_nd));
+        out_arr_value = out_arr_value_t( result BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_result_accessor, ~) );
+        BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_end, ND)
+
         return true;
     }
 };
 
+#undef BOOST_NUMPY_DSTREAM_result_accessor
+#undef BOOST_NUMPY_DSTREAM_value_offset
+#undef BOOST_NUMPY_DSTREAM_for_dim_end
+#undef BOOST_NUMPY_DSTREAM_for_dim_begin
+
 #undef ND
 
 #else
-#if BOOST_PP_ITERATION_FLAGS() == 2
+#if BOOST_PP_ITERATION_FLAGS() == 3
 
 #define OUT_ARITY BOOST_PP_ITERATION()
 
 template <class WiringModelAPI, class OutMapping, class RT>
-struct std_vector_of_scalar_return_to_core_shape_data_impl<OutMapping, RT, 1, OUT_ARITY>
+struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, 1, OUT_ARITY>
 {
     // This implementation is used to put the 1-dimensional result into the
     // OUT_ARITY scalar output arrays.
@@ -421,6 +488,7 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<OutMapping, RT, 1, OU
 
 #undef OUT_ARITY
 
+#endif // BOOST_PP_ITERATION_FLAGS() == 3
 #endif // BOOST_PP_ITERATION_FLAGS() == 2
 #endif // BOOST_PP_ITERATION_FLAGS() == 1
 
