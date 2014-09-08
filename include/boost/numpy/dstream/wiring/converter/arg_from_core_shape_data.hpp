@@ -298,8 +298,8 @@ struct arg_from_core_shape_data_converter
     BOOST_PP_CAT(v, BOOST_PP_SUB(BOOST_PP_SUB(nd,n),1)).push_back( \
         BOOST_PP_CAT(v,BOOST_PP_SUB(nd,n))); }
 
-#define BOOST_NUMPY_DSTREAM_value_offset(z, n, _op_nd)\
-    BOOST_PP_IF(n,+,) BOOST_PP_CAT(i,n)*strides[_op_nd - BOOST_PP_SUB(ND,n)]
+#define BOOST_NUMPY_DSTREAM_value_offset(z, n, _op_nd) \
+    + BOOST_PP_CAT(i,n)*strides[_op_nd - BOOST_PP_SUB(ND,n)]
 
 template <class FctArgT, class ScalarT, class ArrDataHoldingT>
 struct std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, ArrDataHoldingT, ND>
@@ -326,7 +326,7 @@ struct std_vector_of_scalar_arg_from_scalar_core_shape_data<FctArgT, ScalarT, Ar
         size_t const op_nd = strides.size();
 
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_begin, ND)
-        ArrDataHoldingT & BOOST_PP_CAT(v,ND) = *reinterpret_cast<ArrDataHoldingT *>(iter.get_data(iter_op_idx) + BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_value_offset, op_nd));
+        ArrDataHoldingT & BOOST_PP_CAT(v,ND) = *reinterpret_cast<ArrDataHoldingT *>(iter.get_data(iter_op_idx) BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_value_offset, op_nd));
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_end, ND)
 
         return v0;
@@ -357,7 +357,7 @@ struct std_vector_of_bp_object_arg_from_bp_object_core_shape_data<ArgT, ND>
         size_t const op_nd = strides.size();
 
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_begin, ND)
-        uintptr_t * data = reinterpret_cast<uintptr_t*>(iter.get_data(iter_op_idx) + BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_value_offset, op_nd));
+        uintptr_t * data = reinterpret_cast<uintptr_t*>(iter.get_data(iter_op_idx) BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_value_offset, op_nd));
         boost::python::object BOOST_PP_CAT(v,ND)(boost::python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*data)));
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_end, ND)
 
