@@ -59,6 +59,7 @@
 #include <boost/numpy/dstream/mapping/converter/arg_type_to_core_shape.hpp>
 #include <boost/numpy/dstream/mapping/converter/return_type_to_out_mapping.hpp>
 #include <boost/numpy/dstream/wiring.hpp>
+#include <boost/numpy/dstream/wiring/generalized_wiring_model.hpp>
 
 // Include all built-in wiring models.
 #include <boost/numpy/dstream/wiring/models/scalars_to_scalar_callable.hpp>
@@ -119,6 +120,7 @@ void create_and_add_py_function(
     // selector. Either the user provided one or the default one.
     typedef typename boost::mpl::eval_if<
               typename boost::is_same<WiringModelSelector, wiring::detail::null_wiring_model_selector>::type
+            //, wiring::generalized_wiring_model_selector
             , wiring::default_wiring_model_selector<mapping_definition_t, FTypes>
             , WiringModelSelector
             >::type
