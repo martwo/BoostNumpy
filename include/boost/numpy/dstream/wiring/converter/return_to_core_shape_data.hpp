@@ -50,6 +50,8 @@
 #include <boost/numpy/detail/iter.hpp>
 #include <boost/numpy/detail/utils.hpp>
 #include <boost/numpy/dstream/mapping/detail/definition.hpp>
+#include <boost/numpy/dstream/wiring/detail/iter_data_ptr.hpp>
+#include <boost/numpy/dstream/wiring/detail/nd_accessor.hpp>
 #include <boost/numpy/dstream/wiring/detail/utilities.hpp>
 
 namespace boost {
@@ -152,7 +154,7 @@ struct get_multidim_std_vector_shape;
 // The std_vector_of_scalar_return_to_core_shape_data_impl template is used to
 // put the function's result data from a n-dimensional std::vector of scalar
 // type into out_arity output arrays.
-template <class WiringModelAPI, class OutMapping, class RT, unsigned nd, unsigned out_arity>
+template <class WiringModelAPI, class OutMapping, class RT, class VectorValueT, unsigned nd, unsigned out_arity>
 struct std_vector_of_scalar_return_to_core_shape_data_impl;
 
 // Define specializations for dimensions I to Z, i.e. 18 dimensions for
@@ -167,7 +169,7 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl;
     (4, (2, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>, 3))
 #include BOOST_PP_ITERATE()
 
-template <class WiringModelAPI, class OutMapping, class RT, unsigned nd, unsigned out_arity>
+template <class WiringModelAPI, class OutMapping, class RT, class VectorValueT, unsigned nd, unsigned out_arity>
 struct select_std_vector_of_scalar_return_to_core_shape_data_impl
 {
     typedef mapping::detail::out_mapping<OutMapping>
@@ -194,7 +196,7 @@ struct select_std_vector_of_scalar_return_to_core_shape_data_impl
                 all_arrays_have_correct_dim
               , all_out_arr_value_types_are_scalars
               >::type
-            , std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, nd, out_arity>
+            , std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, VectorValueT, nd, out_arity>
 
             , numpy::mpl::unspecified
             >::type
@@ -202,8 +204,8 @@ struct select_std_vector_of_scalar_return_to_core_shape_data_impl
 };
 
 // Specialization for out_arity = 1.
-template <class WiringModelAPI, class OutMapping, class RT, unsigned nd>
-struct select_std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, nd, 1>
+template <class WiringModelAPI, class OutMapping, class RT, class VectorValueT, unsigned nd>
+struct select_std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, VectorValueT, nd, 1>
 {
     typedef mapping::detail::out_mapping<OutMapping>
             out_mapping_utils;
@@ -222,7 +224,7 @@ struct select_std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI
                 has_correct_dim
               , has_scalar_array_data_holding_type
               >::type
-            , std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, nd, 1>
+            , std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, VectorValueT, nd, 1>
 
             , numpy::mpl::unspecified
             >::type
@@ -241,7 +243,7 @@ struct std_vector_return_to_core_shape_data
 
     typedef typename boost::mpl::if_<
               typename is_scalar<vector_bare_value_t>::type
-            , typename select_std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, OutMapping::arity>::type
+            , typename select_std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, vector_value_t, ND, OutMapping::arity>::type
 
               // TODO: Add check for bp::object vector value type.
             // Check if the std::vector's value type is a std::vector again, and
@@ -377,23 +379,17 @@ struct get_multidim_std_vector_shape<VectorT, ND>
 
 
 #define BOOST_NUMPY_DSTREAM_for_dim_begin(z, n, data) \
-    for(intptr_t BOOST_PP_CAT(i,n)=0; BOOST_PP_CAT(i,n)<out_core_shapes[0][n]; ++BOOST_PP_CAT(i,n)) {
+    for(dim_indices[n] = 0; dim_indices[n] < out_core_shapes[0][n]; ++dim_indices[n]) {
 
 #define BOOST_NUMPY_DSTREAM_for_dim_end(z, n, data) \
     }
 
-#define BOOST_NUMPY_DSTREAM_value_offset(z, n, _op_nd) \
-    + BOOST_PP_CAT(i,n)*strides[_op_nd - BOOST_PP_SUB(ND,n)]
-
-#define BOOST_NUMPY_DSTREAM_result_accessor(z, n, data) \
-    [BOOST_PP_CAT(i,n)]
-
-template <class WiringModelAPI, class OutMapping, class RT>
-struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, 1>
+template <class WiringModelAPI, class OutMapping, class RT, class VectorValueT>
+struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, VectorValueT, ND, 1>
 {
     // This implementation is used to put the ND-dimensional result into the
     // one and only output array (i.e. nd=ND and out_arity=1).
-    typedef std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, 1>
+    typedef std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, VectorValueT, ND, 1>
             type;
 
     typedef typename remove_reference<RT>::type
@@ -430,17 +426,17 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
             return false;
         }
 
+        std::vector<intptr_t> dim_indices(ND);
+
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_begin, ND)
-        out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0) BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_value_offset, op_nd));
-        out_arr_value = out_arr_value_t( result BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_result_accessor, ~) );
+        out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>( wiring::detail::iter_data_ptr<ND, 0>::get(iter, 0, dim_indices, strides) );
+        out_arr_value = out_arr_value_t( wiring::detail::nd_accessor<RT, VectorValueT, ND>::get(result, dim_indices) );
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_end, ND)
 
         return true;
     }
 };
 
-#undef BOOST_NUMPY_DSTREAM_result_accessor
-#undef BOOST_NUMPY_DSTREAM_value_offset
 #undef BOOST_NUMPY_DSTREAM_for_dim_end
 #undef BOOST_NUMPY_DSTREAM_for_dim_begin
 
@@ -468,31 +464,25 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
     std::vector<intptr_t> const BOOST_PP_CAT(strides,n) = iter.get_operand(n).get_strides_vector();
 
 #define BOOST_NUMPY_DSTREAM_for_dim_begin(z, n, data)                          \
-    std::cout << BOOST_PP_STRINGIZE( BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) ) << "<" << out_core_shapes[0][n] << std::endl; \
-    for(intptr_t BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) = 0; BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) < out_core_shapes[0][n]; ++ BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) ) {
+    for(dim_indices[ BOOST_PP_ADD(n,1) ] = 0; dim_indices[ BOOST_PP_ADD(n,1) ] < out_core_shapes[0][n]; ++ dim_indices[ BOOST_PP_ADD(n,1) ] ) {
 
 #define BOOST_NUMPY_DSTREAM_for_dim_end(z, n, data)                            \
     }
 
-#define BOOST_NUMPY_DSTREAM_value_offset(z, n, _op_idx)                        \
-    + BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) * BOOST_PP_CAT(strides,_op_idx) [BOOST_PP_CAT(strides,_op_idx).size() - BOOST_PP_SUB(ND,n) + 1]
-
-#define BOOST_NUMPY_DSTREAM_result_accessor(z, n, data)                        \
-    [ BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) ]
-
 #define BOOST_NUMPY_DSTREAM_out_arr_value_set(z, n, _nd)                       \
+    dim_indices[0] = n;                                                        \
     BOOST_PP_CAT(out_arr_value_t,n) & BOOST_PP_CAT(out_arr_value,n) =          \
-        *reinterpret_cast<BOOST_PP_CAT(out_arr_value_t,n) *>(iter.get_data(n) BOOST_PP_REPEAT_FROM_TO_D(1, 0, BOOST_PP_SUB(_nd,1), BOOST_NUMPY_DSTREAM_value_offset, n) ); \
-    BOOST_PP_CAT(out_arr_value,n) = BOOST_PP_CAT(out_arr_value_t,n)(result[n] BOOST_PP_REPEAT_FROM_TO_D(1, 0, BOOST_PP_SUB(_nd,1), BOOST_NUMPY_DSTREAM_result_accessor, ~) );
+        *reinterpret_cast<BOOST_PP_CAT(out_arr_value_t,n) *>( wiring::detail::iter_data_ptr<_nd, 1>::get(iter, n, dim_indices, BOOST_PP_CAT(strides,n)) ); \
+    BOOST_PP_CAT(out_arr_value,n) = BOOST_PP_CAT(out_arr_value_t,n)( wiring::detail::nd_accessor<RT, VectorValueT, _nd>::get(result, dim_indices) );
 
-template <class WiringModelAPI, class OutMapping, class RT>
-struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, OUT_ARITY>
+template <class WiringModelAPI, class OutMapping, class RT, class VectorValueT>
+struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, VectorValueT, ND, OUT_ARITY>
 {
     // This implementation is used to put the ND-dimensional result into the
     // OUT_ARITY (ND-1)-dimensional output arrays by distributing the first
     // dimension of the function's result vector accross the output arrays.
 
-    typedef std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, OUT_ARITY>
+    typedef std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, VectorValueT, ND, OUT_ARITY>
             type;
 
     BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_out_arr_value_type, ~)
@@ -517,10 +507,9 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
 
         BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_strides, ~)
 
+        std::vector<intptr_t> dim_indices(ND);
+
         BOOST_PP_REPEAT(BOOST_PP_SUB(ND,1), BOOST_NUMPY_DSTREAM_for_dim_begin, ~)
-        // TODO: The 2-D BOOST_PP_REPEAT structure here drives clang crazy in
-        //       in memory consuption. One might think about the templated
-        //       version here to break the PP dimensionality down to linear.
         BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_out_arr_value_set, ND)
         BOOST_PP_REPEAT(BOOST_PP_SUB(ND,1), BOOST_NUMPY_DSTREAM_for_dim_end, ~)
 
@@ -529,8 +518,6 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
 };
 
 #undef BOOST_NUMPY_DSTREAM_out_arr_value_set
-#undef BOOST_NUMPY_DSTREAM_result_accessor
-#undef BOOST_NUMPY_DSTREAM_value_offset
 #undef BOOST_NUMPY_DSTREAM_for_dim_end
 #undef BOOST_NUMPY_DSTREAM_for_dim_begin
 #undef BOOST_NUMPY_DSTREAM_strides
