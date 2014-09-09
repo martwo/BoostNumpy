@@ -29,10 +29,12 @@
 #include <vector>
 
 #include <boost/preprocessor/cat.hpp>
-#include <boost/preprocessor/control/if.hpp>
-#include <boost/preprocessor/comparison/greater.hpp>
-#include <boost/preprocessor/facilities/empty.hpp>
 #include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/arithmetic/add.hpp>
+#include <boost/preprocessor/arithmetic/sub.hpp>
+#include <boost/preprocessor/comparison/greater.hpp>
+#include <boost/preprocessor/control/if.hpp>
+#include <boost/preprocessor/facilities/empty.hpp>
 #include <boost/preprocessor/punctuation/comma.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/repetition/repeat_from_to.hpp>
@@ -300,7 +302,7 @@ struct return_to_core_shape_data_converter
 
 #endif // ! BOOST_NUMPY_DSTREAM_WIRING_RETURN_TO_CORE_SHAPE_DATA_HPP_INCLUDED
 #else
-#if BOOST_PP_ITERATION_FLAGS() == 1
+#if (BOOST_PP_ITERATION_DEPTH() == 1) && (BOOST_PP_ITERATION_FLAGS() == 1)
 
 #define AXIS BOOST_PP_ITERATION()
 
@@ -336,7 +338,7 @@ struct multidim_std_vector_has_fixed_length_axis<VectorT, AXIS>
 #undef AXIS
 
 #else
-#if BOOST_PP_ITERATION_FLAGS() == 2
+#if (BOOST_PP_ITERATION_DEPTH() == 1) && (BOOST_PP_ITERATION_FLAGS() == 2)
 
 #define ND BOOST_PP_ITERATION()
 
@@ -345,10 +347,11 @@ struct multidim_std_vector_has_fixed_length_axis<VectorT, AXIS>
     BOOST_PP_REPEAT(BOOST_PP_SUB(_nd,1), BOOST_NUMPY_DSTREAM_null_item, ~)
 
 #define BOOST_NUMPY_DSTREAM_fill_shape(z, n, data) \
-    shape [n] = v BOOST_NUMPY_DSTREAM_trailing_dim(BOOST_PP_ADD(n,1)) .size();
+    shape [n] = v BOOST_NUMPY_DSTREAM_trailing_dim( BOOST_PP_ADD(n,1) ) .size();
 
-#define BOOST_NUMPY_DSTREAM_check_for_fixed_length_axis(z, _axis, _v) \
-    assert( multidim_std_vector_has_fixed_length_axis<VectorT BOOST_PP_COMMA() _axis>::apply(_v) );
+#define BOOST_NUMPY_DSTREAM_check_for_fixed_length_axis(z, _axis, data) \
+    typedef multidim_std_vector_has_fixed_length_axis< VectorT, _axis > BOOST_PP_CAT(flc_t,_axis) ; \
+    assert( BOOST_PP_CAT(flc_t,_axis)::apply(v) );
 
 template <class VectorT>
 struct get_multidim_std_vector_shape<VectorT, ND>
@@ -357,7 +360,7 @@ struct get_multidim_std_vector_shape<VectorT, ND>
     std::vector<intptr_t>
     apply(VectorT const & v)
     {
-        BOOST_PP_REPEAT_FROM_TO(1, ND, BOOST_NUMPY_DSTREAM_check_for_fixed_length_axis, v)
+        BOOST_PP_REPEAT_FROM_TO(1, ND, BOOST_NUMPY_DSTREAM_check_for_fixed_length_axis, ~)
 
         std::vector<intptr_t> shape(ND);
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_fill_shape, ~)
@@ -444,18 +447,55 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
 #undef ND
 
 #else
-#if BOOST_PP_ITERATION_FLAGS() == 3
+#if (BOOST_PP_ITERATION_DEPTH() == 1) && (BOOST_PP_ITERATION_FLAGS() == 3)
 
-#define OUT_ARITY BOOST_PP_ITERATION()
+// Loop over ND.
+#define BOOST_PP_ITERATION_PARAMS_2 \
+    (4, (1, 18, <boost/numpy/dstream/wiring/converter/return_to_core_shape_data.hpp>, 1))
+#include BOOST_PP_ITERATE()
+
+#else
+#if (BOOST_PP_ITERATION_DEPTH() == 2) && (BOOST_PP_ITERATION_FLAGS() == 1)
+
+#define OUT_ARITY BOOST_PP_RELATIVE_ITERATION(1)
+#define ND BOOST_PP_ITERATION()
+
+#define BOOST_NUMPY_DSTREAM_out_arr_value_type(z, n, data)                     \
+    typedef typename WiringModelAPI::template out_arr_value_type<n>::type      \
+            BOOST_PP_CAT(out_arr_value_t,n);
+
+#define BOOST_NUMPY_DSTREAM_strides(z, n, data)                                \
+    std::vector<intptr_t> const BOOST_PP_CAT(strides,n) = iter.get_operand(n).get_strides_vector();
+
+#define BOOST_NUMPY_DSTREAM_for_dim_begin(z, n, data)                          \
+    std::cout << BOOST_PP_STRINGIZE( BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) ) << "<" << out_core_shapes[0][n] << std::endl; \
+    for(intptr_t BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) = 0; BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) < out_core_shapes[0][n]; ++ BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) ) {
+
+#define BOOST_NUMPY_DSTREAM_for_dim_end(z, n, data)                            \
+    }
+
+#define BOOST_NUMPY_DSTREAM_value_offset(z, n, _op_idx)                        \
+    + BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) * BOOST_PP_CAT(strides,_op_idx) [BOOST_PP_CAT(strides,_op_idx).size() - BOOST_PP_SUB(ND,n) + 1]
+
+#define BOOST_NUMPY_DSTREAM_result_accessor(z, n, data)                        \
+    [ BOOST_PP_CAT(i,BOOST_PP_ADD(n,1)) ]
+
+#define BOOST_NUMPY_DSTREAM_out_arr_value_set(z, n, _nd)                       \
+    BOOST_PP_CAT(out_arr_value_t,n) & BOOST_PP_CAT(out_arr_value,n) =          \
+        *reinterpret_cast<BOOST_PP_CAT(out_arr_value_t,n) *>(iter.get_data(n) BOOST_PP_REPEAT_FROM_TO_D(1, 0, BOOST_PP_SUB(_nd,1), BOOST_NUMPY_DSTREAM_value_offset, n) ); \
+    BOOST_PP_CAT(out_arr_value,n) = BOOST_PP_CAT(out_arr_value_t,n)(result[n] BOOST_PP_REPEAT_FROM_TO_D(1, 0, BOOST_PP_SUB(_nd,1), BOOST_NUMPY_DSTREAM_result_accessor, ~) );
 
 template <class WiringModelAPI, class OutMapping, class RT>
-struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, 1, OUT_ARITY>
+struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, OUT_ARITY>
 {
-    // This implementation is used to put the 1-dimensional result into the
-    // OUT_ARITY scalar output arrays.
+    // This implementation is used to put the ND-dimensional result into the
+    // OUT_ARITY (ND-1)-dimensional output arrays by distributing the first
+    // dimension of the function's result vector accross the output arrays.
 
-    typedef std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, 1, OUT_ARITY>
+    typedef std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT, ND, OUT_ARITY>
             type;
+
+    BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_out_arr_value_type, ~)
 
     static
     bool
@@ -465,31 +505,44 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
       , std::vector< std::vector<intptr_t> > const & out_core_shapes
     )
     {
-        // Check if the number of scalar values match the output arity.
+        // Check if the size of the result's vector first dimension matches the
+        // output arity.
         if(result.size() != OUT_ARITY)
         {
-            std::cerr << "The size of the return vector "
-                      << "("<< result.size() <<") does not match the output "
-                      << "arity ("<< OUT_ARITY <<")!" << std::endl;
+            std::cerr << "The size of the first dimension of the function's "
+                      << "return vector ("<< result.size() <<") must match the "
+                      << "output arity ("<< OUT_ARITY <<")!" << std::endl;
             return false;
         }
 
-        #define BOOST_NUMPY_DSTREAM_DEF(z, n, data)                                     \
-            typedef typename WiringModelAPI::template out_arr_value_type<n>::type       \
-                    BOOST_PP_CAT(out_arr_value_t,n);                                    \
-            BOOST_PP_CAT(out_arr_value_t,n) & BOOST_PP_CAT(out_arr_value,n) =           \
-                *reinterpret_cast<BOOST_PP_CAT(out_arr_value_t,n) *>(iter.get_data(n)); \
-            BOOST_PP_CAT(out_arr_value,n) = BOOST_PP_CAT(out_arr_value_t,n)(result[n]);
-        BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_DEF, ~)
-        #undef BOOST_NUMPY_DSTREAM_DEF
+        BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_strides, ~)
+
+        BOOST_PP_REPEAT(BOOST_PP_SUB(ND,1), BOOST_NUMPY_DSTREAM_for_dim_begin, ~)
+        // TODO: The 2-D BOOST_PP_REPEAT structure here drives clang crazy in
+        //       in memory consuption. One might think about the templated
+        //       version here to break the PP dimensionality down to linear.
+        BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_out_arr_value_set, ND)
+        BOOST_PP_REPEAT(BOOST_PP_SUB(ND,1), BOOST_NUMPY_DSTREAM_for_dim_end, ~)
+
         return true;
     }
 };
 
+#undef BOOST_NUMPY_DSTREAM_out_arr_value_set
+#undef BOOST_NUMPY_DSTREAM_result_accessor
+#undef BOOST_NUMPY_DSTREAM_value_offset
+#undef BOOST_NUMPY_DSTREAM_for_dim_end
+#undef BOOST_NUMPY_DSTREAM_for_dim_begin
+#undef BOOST_NUMPY_DSTREAM_strides
+#undef BOOST_NUMPY_DSTREAM_out_arr_value_type
+
+#undef ND
 #undef OUT_ARITY
 
-#endif // BOOST_PP_ITERATION_FLAGS() == 3
-#endif // BOOST_PP_ITERATION_FLAGS() == 2
-#endif // BOOST_PP_ITERATION_FLAGS() == 1
+#endif // (BOOST_PP_ITERATION_DEPTH() == 2) && (BOOST_PP_ITERATION_FLAGS() == 1)
+
+#endif // (BOOST_PP_ITERATION_DEPTH() == 1) && (BOOST_PP_ITERATION_FLAGS() == 3)
+#endif // (BOOST_PP_ITERATION_DEPTH() == 1) && (BOOST_PP_ITERATION_FLAGS() == 2)
+#endif // (BOOST_PP_ITERATION_DEPTH() == 1) && (BOOST_PP_ITERATION_FLAGS() == 1)
 
 #endif // BOOST_PP_IS_ITERATING
