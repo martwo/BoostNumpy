@@ -68,7 +68,7 @@ struct iter_data_ptr<ND, 0>
     char*
     get(
         numpy::detail::iter & iter
-      , intptr_t op_idx
+      , intptr_t const op_idx
       , std::vector<intptr_t> const & dim_indices
       , std::vector<intptr_t> const & op_strides
     )
@@ -85,7 +85,7 @@ struct iter_data_ptr<ND, 1>
     char*
     get(
         numpy::detail::iter & iter
-      , intptr_t op_idx
+      , intptr_t const op_idx
       , std::vector<intptr_t> const & dim_indices
       , std::vector<intptr_t> const & op_strides
     )

@@ -163,8 +163,19 @@ struct generalized_wiring_model_selector
 
 #define IN_ARITY BOOST_PP_ITERATION()
 
+#define BOOST_NUMPY_DSTREAM_DEF_arg_converter_type(z, n, data)                 \
+    typedef typename converter::detail::arg_from_core_shape_data_converter<    \
+              typename numpy::mpl::fct_arg_type<FTypes, n>::type               \
+            , typename mapping::detail::in_mapping<typename MappingDefinition::in>::template array<n>::core_shape_t \
+            , typename api::template in_arr_value_type<n>::type                \
+            >::type                                                            \
+            BOOST_PP_CAT(arg_converter_t,n);
+
+#define BOOST_NUMPY_DSTREAM_DEF_arg_converter(z, n, data) \
+    BOOST_PP_CAT(arg_converter_t,n) BOOST_PP_CAT(arg_converter,n)(iter, MappingDefinition::out::arity + n, in_core_shapes[n]);
+
 #define BOOST_NUMPY_DSTREAM_DEF__in_arr_value(z, n, data) \
-    BOOST_PP_COMMA_IF(n) BOOST_PP_CAT(arg_converter_t,n)::apply(iter, MappingDefinition::out::arity + n, in_core_shapes[n])
+    BOOST_PP_COMMA_IF(n) BOOST_PP_CAT(arg_converter,n)()
 
 template <>
 struct generalized_wiring_model_arity<IN_ARITY>
@@ -190,15 +201,7 @@ struct generalized_wiring_model_arity<IN_ARITY>
 
         // Define the arg_from_core_shape_data converter types for all the
         // input arguments.
-        #define BOOST_NUMPY_DSTREAM_DEF(z, n, data)                            \
-            typedef typename converter::detail::arg_from_core_shape_data_converter< \
-                      typename numpy::mpl::fct_arg_type<FTypes, n>::type       \
-                    , typename mapping::detail::in_mapping<typename MappingDefinition::in>::template array<n>::core_shape_t \
-                    , typename api::template in_arr_value_type<n>::type        \
-                    >::type                                                    \
-                    BOOST_PP_CAT(arg_converter_t,n);
-        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF, ~)
-        #undef BOOST_NUMPY_DSTREAM_DEF
+        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF_arg_converter_type, ~)
 
         /** The iterate method of the wiring model does the iteration and the
          *  actual wiring.
@@ -215,12 +218,21 @@ struct generalized_wiring_model_arity<IN_ARITY>
             , bool & error_flag
         )
         {
+            // Create an argument data converter instance for each function
+            // argument.
+            BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF_arg_converter, ~)
+
+            // Do the iteration loop over the array.
+            // Note: The iterator flags is set with EXTERNAL_LOOP in order
+            //       to allow for multi-threading. So each iteration is a
+            //       chunk of size iter.get_inner_loop_size() of data, that
+            //       needs to be iterated manually. The inner loop size is
+            //       strongly related to the buffer size specified at
+            //       iterator construction.
             do {
                 intptr_t size = iter.get_inner_loop_size();
                 while(size--)
                 {
-                    std::cout << "Calling f from generalized:";
-
                     f_caller.call(
                         self
                       , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF__in_arr_value, ~)
@@ -246,15 +258,7 @@ struct generalized_wiring_model_arity<IN_ARITY>
 
         // Define the arg_from_core_shape_data converter types for all the
         // input arguments.
-        #define BOOST_NUMPY_DSTREAM_DEF(z, n, data)                            \
-            typedef typename converter::detail::arg_from_core_shape_data_converter< \
-                      typename numpy::mpl::fct_arg_type<FTypes, n>::type       \
-                    , typename mapping::detail::in_mapping<typename MappingDefinition::in>::template array<n>::core_shape_t \
-                    , typename api::template in_arr_value_type<n>::type        \
-                    >::type                                                    \
-                    BOOST_PP_CAT(arg_converter_t,n);
-        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF, ~)
-        #undef BOOST_NUMPY_DSTREAM_DEF
+        BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF_arg_converter_type, ~)
 
         // Define the return value converter type, that will be used to transfer
         // the function's return data into the output arrays.
@@ -280,17 +284,23 @@ struct generalized_wiring_model_arity<IN_ARITY>
             , bool & error_flag
         )
         {
+            // Create an argument data converter instance for each function
+            // argument.
+            BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF_arg_converter, ~)
+
+            // Create the result data converter instance for putting the
+            // function result into the numpy array.
+            return_to_core_shape_data_t result_converter(iter, out_core_shapes);
+
             do {
                 intptr_t size = iter.get_inner_loop_size();
                 while(size--)
                 {
-                    if(! return_to_core_shape_data_t::apply(
+                    if(! result_converter(
                           f_caller.call(
                                 self
                               , BOOST_PP_REPEAT(IN_ARITY, BOOST_NUMPY_DSTREAM_DEF__in_arr_value, ~)
                           )
-                        , iter
-                        , out_core_shapes
                     ))
                     {
                         error_flag = true;
@@ -305,6 +315,8 @@ struct generalized_wiring_model_arity<IN_ARITY>
 };
 
 #undef BOOST_NUMPY_DSTREAM_DEF__in_arr_value
+#undef BOOST_NUMPY_DSTREAM_DEF_arg_converter
+#undef BOOST_NUMPY_DSTREAM_DEF_arg_converter_type
 
 #undef IN_ARITY
 

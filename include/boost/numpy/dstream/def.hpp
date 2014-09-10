@@ -120,8 +120,8 @@ void create_and_add_py_function(
     // selector. Either the user provided one or the default one.
     typedef typename boost::mpl::eval_if<
               typename boost::is_same<WiringModelSelector, wiring::detail::null_wiring_model_selector>::type
-            //, wiring::generalized_wiring_model_selector
-            , wiring::default_wiring_model_selector<mapping_definition_t, FTypes>
+            , wiring::generalized_wiring_model_selector
+            //, wiring::default_wiring_model_selector<mapping_definition_t, FTypes>
             , WiringModelSelector
             >::type
             wiring_model_selector_t;

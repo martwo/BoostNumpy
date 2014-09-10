@@ -97,23 +97,30 @@ struct scalar_return_to_core_shape_data_impl
     typedef typename WiringModelAPI::template out_arr_value_type<0>::type
             out_arr_value_t;
 
-    static
-    bool
-    apply(
-        RT result
-      , numpy::detail::iter & iter
+    scalar_return_to_core_shape_data_impl(
+        numpy::detail::iter & iter
       , std::vector< std::vector<intptr_t> > const & out_core_shapes
     )
+      : iter_(iter)
+      , out_core_shapes_(out_core_shapes)
     {
-        BOOST_ASSERT((out_core_shapes.size()    == 1 &&
-                      out_core_shapes[0].size() == 1 &&
-                      out_core_shapes[0][0]     == 1));
+        BOOST_ASSERT((out_core_shapes_.size()    == 1 &&
+                      out_core_shapes_[0].size() == 1 &&
+                      out_core_shapes_[0][0]     == 1));
+    }
 
-        out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>(iter.get_data(0));
+    inline
+    bool
+    operator()(RT result)
+    {
+        out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>(iter_.get_data(0));
         out_arr_value = out_arr_value_t(result);
 
         return true;
     }
+
+    numpy::detail::iter & iter_;
+    std::vector< std::vector<intptr_t> > const & out_core_shapes_;
 };
 
 template <class WiringModelAPI, class OutMapping, class RT>
@@ -398,35 +405,42 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
     typedef typename WiringModelAPI::template out_arr_value_type<0>::type
             out_arr_value_t;
 
-    static
-    bool
-    apply(
-        RT result
-      , numpy::detail::iter & iter
-      , std::vector< std::vector<intptr_t> > const & out_core_shapes
+    std_vector_of_scalar_return_to_core_shape_data_impl(
+        numpy::detail::iter & iter_
+      , std::vector< std::vector<intptr_t> > const & out_core_shapes_
     )
+      : iter(iter_)
+      , out_core_shapes(out_core_shapes_)
+      , dim_indices(std::vector<intptr_t>(ND))
+      , strides(iter.get_operand(0).get_strides_vector())
+      , op_nd(strides.size())
+      , check_result_shape_(true)
     {
         BOOST_ASSERT((out_core_shapes.size() == 1 && out_core_shapes[0].size() == ND));
+    }
 
-        std::vector<intptr_t> const strides = iter.get_operand(0).get_strides_vector();
-        size_t const op_nd = strides.size();
-
+    inline
+    bool
+    operator()(vector_t const & result)
+    {
         // Check if the shape of the function result matches the shape of the
         // output array.
-        std::vector<intptr_t> const result_shape = get_multidim_std_vector_shape<vector_t, ND>::apply(result);
-        if(result_shape != out_core_shapes[0])
+        if(check_result_shape_)
         {
-            std::cerr << "The shape "
-                      << numpy::detail::shape_vector_to_string<intptr_t>(result_shape)
-                      << " of the function's "<<ND<<"-dimensional result"
-                      << " vector must be "
-                      << numpy::detail::shape_vector_to_string<intptr_t>(out_core_shapes[0])
-                      << "!"
-                      << std::endl;
-            return false;
+            std::vector<intptr_t> const result_shape = get_multidim_std_vector_shape<vector_t, ND>::apply(result);
+            if(result_shape != out_core_shapes[0])
+            {
+                std::cerr << "The shape "
+                          << numpy::detail::shape_vector_to_string<intptr_t>(result_shape)
+                          << " of the function's "<<ND<<"-dimensional result"
+                          << " vector must be "
+                          << numpy::detail::shape_vector_to_string<intptr_t>(out_core_shapes[0])
+                          << "!"
+                          << std::endl;
+                return false;
+            }
+            check_result_shape_ = false;
         }
-
-        std::vector<intptr_t> dim_indices(ND);
 
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_for_dim_begin, ND)
         out_arr_value_t & out_arr_value = *reinterpret_cast<out_arr_value_t *>( wiring::detail::iter_data_ptr<ND, 0>::get(iter, 0, dim_indices, strides) );
@@ -435,6 +449,13 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
 
         return true;
     }
+
+    numpy::detail::iter & iter;
+    std::vector< std::vector<intptr_t> > const & out_core_shapes;
+    std::vector<intptr_t> dim_indices;
+    std::vector<intptr_t> const strides;
+    size_t const op_nd;
+    bool check_result_shape_;
 };
 
 #undef BOOST_NUMPY_DSTREAM_for_dim_end
@@ -460,8 +481,11 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
     typedef typename WiringModelAPI::template out_arr_value_type<n>::type      \
             BOOST_PP_CAT(out_arr_value_t,n);
 
+#define BOOST_NUMPY_DSTREAM_strides_def(z, n, data)                            \
+    std::vector<intptr_t> const BOOST_PP_CAT(strides,n);
+
 #define BOOST_NUMPY_DSTREAM_strides(z, n, data)                                \
-    std::vector<intptr_t> const BOOST_PP_CAT(strides,n) = iter.get_operand(n).get_strides_vector();
+    BOOST_PP_COMMA() BOOST_PP_CAT(strides,n)( iter.get_operand(n).get_strides_vector() )
 
 #define BOOST_NUMPY_DSTREAM_for_dim_begin(z, n, data)                          \
     for(dim_indices[ BOOST_PP_ADD(n,1) ] = 0; dim_indices[ BOOST_PP_ADD(n,1) ] < out_core_shapes[0][n]; ++ dim_indices[ BOOST_PP_ADD(n,1) ] ) {
@@ -487,14 +511,21 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
 
     BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_out_arr_value_type, ~)
 
-    static
-    bool
-    apply(
-        RT result
-      , numpy::detail::iter & iter
-      , std::vector< std::vector<intptr_t> > const & out_core_shapes
+    std_vector_of_scalar_return_to_core_shape_data_impl(
+        numpy::detail::iter & iter_
+      , std::vector< std::vector<intptr_t> > const & out_core_shapes_
     )
+      : iter(iter_)
+      , out_core_shapes(out_core_shapes_)
+      , dim_indices(std::vector<intptr_t>(ND))
+      BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_strides, ~)
+    {}
+
+    inline
+    bool
+    operator()(RT result)
     {
+        //std::cerr << "std_vector_of_scalar_return 2" << std::endl;
         // Check if the size of the result's vector first dimension matches the
         // output arity.
         if(result.size() != OUT_ARITY)
@@ -505,9 +536,7 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
             return false;
         }
 
-        BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_strides, ~)
-
-        std::vector<intptr_t> dim_indices(ND);
+        //std::vector<intptr_t> dim_indices(ND);
 
         BOOST_PP_REPEAT(BOOST_PP_SUB(ND,1), BOOST_NUMPY_DSTREAM_for_dim_begin, ~)
         BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_out_arr_value_set, ND)
@@ -515,12 +544,18 @@ struct std_vector_of_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMa
 
         return true;
     }
+
+    numpy::detail::iter & iter;
+    std::vector< std::vector<intptr_t> > const & out_core_shapes;
+    std::vector<intptr_t> dim_indices;
+    BOOST_PP_REPEAT(OUT_ARITY, BOOST_NUMPY_DSTREAM_strides_def, ~)
 };
 
 #undef BOOST_NUMPY_DSTREAM_out_arr_value_set
 #undef BOOST_NUMPY_DSTREAM_for_dim_end
 #undef BOOST_NUMPY_DSTREAM_for_dim_begin
 #undef BOOST_NUMPY_DSTREAM_strides
+#undef BOOST_NUMPY_DSTREAM_strides_def
 #undef BOOST_NUMPY_DSTREAM_out_arr_value_type
 
 #undef ND
