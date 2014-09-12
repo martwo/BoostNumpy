@@ -64,6 +64,33 @@ struct all_out_arr_value_types_arity<WiringModelAPI, UnaryMetaFunction, 1>
             type;
 };
 
+template <
+    class WiringModelAPI
+  , template <class T> class UnaryMetaFunction
+  , unsigned out_arity
+>
+struct any_out_arr_value_type_arity;
+
+template <
+    class WiringModelAPI
+  , template <class T> class UnaryMetaFunction
+>
+struct any_out_arr_value_type_arity<WiringModelAPI, UnaryMetaFunction, 0>
+{
+    typedef boost::mpl::bool_<false>
+            type;
+};
+
+template <
+    class WiringModelAPI
+  , template <class T> class UnaryMetaFunction
+>
+struct any_out_arr_value_type_arity<WiringModelAPI, UnaryMetaFunction, 1>
+{
+    typedef typename UnaryMetaFunction< typename WiringModelAPI::template out_arr_value_type<0>::type >::type
+            type;
+};
+
 #define BOOST_PP_ITERATION_PARAMS_1 \
     (4, (2, BOOST_NUMPY_LIMIT_OUTPUT_ARITY, <boost/numpy/dstream/wiring/detail/utilities.hpp>, 1))
 #include BOOST_PP_ITERATE()
@@ -77,6 +104,15 @@ struct utilities
     struct all_out_arr_value_types
     {
         typedef typename all_out_arr_value_types_arity<WiringModelAPI, UnaryMetaFunction, WiringModelAPI::mapping_definition_t::out::arity>::type
+                type;
+    };
+
+    template <
+        template<class T> class UnaryMetaFunction
+    >
+    struct any_out_arr_value_type
+    {
+        typedef typename any_out_arr_value_type_arity<WiringModelAPI, UnaryMetaFunction, WiringModelAPI::mapping_definition_t::out::arity>::type
                 type;
     };
 };
@@ -115,6 +151,29 @@ struct all_out_arr_value_types_arity<WiringModelAPI, UnaryMetaFunction, OUT_ARIT
     #undef BOOST_NUMPY_DEF_post_and
     #undef BOOST_NUMPY_DEF_unary_metafunction_result
     #undef BOOST_NUMPY_DEF_pre_and
+};
+
+template <
+    class WiringModelAPI
+  , template <class T> class UnaryMetaFunction
+>
+struct any_out_arr_value_type_arity<WiringModelAPI, UnaryMetaFunction, OUT_ARITY>
+{
+    #define BOOST_NUMPY_DEF_pre_or(z, n, data) \
+        typename boost::mpl::or_<
+    #define BOOST_NUMPY_DEF_unary_metafunction_result(n) \
+        typename UnaryMetaFunction< typename WiringModelAPI::template out_arr_value_type<n>::type >::type
+    #define BOOST_NUMPY_DEF_post_or(z, n, data) \
+        BOOST_PP_COMMA() BOOST_NUMPY_DEF_unary_metafunction_result(BOOST_PP_ADD(n,1)) >::type
+
+    typedef BOOST_PP_REPEAT(BOOST_PP_SUB(OUT_ARITY,1), BOOST_NUMPY_DEF_pre_or, ~)
+            BOOST_NUMPY_DEF_unary_metafunction_result(0)
+            BOOST_PP_REPEAT(BOOST_PP_SUB(OUT_ARITY,1), BOOST_NUMPY_DEF_post_or, ~)
+            type;
+
+    #undef BOOST_NUMPY_DEF_post_or
+    #undef BOOST_NUMPY_DEF_unary_metafunction_result
+    #undef BOOST_NUMPY_DEF_pre_or
 };
 
 #undef OUT_ARITY

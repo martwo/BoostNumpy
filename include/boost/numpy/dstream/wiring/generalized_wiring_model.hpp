@@ -26,6 +26,7 @@
 #include <boost/mpl/bitor.hpp>
 #include <boost/mpl/if.hpp>
 
+#include <boost/numpy/mpl/is_type_of.hpp>
 #include <boost/numpy/mpl/types_from_fctptr_signature.hpp>
 #include <boost/numpy/dstream/wiring.hpp>
 #include <boost/numpy/dstream/wiring/converter/arg_from_core_shape_data.hpp>
@@ -94,7 +95,10 @@ struct generalized_wiring_model_api
         // Note: This could lead to the requirement that
         //       the python GIL cannot released during the iteration!
         typedef typename boost::mpl::if_<
-                  typename LoopService::object_arrays_are_involved
+                  typename boost::mpl::or_<
+                    typename LoopService::object_arrays_are_involved
+                  , typename utilities< generalized_wiring_model_api<MappingDefinition, FTypes> >::template any_out_arr_value_type< numpy::mpl::is_type_of<python::object>::apply >::type
+                  >::type
                 , numpy::detail::iter::flags::REFS_OK
                 , numpy::detail::iter::flags::NONE
                 >::type

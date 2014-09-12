@@ -43,6 +43,7 @@
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/assert.hpp>
 #include <boost/mpl/if.hpp>
+#include <boost/python/refcount.hpp>
 #include <boost/type_traits/is_scalar.hpp>
 #include <boost/type_traits/remove_reference.hpp>
 
@@ -98,15 +99,13 @@ struct scalar_return_to_core_shape_data_impl
             out_arr_value_t;
 
     scalar_return_to_core_shape_data_impl(
-        numpy::detail::iter & iter
+        numpy::detail::iter &                        iter
       , std::vector< std::vector<intptr_t> > const & out_core_shapes
     )
       : iter_(iter)
-      , out_core_shapes_(out_core_shapes)
     {
-        BOOST_ASSERT((out_core_shapes_.size()    == 1 &&
-                      out_core_shapes_[0].size() == 1 &&
-                      out_core_shapes_[0][0]     == 1));
+        BOOST_ASSERT((out_core_shapes.size()    == 1 &&
+                      out_core_shapes[0].size() == 0));
     }
 
     inline
@@ -120,7 +119,6 @@ struct scalar_return_to_core_shape_data_impl
     }
 
     numpy::detail::iter & iter_;
-    std::vector< std::vector<intptr_t> > const & out_core_shapes_;
 };
 
 template <class WiringModelAPI, class OutMapping, class RT>
@@ -148,6 +146,69 @@ struct select_scalar_return_to_core_shape_data_impl
               , is_scalar_out_array_data_type
               >::type
             , scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT>
+
+            , numpy::mpl::unspecified
+            >::type
+            type;
+};
+
+//------------------------------------------------------------------------------
+template <class WiringModelAPI, class OutMapping, class RT>
+struct bp_object_return_to_core_shape_data_impl
+{
+    typedef bp_object_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT>
+            type;
+
+    bp_object_return_to_core_shape_data_impl(
+        numpy::detail::iter &                        iter
+      , std::vector< std::vector<intptr_t> > const & out_core_shapes
+    )
+      : iter_(iter)
+    {
+        BOOST_ASSERT((out_core_shapes.size()    == 1 &&
+                      out_core_shapes[0].size() == 0));
+    }
+
+    inline
+    bool
+    operator()(RT const & obj)
+    {
+        uintptr_t * ptr_value_ptr = reinterpret_cast<uintptr_t *>(iter_.get_data(0));
+        // Increment the reference counter for the bp object so it does not get
+        // destroyed when the bp::object object gets out of scope.
+        *ptr_value_ptr = reinterpret_cast<uintptr_t>(python::xincref<PyObject>(obj.ptr()));
+
+        return true;
+    }
+
+    numpy::detail::iter & iter_;
+};
+
+template <class WiringModelAPI, class OutMapping, class RT>
+struct select_bp_object_return_to_core_shape_data_impl
+{
+    typedef mapping::detail::out_mapping<OutMapping>
+            out_mapping_utils;
+
+    // Check if the output arity is 1.
+    typedef typename out_mapping_utils::template arity_is_equal_to<1>::type
+            is_unary_out_mapping;
+
+    // Check if the output array has a scalar core shape.
+    typedef typename out_mapping_utils::template array<0>::is_scalar::type
+            is_scalar_out_array;
+
+    // Check if the output array has a bp::object data holding type.
+    typedef typename is_same<typename WiringModelAPI::template out_arr_value_type<0>::type, python::object>::type
+            is_bp_object_out_array_data_type;
+
+    typedef typename boost::mpl::if_<
+              typename boost::mpl::and_<
+                is_unary_out_mapping
+              , is_scalar_out_array
+              , is_bp_object_out_array_data_type
+              >::type
+            , bp_object_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT>
 
             , numpy::mpl::unspecified
             >::type
@@ -279,11 +340,16 @@ struct select_return_to_core_shape_data_converter
             , select_scalar_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT>
 
             // TODO: Add bp::object types.
-            , typename boost::mpl::eval_if<
-                typename numpy::mpl::is_std_vector<bare_rt>::type
-              , std_vector_return_to_core_shape_data<WiringModelAPI, OutMapping, RT, RT, 1>
+            , typename boost::mpl::if_<
+                typename is_same<bare_rt, python::object>::type
+              , select_bp_object_return_to_core_shape_data_impl<WiringModelAPI, OutMapping, RT>
 
-              , numpy::mpl::unspecified
+              , typename boost::mpl::eval_if<
+                  typename numpy::mpl::is_std_vector<bare_rt>::type
+                , std_vector_return_to_core_shape_data<WiringModelAPI, OutMapping, RT, RT, 1>
+
+                , numpy::mpl::unspecified
+                >::type
               >::type
             >::type
             type;
