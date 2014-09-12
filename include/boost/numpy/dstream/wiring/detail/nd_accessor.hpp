@@ -56,21 +56,35 @@ struct nd_accessor;
 
 #define ND BOOST_PP_ITERATION()
 
-#define BOOST_NUMPY_DSTREAM_access(z, n, data) \
-    [ dim_indices[n] ]
+#define BOOST_NUMPY_DSTREAM_dim_indices_def(z, n, data)                        \
+    intptr_t & BOOST_PP_CAT(dim_index,n);
+
+#define BOOST_NUMPY_DSTREAM_dim_indices_init(z, n, data)                       \
+    BOOST_PP_COMMA_IF(n) BOOST_PP_CAT(dim_index,n)(dim_indices[n])
+
+#define BOOST_NUMPY_DSTREAM_access(z, n, data)                                 \
+    [ BOOST_PP_CAT(dim_index,n) ]
 
 template <class T, class ValueT>
 struct nd_accessor<T, ValueT, ND>
 {
-    static
+    nd_accessor(std::vector<intptr_t> & dim_indices)
+      : BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_dim_indices_init, ~)
+    {}
+
+    inline
     ValueT
-    get(T nd_obj, std::vector<intptr_t> const & dim_indices)
+    operator()(T const & nd_obj)
     {
         return nd_obj BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_access, ~) ;
     }
+
+    BOOST_PP_REPEAT(ND, BOOST_NUMPY_DSTREAM_dim_indices_def, ~)
 };
 
 #undef BOOST_NUMPY_DSTREAM_access
+#undef BOOST_NUMPY_DSTREAM_dim_indices_init
+#undef BOOST_NUMPY_DSTREAM_dim_indices_def
 
 #undef ND
 
