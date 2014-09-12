@@ -61,10 +61,6 @@
 #include <boost/numpy/dstream/wiring.hpp>
 #include <boost/numpy/dstream/wiring/generalized_wiring_model.hpp>
 
-// Include all built-in wiring models.
-#include <boost/numpy/dstream/wiring/models/scalars_to_scalar_callable.hpp>
-#include <boost/numpy/dstream/wiring/models/scalars_to_vector_of_scalar_callable.hpp>
-
 #define BOOST_NUMPY_DSTREAM_DEF_MAX_OPTIONAL_ARGS 4
 
 namespace boost {
@@ -121,7 +117,6 @@ void create_and_add_py_function(
     typedef typename boost::mpl::eval_if<
               typename boost::is_same<WiringModelSelector, wiring::detail::null_wiring_model_selector>::type
             , wiring::generalized_wiring_model_selector
-            //, wiring::default_wiring_model_selector<mapping_definition_t, FTypes>
             , WiringModelSelector
             >::type
             wiring_model_selector_t;
