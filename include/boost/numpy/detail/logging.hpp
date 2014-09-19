@@ -44,12 +44,14 @@ log(
         oss << msg;                                                            \
         boost::numpy::detail::log(file, line, func, oss.str());                \
     }
-
+/*
 #ifdef NDEBUG
     #define BOOST_NUMPY_LOG(msg)
 #else
     #define BOOST_NUMPY_LOG(msg) \
         BOOST_NUMPY_DETAIL_STREAM_LOGGER(__FILE__, __LINE__, __PRETTY_FUNCTION__, msg)
 #endif
+*/
+#define BOOST_NUMPY_LOG(msg)
 
 #endif // BOOST_NUMPY_DETAIL_LOGGING_HPP_INCLUDED
