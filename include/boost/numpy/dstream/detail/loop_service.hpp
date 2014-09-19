@@ -64,6 +64,7 @@ struct max_loop_shape_selector
     int const arr_loop_nd_;
 };
 
+inline
 bool operator>(max_loop_shape_selector const & lhs, max_loop_shape_selector const & rhs)
 {
     return (lhs.arr_loop_nd_ > rhs.arr_loop_nd_);
