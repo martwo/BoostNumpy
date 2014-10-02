@@ -32,7 +32,8 @@ function(find_numpy)
 
             find_path(NUMPY_INCLUDE_DIR
                 NAMES numpy/ndarrayobject.h
-                PATHS ${NUMPY_INCLUDE_DIR_CANDIDATES})
+                PATHS ${NUMPY_INCLUDE_DIR_CANDIDATES}
+                NO_DEFAULT_PATH)
 
             set(NUMPY_INCLUDE_DIRS "${NUMPY_INCLUDE_DIR}"
                 CACHE PATH "The numpy include directories." FORCE)
