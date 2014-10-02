@@ -216,7 +216,7 @@ template <class InMapping, unsigned idx>
 struct in_mapping_array_select;
 
 #define BOOST_PP_ITERATION_PARAMS_1 \
-    (4, (0, BOOST_PP_SUB(BOOST_NUMPY_LIMIT_INPUT_ARITY, 1), <boost/numpy/dstream/mapping/detail/definition.hpp>, 3))
+    (4, (0, BOOST_NUMPY_LIMIT_INPUT_ARITY - 1, <boost/numpy/dstream/mapping/detail/definition.hpp>, 3))
 #include BOOST_PP_ITERATE()
 
 template <class InMapping>
