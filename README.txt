@@ -101,3 +101,9 @@ Build the documentation (if Sphinx is installed)::
 After that, install BoostNumpy (and the documentation) by typing::
 
     make install
+
+Known Limitations
+-----------------
+
+1. Functions exposed using the dstream library cannot use references and/or
+   const qualifiers in their arguments.
