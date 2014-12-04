@@ -404,15 +404,6 @@ ndarray::
 get_bpo_item(python::object const & obj) const
 {
     python::object item = python::api::getitem((python::object)*this, obj);
-    if((! PyArray_Check(item.ptr())) &&
-       (! PyArray_CheckScalar(item.ptr()))
-      )
-    {
-        PyErr_SetString(PyExc_TypeError,
-            "ndarray::operator[]: The item object is not a sub-type of "
-            "PyGenericArrType_Type or PyArray_Type!");
-        python::throw_error_already_set();
-    }
     return item;
 }
 
