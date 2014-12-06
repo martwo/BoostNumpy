@@ -22,9 +22,11 @@
 
 #include <boost/python.hpp>
 
-// For user convenience, include also the ndarray and matrix class.
+// For user convenience, include also the ndarray, and matrix class, as well as
+// the flat_iterator iterator.
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/matrix.hpp>
+#include <boost/numpy/flat_iterator.hpp>
 
 namespace boost {
 namespace numpy {

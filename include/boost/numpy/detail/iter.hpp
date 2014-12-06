@@ -26,7 +26,7 @@
 #if !BOOST_PP_IS_ITERATING
 
 #ifndef BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
-#define BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED
+#define BOOST_NUMPY_DETAIL_ITER_HPP_INCLUDED 1
 
 #include <limits>
 #include <sstream>
@@ -42,6 +42,7 @@
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
+#include <boost/numpy/limits.hpp>
 #include <boost/numpy/numpy_c_api.hpp>
 #include <boost/numpy/detail/logging.hpp>
 #include <boost/numpy/ndarray.hpp>
