@@ -271,6 +271,14 @@ class iter
 
     //__________________________________________________________________________
     /**
+     * \brief Moves the data pointers to the location pointed by the specified
+     *     indices.
+     */
+    void
+    go_to(std::vector<intptr_t> const & indices);
+
+    //__________________________________________________________________________
+    /**
      * \brief Adds inner_loop_stride_array_ptr_[I] to the data pointer of the
      *     iterator's I'th operand. It does this for all operands.
      */
@@ -353,6 +361,17 @@ class iter
      */
     ndarray
     get_operand(size_t op_idx);
+
+    //__________________________________________________________________________
+    /**
+     * \brief Resets the iterator to its initial state, i.e. to the beginning
+     *        of the iteration range. Returns ``true`` after success and
+     *       ``false`` otherwise. If the parameter ``throws`` is set to ``true``
+     *       this function will throw an exception on failure. Otherwise it will
+     *       not and it can be used even without holding the Python GIL.
+     */
+    bool
+    reset(bool throws=true);
 
   protected:
     /**

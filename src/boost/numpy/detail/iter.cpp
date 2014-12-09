@@ -179,6 +179,42 @@ get_operand(size_t op_idx)
     return ndarray(python::detail::borrowed_reference(op_carray[op_idx]));
 }
 
+//______________________________________________________________________________
+void
+iter::
+go_to(std::vector<intptr_t> const & indices)
+{
+    if(NpyIter_GotoMultiIndex(npyiter_, (npy_intp*)const_cast<intptr_t*>(&indices.front())) == NPY_FAIL)
+    {
+        python::throw_error_already_set();
+    }
+}
+
+//______________________________________________________________________________
+bool
+iter::
+reset(bool throws)
+{
+    if(throws)
+    {
+        if(NpyIter_Reset(npyiter_, NULL) == NPY_FAIL)
+        {
+            python::throw_error_already_set();
+            return false;
+        }
+    }
+    else
+    {
+        char errmsg[2048];
+        char * errmsgptr = &errmsg[0];
+        if(NpyIter_Reset(npyiter_, &errmsgptr) == NPY_FAIL)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 }// namespace detail
 }// namespace numpy
 }// namespace boost
