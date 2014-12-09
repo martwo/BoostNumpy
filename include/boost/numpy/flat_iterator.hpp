@@ -72,6 +72,7 @@ class flat_iterator
     // requirements.
     flat_iterator()
       : iter_ptr_(boost::shared_ptr<detail::iter>())
+      , is_end_point_(true)
     {}
 
     explicit flat_iterator(ndarray & arr)
@@ -89,23 +90,23 @@ class flat_iterator
         {
             // We reached the end of the iteration. So we need to put this
             // iterator into the END state, wich is (by definition) indicated
-            // that iter_ptr_ is not hold a pointer.
-            // Deallocate the iter object by forgetting about it.
-            iter_ptr_ = boost::shared_ptr<detail::iter>();
+            // through the is_end_point_ member variable set to ``true``.
+            // Note: We still keep the iterator object, in case the user wants
+            //       to reset the iterator and start iterating from the
+            //       beginning.
+            is_end_point_ = true;
         }
     }
 
     bool
     equal(flat_iterator<ValueType> const & other) const
     {
-        detail::iter * const p1 = iter_ptr_.get();
-        detail::iter * const p2 = other.iter_ptr_.get();
-        if(p1 == NULL && p2 == NULL)
+        if(is_end_point_ && other.is_end_point_)
         {
             return true;
         }
         // Check if one of the two iterators is the END state.
-        if(p1 == NULL || p2 == NULL)
+        if(is_end_point_ || other.is_end_point_)
         {
             return false;
         }
@@ -130,6 +131,7 @@ class flat_iterator
     friend class boost::iterator_core_access;
 
     boost::shared_ptr<detail::iter> iter_ptr_;
+    bool is_end_point_;
 };
 
 // Specialization for boost::python::object. In this case the dereferencing
@@ -148,6 +150,7 @@ class flat_iterator<boost::python::object>
     // requirements.
     flat_iterator()
       : iter_ptr_(boost::shared_ptr<detail::iter>())
+      , is_end_point_(true)
     {}
 
     explicit flat_iterator(ndarray & arr)
@@ -176,14 +179,12 @@ class flat_iterator<boost::python::object>
     bool
     equal(flat_iterator<boost::python::object> const & other) const
     {
-        detail::iter * const p1 = iter_ptr_.get();
-        detail::iter * const p2 = other.iter_ptr_.get();
-        if(p1 == NULL && p2 == NULL)
+        if(is_end_point_ && other.is_end_point_)
         {
             return true;
         }
         // Check if one of the two iterators is the END state.
-        if(p1 == NULL || p2 == NULL)
+        if(is_end_point_ || other.is_end_point_)
         {
             return false;
         }
@@ -210,6 +211,7 @@ class flat_iterator<boost::python::object>
     friend class boost::iterator_core_access;
 
     boost::shared_ptr<detail::iter> iter_ptr_;
+    bool is_end_point_;
 };
 
 }// namespace numpy
