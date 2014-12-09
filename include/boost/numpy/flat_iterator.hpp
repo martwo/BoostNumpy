@@ -80,7 +80,8 @@ class flat_iterator
         // Construct a iterator on the heap which keeps the state of the current
         // iteration.
         detail::iter_flags_t iter_flags = detail::iter::flags::DONT_NEGATE_STRIDES::value;
-        this->iter_ptr_ = detail::construct_flat_iter(arr, iter_flags);
+        iter_ptr_ = detail::construct_flat_iter(arr, iter_flags);
+        is_end_point_ = false;
     }
 
     void
@@ -124,6 +125,7 @@ class flat_iterator
     bool
     reset(bool throws=true)
     {
+        is_end_point_ = false;
         return iter_ptr_->reset(throws);
     }
 
@@ -160,7 +162,8 @@ class flat_iterator<boost::python::object>
         detail::iter_flags_t iter_flags =
             detail::iter::flags::DONT_NEGATE_STRIDES::value
           | detail::iter::flags::REFS_OK::value;
-        this->iter_ptr_ = detail::construct_flat_iter(arr, iter_flags);
+        iter_ptr_ = detail::construct_flat_iter(arr, iter_flags);
+        is_end_point_ = false;
     }
 
     void
@@ -170,9 +173,11 @@ class flat_iterator<boost::python::object>
         {
             // We reached the end of the iteration. So we need to put this
             // iterator into the END state, wich is (by definition) indicated
-            // that iter_ptr_ is not hold a pointer.
-            // Deallocate the iter object by forgetting about it.
-            iter_ptr_ = boost::shared_ptr<detail::iter>();
+            // through the is_end_point_ member variable set to ``true``.
+            // Note: We still keep the iterator object, in case the user wants
+            //       to reset the iterator and start iterating from the
+            //       beginning.
+            is_end_point_ = true;
         }
     }
 
@@ -204,6 +209,7 @@ class flat_iterator<boost::python::object>
     bool
     reset(bool throws=true)
     {
+        is_end_point_ = false;
         return iter_ptr_->reset(throws);
     }
 
