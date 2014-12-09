@@ -120,6 +120,12 @@ class flat_iterator
         return *reinterpret_cast<ValueType*>(iter_ptr_->get_data(0));
     }
 
+    bool
+    reset(bool throws=true)
+    {
+        return iter_ptr_->reset(throws);
+    }
+
   private:
     friend class boost::iterator_core_access;
 
@@ -192,6 +198,12 @@ class flat_iterator<boost::python::object>
         uintptr_t * data = reinterpret_cast<uintptr_t*>(iter_ptr_->get_data(0));
         boost::python::object obj(boost::python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*data)));
         return obj;
+    }
+
+    bool
+    reset(bool throws=true)
+    {
+        return iter_ptr_->reset(throws);
     }
 
   private:
