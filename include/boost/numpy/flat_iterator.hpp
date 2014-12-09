@@ -213,6 +213,12 @@ class flat_iterator<boost::python::object>
         return iter_ptr_->reset(throws);
     }
 
+    uintptr_t*
+    get_object_ptr_ptr() const
+    {
+        return reinterpret_cast<uintptr_t*>(iter_ptr_->get_data(0));
+    }
+
   private:
     friend class boost::iterator_core_access;
 
