@@ -30,6 +30,9 @@ namespace boost {
 namespace numpy {
 namespace detail {
 
+class iterator_base
+{};
+
 template <class Derived, typename ValueType, typename ValueRefType>
 class iter_iterator_base
   : public boost::iterator_facade<
@@ -38,19 +41,26 @@ class iter_iterator_base
       , boost::forward_traversal_tag // CategoryOrTraversal
       , ValueRefType                 // Reference
     >
+    , public iterator_base
 {
   public:
-    typedef boost::function<boost::shared_ptr<iter> (ndarray &)>
+    typedef boost::function< boost::shared_ptr<iter> (iter_iterator_base &, ndarray &) >
             iter_construct_fct_ptr_t;
 
     iter_iterator_base()
       : is_end_point_(true)
+      , arr_access_flags_(iter_operand::flags::READONLY::value)
     {}
 
-    explicit iter_iterator_base(ndarray & arr, iter_construct_fct_ptr_t iter_construct_fct)
+    explicit iter_iterator_base(
+        ndarray & arr
+      , iter_operand_flags_t arr_access_flags
+      , iter_construct_fct_ptr_t iter_construct_fct
+    )
+      : is_end_point_(false)
+      , arr_access_flags_(arr_access_flags)
     {
-        iter_ptr_ = iter_construct_fct(arr);
-        is_end_point_ = false;
+        iter_ptr_ = iter_construct_fct(*this, arr);
     }
 
     void
@@ -94,9 +104,11 @@ class iter_iterator_base
   protected:
     boost::shared_ptr<detail::iter> iter_ptr_;
     bool is_end_point_;
+    // Stores if the array is readonly, writeonly or readwrite'able.
+    iter_operand_flags_t arr_access_flags_;
 };
 
-}//namespace detail
+}// namespace detail
 }// namespace numpy
 }// namespace boost
 

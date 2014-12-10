@@ -31,11 +31,14 @@ namespace detail {
 
 inline
 boost::shared_ptr<iter>
-construct_flat_iter(ndarray & arr, iter_flags_t iter_flags)
+construct_flat_iter(
+    ndarray & arr
+  , iter_flags_t iter_flags
+  , iter_operand_flags_t arr_op_flags
+)
 {
     intptr_t itershape[1];
     itershape[0] = -1;
-    iter_operand_flags_t arr_op_flags = iter_operand::flags::READONLY::value;
     int arr_op_bcr[1];
     arr_op_bcr[0] = 0;
     detail::iter_operand arr_op(arr, arr_op_flags, arr_op_bcr);
@@ -67,9 +70,10 @@ class flat_iterator
 
     static
     boost::shared_ptr<detail::iter>
-    construct_iter(ndarray & arr)
+    construct_iter(detail::iterator_base & iter_base, ndarray & arr)
     {
-        return detail::construct_flat_iter(arr, detail::iter::flags::DONT_NEGATE_STRIDES::value);
+        flat_iterator<ValueType> & iter = *static_cast<flat_iterator<ValueType> *>(&iter_base);
+        return detail::construct_flat_iter(arr, detail::iter::flags::DONT_NEGATE_STRIDES::value, iter.arr_access_flags_);
     }
 
     // The existence of the default constructor is needed by the STL
@@ -78,8 +82,11 @@ class flat_iterator
       : base_t()
     {}
 
-    explicit flat_iterator(ndarray & arr)
-      : base_t(arr, &flat_iterator<ValueType>::construct_iter)
+    explicit flat_iterator(
+        ndarray & arr
+      , detail::iter_operand_flags_t arr_access_flags = detail::iter_operand::flags::READONLY::value
+    )
+      : base_t(arr, arr_access_flags, &flat_iterator<ValueType>::construct_iter)
     {}
 
     ValueType &
@@ -105,10 +112,13 @@ class flat_iterator<boost::python::object>
 
     static
     boost::shared_ptr<detail::iter>
-    construct_iter(ndarray & arr)
+    construct_iter(detail::iterator_base & iter_base, ndarray & arr)
     {
-        return detail::construct_flat_iter(arr,   detail::iter::flags::DONT_NEGATE_STRIDES::value
-                                                | detail::iter::flags::REFS_OK::value);
+        flat_iterator<boost::python::object> & iter = *static_cast<flat_iterator<boost::python::object> *>(&iter_base);
+        return detail::construct_flat_iter(  arr
+                                           ,   detail::iter::flags::DONT_NEGATE_STRIDES::value
+                                             | detail::iter::flags::REFS_OK::value
+                                           , iter.arr_access_flags_);
     }
 
     // The existence of the default constructor is needed by the STL
@@ -117,8 +127,11 @@ class flat_iterator<boost::python::object>
       : base_t()
     {}
 
-    explicit flat_iterator(ndarray & arr)
-      : base_t(arr, &flat_iterator<boost::python::object>::construct_iter)
+    explicit flat_iterator(
+        ndarray & arr
+      , detail::iter_operand_flags_t arr_access_flags = detail::iter_operand::flags::READONLY::value
+    )
+      : base_t(arr, arr_access_flags, &flat_iterator<boost::python::object>::construct_iter)
     {}
 
     boost::python::object

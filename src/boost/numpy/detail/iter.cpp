@@ -182,7 +182,7 @@ get_operand(size_t op_idx)
 //______________________________________________________________________________
 void
 iter::
-go_to(std::vector<intptr_t> const & indices)
+jump_to(std::vector<intptr_t> const & indices)
 {
     if(NpyIter_GotoMultiIndex(npyiter_, (npy_intp*)const_cast<intptr_t*>(&indices.front())) == NPY_FAIL)
     {

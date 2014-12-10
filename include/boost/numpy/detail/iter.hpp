@@ -275,7 +275,7 @@ class iter
      *     indices.
      */
     void
-    go_to(std::vector<intptr_t> const & indices);
+    jump_to(std::vector<intptr_t> const & indices);
 
     //__________________________________________________________________________
     /**
