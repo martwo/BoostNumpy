@@ -20,8 +20,7 @@
 #ifndef BOOST_NUMPY_FLAT_ITERATOR_HPP_INCLUDED
 #define BOOST_NUMPY_FLAT_ITERATOR_HPP_INCLUDED 1
 
-#include <boost/iterator/iterator_facade.hpp>
-
+#include <boost/numpy/detail/iter_iterator_base.hpp>
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/detail/iter.hpp>
 
@@ -60,142 +59,67 @@ construct_flat_iter(ndarray & arr, iter_flags_t iter_flags)
 // values stored in the ndarray.
 template <typename ValueType>
 class flat_iterator
-  : public boost::iterator_facade<
-        flat_iterator<ValueType>     // Derived
-      , ValueType                    // Value
-      , boost::forward_traversal_tag // CategoryOrTraversal
-      , ValueType &                  // Reference
-    >
+  : public detail::iter_iterator_base<flat_iterator<ValueType>, ValueType, ValueType &>
 {
   public:
+    typedef detail::iter_iterator_base<flat_iterator<ValueType>, ValueType, ValueType &>
+            base_t;
+
+    static
+    boost::shared_ptr<detail::iter>
+    construct_iter(ndarray & arr)
+    {
+        return detail::construct_flat_iter(arr, detail::iter::flags::DONT_NEGATE_STRIDES::value);
+    }
+
     // The existence of the default constructor is needed by the STL
     // requirements.
     flat_iterator()
-      : iter_ptr_(boost::shared_ptr<detail::iter>())
-      , is_end_point_(true)
+      : base_t()
     {}
 
     explicit flat_iterator(ndarray & arr)
-    {
-        // Construct a iterator on the heap which keeps the state of the current
-        // iteration.
-        detail::iter_flags_t iter_flags = detail::iter::flags::DONT_NEGATE_STRIDES::value;
-        iter_ptr_ = detail::construct_flat_iter(arr, iter_flags);
-        is_end_point_ = false;
-    }
-
-    void
-    increment()
-    {
-        if(! iter_ptr_->next())
-        {
-            // We reached the end of the iteration. So we need to put this
-            // iterator into the END state, wich is (by definition) indicated
-            // through the is_end_point_ member variable set to ``true``.
-            // Note: We still keep the iterator object, in case the user wants
-            //       to reset the iterator and start iterating from the
-            //       beginning.
-            is_end_point_ = true;
-        }
-    }
-
-    bool
-    equal(flat_iterator<ValueType> const & other) const
-    {
-        if(is_end_point_ && other.is_end_point_)
-        {
-            return true;
-        }
-        // Check if one of the two iterators is the END state.
-        if(is_end_point_ || other.is_end_point_)
-        {
-            return false;
-        }
-        // If the data pointers point to the same address, we are equal.
-        return (iter_ptr_->get_data(0) == other.iter_ptr_->get_data(0));
-    }
+      : base_t(arr, &flat_iterator<ValueType>::construct_iter)
+    {}
 
     ValueType &
     dereference() const
     {
-        assert(this->iter_ptr_.get());
-        return *reinterpret_cast<ValueType*>(iter_ptr_->get_data(0));
-    }
-
-    bool
-    reset(bool throws=true)
-    {
-        is_end_point_ = false;
-        return iter_ptr_->reset(throws);
+        assert(base_t::iter_ptr_.get());
+        return *reinterpret_cast<ValueType*>(base_t::iter_ptr_->get_data(0));
     }
 
   private:
     friend class boost::iterator_core_access;
-
-    boost::shared_ptr<detail::iter> iter_ptr_;
-    bool is_end_point_;
 };
 
 // Specialization for boost::python::object. In this case the dereferencing
 // returns an object (i.e. bp::object) and not a reference.
 template <>
 class flat_iterator<boost::python::object>
-  : public boost::iterator_facade<
-        flat_iterator<boost::python::object> // Derived
-      , boost::python::object                // Value
-      , boost::forward_traversal_tag         // CategoryOrTraversal
-      , boost::python::object                // Reference
-    >
+  : public detail::iter_iterator_base<flat_iterator<boost::python::object>, boost::python::object, boost::python::object>
 {
   public:
+    typedef detail::iter_iterator_base<flat_iterator<boost::python::object>, boost::python::object, boost::python::object>
+            base_t;
+
+    static
+    boost::shared_ptr<detail::iter>
+    construct_iter(ndarray & arr)
+    {
+        return detail::construct_flat_iter(arr,   detail::iter::flags::DONT_NEGATE_STRIDES::value
+                                                | detail::iter::flags::REFS_OK::value);
+    }
+
     // The existence of the default constructor is needed by the STL
     // requirements.
     flat_iterator()
-      : iter_ptr_(boost::shared_ptr<detail::iter>())
-      , is_end_point_(true)
+      : base_t()
     {}
 
     explicit flat_iterator(ndarray & arr)
-    {
-        // Construct a iterator on the heap which keeps the state of the current
-        // iteration.
-        detail::iter_flags_t iter_flags =
-            detail::iter::flags::DONT_NEGATE_STRIDES::value
-          | detail::iter::flags::REFS_OK::value;
-        iter_ptr_ = detail::construct_flat_iter(arr, iter_flags);
-        is_end_point_ = false;
-    }
-
-    void
-    increment()
-    {
-        if(! iter_ptr_->next())
-        {
-            // We reached the end of the iteration. So we need to put this
-            // iterator into the END state, wich is (by definition) indicated
-            // through the is_end_point_ member variable set to ``true``.
-            // Note: We still keep the iterator object, in case the user wants
-            //       to reset the iterator and start iterating from the
-            //       beginning.
-            is_end_point_ = true;
-        }
-    }
-
-    bool
-    equal(flat_iterator<boost::python::object> const & other) const
-    {
-        if(is_end_point_ && other.is_end_point_)
-        {
-            return true;
-        }
-        // Check if one of the two iterators is the END state.
-        if(is_end_point_ || other.is_end_point_)
-        {
-            return false;
-        }
-        // If the data pointers point to the same address, we are equal.
-        return (iter_ptr_->get_data(0) == other.iter_ptr_->get_data(0));
-    }
+      : base_t(arr, &flat_iterator<boost::python::object>::construct_iter)
+    {}
 
     boost::python::object
     dereference() const
@@ -206,13 +130,6 @@ class flat_iterator<boost::python::object>
         return obj;
     }
 
-    bool
-    reset(bool throws=true)
-    {
-        is_end_point_ = false;
-        return iter_ptr_->reset(throws);
-    }
-
     uintptr_t*
     get_object_ptr_ptr() const
     {
@@ -221,9 +138,6 @@ class flat_iterator<boost::python::object>
 
   private:
     friend class boost::iterator_core_access;
-
-    boost::shared_ptr<detail::iter> iter_ptr_;
-    bool is_end_point_;
 };
 
 }// namespace numpy
