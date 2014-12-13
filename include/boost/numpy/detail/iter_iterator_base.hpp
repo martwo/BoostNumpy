@@ -63,6 +63,19 @@ class iter_iterator_base
         iter_ptr_ = iter_construct_fct(*this, arr);
     }
 
+    // In case a const array is given, the READONLY flag for the array set
+    // automatically.
+    explicit iter_iterator_base(
+        ndarray const & arr
+      , iter_operand_flags_t arr_access_flags
+      , iter_construct_fct_ptr_t iter_construct_fct
+    )
+      : is_end_point_(false)
+      , arr_access_flags_(arr_access_flags | iter_operand::flags::READONLY::value)
+    {
+        iter_ptr_ = iter_construct_fct(*this, const_cast<ndarray&>(arr));
+    }
+
     void
     increment()
     {

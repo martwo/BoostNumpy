@@ -89,6 +89,15 @@ class flat_iterator
       : base_t(arr, arr_access_flags, &flat_iterator<ValueType>::construct_iter)
     {}
 
+    // In case a constant array is given, the READONLY flag for the array will
+    // be set automatically through the base iterator.
+    explicit flat_iterator(
+        ndarray const & arr
+      , detail::iter_operand_flags_t arr_access_flags = detail::iter_operand::flags::READONLY::value
+    )
+      : base_t(arr, arr_access_flags, &flat_iterator<ValueType>::construct_iter)
+    {}
+
     ValueType &
     dereference() const
     {
@@ -129,6 +138,13 @@ class flat_iterator<boost::python::object>
 
     explicit flat_iterator(
         ndarray & arr
+      , detail::iter_operand_flags_t arr_access_flags = detail::iter_operand::flags::READONLY::value
+    )
+      : base_t(arr, arr_access_flags, &flat_iterator<boost::python::object>::construct_iter)
+    {}
+
+    explicit flat_iterator(
+        ndarray const & arr
       , detail::iter_operand_flags_t arr_access_flags = detail::iter_operand::flags::READONLY::value
     )
       : base_t(arr, arr_access_flags, &flat_iterator<boost::python::object>::construct_iter)
