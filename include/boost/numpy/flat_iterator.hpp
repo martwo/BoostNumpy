@@ -105,6 +105,8 @@ class flat_iterator
         return *reinterpret_cast<ValueType*>(base_t::iter_ptr_->get_data(0));
     }
 
+    base_t end;
+
   private:
     friend class boost::iterator_core_access;
 };
@@ -164,6 +166,8 @@ class flat_iterator<boost::python::object>
     {
         return reinterpret_cast<uintptr_t*>(iter_ptr_->get_data(0));
     }
+
+    base_t end;
 
   private:
     friend class boost::iterator_core_access;
