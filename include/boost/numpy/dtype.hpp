@@ -23,8 +23,11 @@
 #define BOOST_NUMPY_DTYPE_HPP_INCLUDED
 
 #include <complex>
+#include <vector>
 
 #include <boost/python.hpp>
+#include <boost/python/list.hpp>
+#include <boost/python/tuple.hpp>
 
 #include <boost/numpy/object_manager_traits.hpp>
 
@@ -91,6 +94,59 @@ class dtype : public python::object
      * @brief Return the size of the data type in bytes.
      */
     int get_itemsize() const;
+
+    /**
+     * @brief Checks if this data type object has fields associated.
+     */
+    bool has_fields() const;
+
+    /**
+     * @brief Checks if this data type object describes a flexible data type,
+     *        i.e. it is of type NPY_STRING, NPY_UNICODE, or NPY_VOID.
+     */
+    bool is_flexible() const;
+
+    /**
+     * @brief Checks if this dtype object describes an array of values of type
+     *        subdtype.
+     */
+    bool is_array() const;
+
+    /**
+     * @brief Returns the dtype object of the array values this dtype object
+     *        describes. In case this dtype object describes no array of values,
+     *        a bare boost::python::object object (i.e. None) is returned.
+     */
+    python::object get_subdtype() const;
+
+    /**
+     * @brief Returns the shape of this dtype object as a python tuble. The
+     *        returned tuple has only entries, if this dtype object describes
+     *        a C-style contiguous array of type subdtype, i.e. if the
+     *        ``is_array`` method returns ``true``.
+     */
+    python::tuple get_shape() const;
+
+    std::vector<intptr_t>
+    get_shape_vector() const;
+
+    /**
+     * @brief Returns a Python list containting the names of the fields. If the
+     *        ``has_fields`` method returns ``false``, this method returns an
+     *        empty list.
+     */
+    python::list get_field_names() const;
+
+    /**
+     * @brief Returns the dtype object of the field having the specified name.
+     *        This method must not be called when the ``has_fields`` method
+     *        returns ``false``.
+     */
+    dtype get_field_dtype(python::str const & field_name) const;
+
+    // TODO: implement intptr_t get_field_offset(python::str const & field_name) const;
+    //       Returning the offset in bytes from the beginning of the ndarray's
+    //       item for the specified field.
 };
 
 namespace detail {

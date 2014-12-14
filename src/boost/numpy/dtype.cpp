@@ -21,6 +21,10 @@
 #define BOOST_NUMPY_INTERNAL_IMPL
 #include <boost/numpy/internal_impl.hpp>
 
+#include <iostream>
+
+#include <boost/python/dict.hpp>
+
 #include <boost/numpy/numpy_c_api.hpp>
 #include <boost/numpy/object_manager_traits_impl.hpp>
 #include <boost/numpy/dtype.hpp>
@@ -57,6 +61,96 @@ get_itemsize() const
 {
     return reinterpret_cast<PyArray_Descr*>(ptr())->elsize;
 }
+//______________________________________________________________________________
+bool
+dtype::
+has_fields() const
+{
+    return PyDataType_HASFIELDS(reinterpret_cast<PyArray_Descr*>(ptr()));
+}
+
+//______________________________________________________________________________
+bool
+dtype::
+is_flexible() const
+{
+    return PyDataType_ISFLEXIBLE(reinterpret_cast<PyArray_Descr*>(ptr()));
+}
+
+//______________________________________________________________________________
+bool
+dtype::
+is_array() const
+{
+    return (reinterpret_cast<PyArray_Descr*>(ptr())->subarray != NULL);
+}
+
+//______________________________________________________________________________
+python::object
+dtype::
+get_subdtype() const
+{
+    if(reinterpret_cast<PyArray_Descr*>(ptr())->subarray == NULL)
+    {
+        return python::object();
+    }
+
+    return dtype(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->subarray->base));
+}
+
+//______________________________________________________________________________
+python::tuple
+dtype::
+get_shape() const
+{
+    if(reinterpret_cast<PyArray_Descr*>(ptr())->subarray == NULL)
+    {
+        return python::make_tuple();
+    }
+
+    return python::tuple(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->subarray->shape));
+}
+
+//______________________________________________________________________________
+std::vector<intptr_t>
+dtype::
+get_shape_vector() const
+{
+    python::tuple shape = get_shape();
+    std::vector<intptr_t> shape_vec(python::len(shape));
+    size_t const nd = shape_vec.size();
+    for(size_t i=0; i<nd; ++i)
+    {
+        shape_vec[i] = python::extract<intptr_t>(shape[i]);
+    }
+    return shape_vec;
+}
+
+//______________________________________________________________________________
+python::list
+dtype::
+get_field_names() const
+{
+    if(reinterpret_cast<PyArray_Descr*>(ptr())->fields != NULL)
+    {
+        python::dict fields(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->fields));
+        python::list field_names = fields.keys();
+        return field_names;
+    }
+    return python::list();
+}
+
+//______________________________________________________________________________
+dtype
+dtype::
+get_field_dtype(python::str const & field_name) const
+{
+    assert(reinterpret_cast<PyArray_Descr*>(ptr())->fields);
+    python::dict fields(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->fields));
+    python::tuple field(fields.get(field_name));
+    return dtype(field[0]);
+}
+
 
 //______________________________________________________________________________
 bool
