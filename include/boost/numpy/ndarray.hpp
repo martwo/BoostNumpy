@@ -639,7 +639,7 @@ ndarray::
 get_item(T const & obj) const
 {
     python::object item = this->get_bpo_item(obj);
-    ndarray arr = from_object(item, this->get_dtype());
+    ndarray arr = from_object(item);
     return arr;
 }
 
@@ -650,7 +650,7 @@ get_item(T const & obj) const
 {
     python::object bpo(obj);
     python::object item = this->get_bpo_item(bpo);
-    ndarray arr = from_object(item, this->get_dtype());
+    ndarray arr = from_object(item);
     return arr;
 }
 
