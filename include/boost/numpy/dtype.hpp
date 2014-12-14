@@ -144,9 +144,11 @@ class dtype : public python::object
      */
     dtype get_field_dtype(python::str const & field_name) const;
 
-    // TODO: implement intptr_t get_field_offset(python::str const & field_name) const;
-    //       Returning the offset in bytes from the beginning of the ndarray's
-    //       item for the specified field.
+    /**
+     * @brief Returns the byte offset of the specified field from the beginning
+     *        of the ndarray's item address.
+     */
+    intptr_t get_field_byte_offset(python::str const & field_name) const;
 };
 
 namespace detail {

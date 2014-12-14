@@ -151,6 +151,16 @@ get_field_dtype(python::str const & field_name) const
     return dtype(field[0]);
 }
 
+//______________________________________________________________________________
+intptr_t
+dtype::
+get_field_byte_offset(python::str const & field_name) const
+{
+    assert(reinterpret_cast<PyArray_Descr*>(ptr())->fields);
+    python::dict fields(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->fields));
+    python::tuple field(fields.get(field_name));
+    return python::extract<intptr_t>(field[1]);
+}
 
 //______________________________________________________________________________
 bool
