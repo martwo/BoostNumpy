@@ -21,6 +21,7 @@
 #define BOOST_NUMPY_INTERNAL_IMPL
 #include <boost/numpy/internal_impl.hpp>
 
+#include <algorithm>
 #include <iostream>
 
 #include <boost/python/dict.hpp>
@@ -131,7 +132,7 @@ python::list
 dtype::
 get_field_names() const
 {
-    if(reinterpret_cast<PyArray_Descr*>(ptr())->fields != NULL)
+    if(has_fields())
     {
         python::dict fields(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->fields));
         python::list field_names = fields.keys();
@@ -145,7 +146,7 @@ dtype
 dtype::
 get_field_dtype(python::str const & field_name) const
 {
-    assert(reinterpret_cast<PyArray_Descr*>(ptr())->fields);
+    assert(has_fields());
     python::dict fields(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->fields));
     python::tuple field(fields.get(field_name));
     return dtype(field[0]);
@@ -156,10 +157,26 @@ intptr_t
 dtype::
 get_field_byte_offset(python::str const & field_name) const
 {
-    assert(reinterpret_cast<PyArray_Descr*>(ptr())->fields);
+    assert(has_fields());
     python::dict fields(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->fields));
     python::tuple field(fields.get(field_name));
     return python::extract<intptr_t>(field[1]);
+}
+
+//______________________________________________________________________________
+std::vector<intptr_t>
+dtype::
+get_fields_byte_offsets() const
+{
+    python::list field_names = get_field_names();
+    size_t N = python::len(field_names);
+    std::vector<intptr_t> offsets(N);
+    for(size_t i=0; i<N; ++i)
+    {
+        offsets[i] = get_field_byte_offset(python::str(field_names[i]));
+    }
+    std::sort(offsets.begin(), offsets.end());
+    return offsets;
 }
 
 //______________________________________________________________________________

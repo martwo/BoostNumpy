@@ -149,6 +149,14 @@ class dtype : public python::object
      *        of the ndarray's item address.
      */
     intptr_t get_field_byte_offset(python::str const & field_name) const;
+
+    /**
+     * @brief Returns a vector containing the byte offsets of all the fields
+     *        defined for this dtype object. The offsets are sorted ascending,
+     *        i.e. by the order the fields appear in the ndarrays data.
+     */
+    std::vector<intptr_t>
+    get_fields_byte_offsets() const;
 };
 
 namespace detail {
