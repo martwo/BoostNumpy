@@ -21,7 +21,6 @@
 #define BOOST_NUMPY_INTERNAL_IMPL
 #include <boost/numpy/internal_impl.hpp>
 
-#include <algorithm>
 #include <iostream>
 
 #include <boost/python/dict.hpp>
@@ -87,6 +86,22 @@ is_array() const
 }
 
 //______________________________________________________________________________
+char
+dtype::
+get_char() const
+{
+    return reinterpret_cast<PyArray_Descr*>(ptr())->kind;
+}
+
+//______________________________________________________________________________
+int
+dtype::
+get_type_num() const
+{
+    return reinterpret_cast<PyArray_Descr*>(ptr())->type_num;
+}
+
+//______________________________________________________________________________
 python::object
 dtype::
 get_subdtype() const
@@ -128,17 +143,16 @@ get_shape_vector() const
 }
 
 //______________________________________________________________________________
-python::list
+python::tuple
 dtype::
 get_field_names() const
 {
     if(has_fields())
     {
-        python::dict fields(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->fields));
-        python::list field_names = fields.keys();
-        return field_names;
+        python::tuple names(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->names));
+        return names;
     }
-    return python::list();
+    return python::tuple();
 }
 
 //______________________________________________________________________________
@@ -168,15 +182,52 @@ std::vector<intptr_t>
 dtype::
 get_fields_byte_offsets() const
 {
-    python::list field_names = get_field_names();
+    python::tuple field_names = get_field_names();
     size_t N = python::len(field_names);
     std::vector<intptr_t> offsets(N);
     for(size_t i=0; i<N; ++i)
     {
         offsets[i] = get_field_byte_offset(python::str(field_names[i]));
     }
-    std::sort(offsets.begin(), offsets.end());
     return offsets;
+}
+
+//______________________________________________________________________________
+void
+dtype::
+add_field(std::string const & name, dtype const & dt)
+{
+    if(!has_fields())
+    {
+        // Add a dictionary to the fields member.
+        python::dict fields_dict;
+        python::incref(fields_dict.ptr());
+        reinterpret_cast<PyArray_Descr*>(ptr())->fields = fields_dict.ptr();
+
+        python::tuple names = python::make_tuple();
+        python::incref(names.ptr());
+        reinterpret_cast<PyArray_Descr*>(ptr())->names = names.ptr();
+        std::cout << "Added dict" << std::endl;
+    }
+
+    python::str name_str(name);
+    python::dict fields(python::detail::borrowed_reference(reinterpret_cast<PyArray_Descr*>(ptr())->fields));
+    python::tuple field = python::make_tuple<dtype, intptr_t>(dt, get_itemsize());
+    fields[name_str] = field;
+
+    // Add the new field name to the names tuple member.
+    // Note: We use new_reference here so the old name tuple gets PyDECREF'ed
+    //       automatically, after old_names gets out of scope.
+    python::tuple old_names(python::detail::new_reference(reinterpret_cast<PyArray_Descr*>(ptr())->names));
+    python::list names_list(old_names);
+    names_list.append(name_str);
+    python::tuple new_names(names_list);
+    python::incref(new_names.ptr());
+    reinterpret_cast<PyArray_Descr*>(ptr())->names = new_names.ptr();
+
+    // Increase the itemsize of this dtype object by the size of the given
+    // field dtype.
+    reinterpret_cast<PyArray_Descr*>(ptr())->elsize += dt.get_itemsize();
 }
 
 //______________________________________________________________________________
@@ -201,6 +252,14 @@ builtin_dtype<bool, true>::
 get()
 {
     return DTYPE_FROM_CODE(NPY_BOOL);
+}
+
+//______________________________________________________________________________
+dtype
+builtin_dtype<void, false>::
+get()
+{
+    return DTYPE_FROM_CODE(NPY_VOID);
 }
 
 //______________________________________________________________________________
@@ -293,6 +352,13 @@ struct builtin_complex_dtype< 2 * NPY_BITSOF_LONGDOUBLE >
 };
 template dtype get_complex_dtype< 2 * NPY_BITSOF_LONGDOUBLE >();
 #endif
+
+//______________________________________________________________________________
+dtype
+construct_new_dtype(int type_num)
+{
+    return dtype(boost::python::detail::new_reference(reinterpret_cast<PyObject*>(PyArray_DescrNewFromType(type_num))));
+}
 
 }/*detail*/
 

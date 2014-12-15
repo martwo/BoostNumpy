@@ -75,9 +75,21 @@ class dtype : public python::object
      *
      *  It can also be useful for users to add explicit specializations for
      *  POD structs that return field-based dtypes.
+     *
+     *  @note: The dtype object returned is a reference to the singleton dtype
+     *         object defined by numpy. One must not change the properties of
+     *         this object. In case a brand new object is needed, the static
+     *         function new_builtin<typename T>() should be used.
      */
     template <typename T>
     static dtype get_builtin();
+
+    /**
+     * @brief Creates a new dtype object with the same properties as the
+     *        numpy's builtin dtype object corresponding to the scalar C++ type.
+     */
+    template <typename T>
+    static dtype new_builtin();
 
     BOOST_PYTHON_FORWARD_OBJECT_CONSTRUCTORS(dtype, python::object);
 
@@ -113,6 +125,16 @@ class dtype : public python::object
     bool is_array() const;
 
     /**
+     * @brief Returns the kind of the array.
+     */
+    char get_char() const;
+
+    /**
+     * @brief Returns the dtype's type number.
+     */
+    int get_type_num() const;
+
+    /**
      * @brief Returns the dtype object of the array values this dtype object
      *        describes. In case this dtype object describes no array of values,
      *        a bare boost::python::object object (i.e. None) is returned.
@@ -131,11 +153,12 @@ class dtype : public python::object
     get_shape_vector() const;
 
     /**
-     * @brief Returns a Python list containting the names of the fields. If the
+     * @brief Returns a Python tuple containting the names of the fields in the
+     *        order they have been added to this dtype object. If the
      *        ``has_fields`` method returns ``false``, this method returns an
-     *        empty list.
+     *        empty tuple.
      */
-    python::list get_field_names() const;
+    python::tuple get_field_names() const;
 
     /**
      * @brief Returns the dtype object of the field having the specified name.
@@ -155,8 +178,14 @@ class dtype : public python::object
      *        defined for this dtype object. The offsets are sorted ascending,
      *        i.e. by the order the fields appear in the ndarrays data.
      */
-    std::vector<intptr_t>
-    get_fields_byte_offsets() const;
+    std::vector<intptr_t> get_fields_byte_offsets() const;
+
+    /**
+     * @brief Adds the field named ``name`` having the data type ``dt`` to the
+     *        end of this dtype object. This increases the itemsize of this
+     *        dtype object automatically by the size of the field's dtype.
+     */
+    void add_field(std::string const & name, dtype const & dt);
 };
 
 namespace detail {
@@ -224,10 +253,18 @@ struct builtin_dtype<bool, true>
 };
 
 template <>
+struct builtin_dtype<void, false>
+{
+    static dtype get();
+};
+
+template <>
 struct builtin_dtype<boost::python::object, false>
 {
     static dtype get();
 };
+
+dtype construct_new_dtype(int type_num);
 
 }// namespace detail
 
@@ -237,6 +274,14 @@ dtype::
 get_builtin()
 {
     return detail::builtin_dtype<T, detail::is_intish<T>::value>::get();
+}
+
+template <typename T>
+dtype
+dtype::
+new_builtin()
+{
+    return detail::construct_new_dtype(get_builtin<T>().get_type_num());
 }
 
 }// namespace numpy
