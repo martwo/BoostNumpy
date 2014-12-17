@@ -12,6 +12,11 @@
 # http://www.boost.org/LICENSE_1_0.txt).
 #
 cmake_minimum_required(VERSION 2.8.3)
+# Make it work on MacOSX with cmake greater 2.8.11.
+if(CMAKE_VERSION VERSION_GREATER 2.8.11)
+    set(CMAKE_MACOSX_RPATH 1)
+    cmake_policy(SET CMP0042 NEW)
+endif(CMAKE_VERSION VERSION_GREATER 2.8.11)
 
 # Choose CMAKE_BUILD_TYPE=Release if the user does not specify it.
 if(DEFINED CMAKE_BUILD_TYPE)
