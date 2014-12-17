@@ -31,15 +31,15 @@ namespace numpy {
 // values stored in the ndarray.
 template <typename ValueType>
 class indexed_iterator
-  : public detail::iter_iterator_base<indexed_iterator<ValueType>, ValueType, ValueType &>
+  : public detail::iter_iterator<indexed_iterator<ValueType>, ValueType, boost::forward_traversal_tag, ValueType &>
 {
   public:
-    typedef detail::iter_iterator_base<indexed_iterator<ValueType>, ValueType, ValueType &>
+    typedef detail::iter_iterator<indexed_iterator<ValueType>, ValueType, boost::forward_traversal_tag, ValueType &>
             base_t;
 
     static
     boost::shared_ptr<detail::iter>
-    construct_iter(detail::iterator_base & iter_base, ndarray & arr)
+    construct_iter(detail::iter_iterator_type & iter_base, ndarray & arr)
     {
         indexed_iterator<ValueType> & cppiter = *static_cast<indexed_iterator<ValueType> *>(&iter_base);
 
@@ -107,15 +107,15 @@ class indexed_iterator
 // Specialization for object arrays. Here, the dereferencing works differently.
 template <>
 class indexed_iterator<python::object>
-  : public detail::iter_iterator_base<indexed_iterator<python::object>, python::object, python::object>
+  : public detail::iter_iterator<indexed_iterator<python::object>, python::object, boost::forward_traversal_tag, python::object>
 {
   public:
-    typedef detail::iter_iterator_base<indexed_iterator<python::object>, python::object, python::object>
+    typedef detail::iter_iterator<indexed_iterator<python::object>, python::object, boost::forward_traversal_tag, python::object>
             base_t;
 
     static
     boost::shared_ptr<detail::iter>
-    construct_iter(detail::iterator_base & iter_base, ndarray & arr)
+    construct_iter(detail::iter_iterator_type & iter_base, ndarray & arr)
     {
         indexed_iterator<python::object> & cppiter = *static_cast<indexed_iterator<python::object> *>(&iter_base);
 

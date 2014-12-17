@@ -244,6 +244,17 @@ class iter
 
     //__________________________________________________________________________
     /**
+     * \brief Returns the iteration index of the iterator, which is an index
+     *        matching the iteration order of the iterator.
+     *
+     * \note The iterator must be created with the C_INDEX or F_INDEX iterator
+     *       flag set.
+     */
+    intptr_t
+    get_iter_index() const;
+
+    //__________________________________________________________________________
+    /**
      * \brief Returns the total number of elements that needs to be iterated
      *     over.
      */
@@ -273,9 +284,19 @@ class iter
     /**
      * \brief Moves the data pointers to the location pointed by the specified
      *     indices.
+     *     It throws an exception if there was an error.
      */
     void
     jump_to(std::vector<intptr_t> const & indices);
+
+    //__________________________________________________________________________
+    /**
+     * \brief Moves the data pointers to the location pointed by the specified
+     *     iteration index. (See also the method get_iter_index())
+     *     It throws an exception if there was an error.
+     */
+    void
+    jump_to_iter_index(intptr_t iteridx);
 
     //__________________________________________________________________________
     /**

@@ -56,24 +56,74 @@ construct_flat_iter(
     return iter_ptr;
 }
 
+template <class Derived, typename ValueType, typename ValueRefType>
+class flat_iterator_base
+  : public iter_iterator<Derived, ValueType, boost::random_access_traversal_tag, ValueRefType>
+{
+  public:
+    typedef detail::iter_iterator<Derived, ValueType, boost::random_access_traversal_tag, ValueRefType>
+            base_t;
+    typedef typename base_t::difference_type
+            difference_type;
+
+    // The existence of the default constructor is needed by the STL
+    // requirements.
+    flat_iterator_base()
+      : base_t()
+    {}
+
+    explicit flat_iterator_base(
+        ndarray & arr
+      , iter_operand_flags_t arr_access_flags
+      , typename base_t::iter_construct_fct_ptr_t iter_construct_fct
+    )
+      : base_t(arr, arr_access_flags, iter_construct_fct)
+    {}
+
+    explicit flat_iterator_base(
+        ndarray const & arr
+      , iter_operand_flags_t arr_access_flags
+      , typename base_t::iter_construct_fct_ptr_t iter_construct_fct
+    )
+      : base_t(arr, arr_access_flags, iter_construct_fct)
+    {}
+
+    void
+    advance(difference_type n)
+    {
+        intptr_t const iteridx = base_t::iter_ptr_->get_iter_index() + n;
+        base_t::iter_ptr_->jump_to_iter_index(iteridx);
+    }
+
+    difference_type
+    distance_to(flat_iterator_base<Derived, ValueType, ValueRefType> const & z)
+    {
+        return z.iter_ptr_->get_iter_index() - base_t::iter_ptr_->get_iter_index();
+    }
+
+    base_t end;
+};
+
 }//namespace detail
 
 // The ValueType template parameter must be the C++ corresponding type of the
 // values stored in the ndarray.
 template <typename ValueType>
 class flat_iterator
-  : public detail::iter_iterator_base<flat_iterator<ValueType>, ValueType, ValueType &>
+  : public detail::flat_iterator_base<flat_iterator<ValueType>, ValueType, ValueType &>
 {
   public:
-    typedef detail::iter_iterator_base<flat_iterator<ValueType>, ValueType, ValueType &>
+    typedef detail::flat_iterator_base<flat_iterator<ValueType>, ValueType, ValueType &>
             base_t;
 
     static
     boost::shared_ptr<detail::iter>
-    construct_iter(detail::iterator_base & iter_base, ndarray & arr)
+    construct_iter(detail::iter_iterator_type & iter_base, ndarray & arr)
     {
         flat_iterator<ValueType> & iter = *static_cast<flat_iterator<ValueType> *>(&iter_base);
-        return detail::construct_flat_iter(arr, detail::iter::flags::DONT_NEGATE_STRIDES::value, iter.arr_access_flags_);
+        detail::iter_flags_t iter_flags = detail::iter::flags::C_INDEX::value
+                                        | detail::iter::flags::DONT_NEGATE_STRIDES::value;
+        return detail::construct_flat_iter(arr, iter_flags, iter.arr_access_flags_);
     }
 
     // The existence of the default constructor is needed by the STL
@@ -105,8 +155,6 @@ class flat_iterator
         return *reinterpret_cast<ValueType*>(base_t::iter_ptr_->get_data(0));
     }
 
-    base_t end;
-
   private:
     friend class boost::iterator_core_access;
 };
@@ -115,21 +163,21 @@ class flat_iterator
 // returns an object (i.e. bp::object) and not a reference.
 template <>
 class flat_iterator<boost::python::object>
-  : public detail::iter_iterator_base<flat_iterator<boost::python::object>, boost::python::object, boost::python::object>
+  : public detail::flat_iterator_base<flat_iterator<boost::python::object>, boost::python::object, boost::python::object>
 {
   public:
-    typedef detail::iter_iterator_base<flat_iterator<boost::python::object>, boost::python::object, boost::python::object>
+    typedef detail::flat_iterator_base<flat_iterator<boost::python::object>, boost::python::object, boost::python::object>
             base_t;
 
     static
     boost::shared_ptr<detail::iter>
-    construct_iter(detail::iterator_base & iter_base, ndarray & arr)
+    construct_iter(detail::iter_iterator_type & iter_base, ndarray & arr)
     {
         flat_iterator<boost::python::object> & iter = *static_cast<flat_iterator<boost::python::object> *>(&iter_base);
-        return detail::construct_flat_iter(  arr
-                                           ,   detail::iter::flags::DONT_NEGATE_STRIDES::value
-                                             | detail::iter::flags::REFS_OK::value
-                                           , iter.arr_access_flags_);
+        detail::iter_flags_t iter_flags = detail::iter::flags::C_INDEX::value
+                                        | detail::iter::flags::DONT_NEGATE_STRIDES::value
+                                        | detail::iter::flags::REFS_OK::value;
+        return detail::construct_flat_iter(arr, iter_flags, iter.arr_access_flags_);
     }
 
     // The existence of the default constructor is needed by the STL
@@ -161,13 +209,11 @@ class flat_iterator<boost::python::object>
         return obj;
     }
 
-    uintptr_t*
+    uintptr_t *
     get_object_ptr_ptr() const
     {
-        return reinterpret_cast<uintptr_t*>(iter_ptr_->get_data(0));
+        return reinterpret_cast<uintptr_t *>(iter_ptr_->get_data(0));
     }
-
-    base_t end;
 
   private:
     friend class boost::iterator_core_access;

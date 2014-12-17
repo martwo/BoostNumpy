@@ -5,7 +5,7 @@
  * 2014 - $Date$
  *     Martin Wolf <boostnumpy@martin-wolf.org>
  *
- * @file    boost/numpy/detail/iter_iterator_base.hpp
+ * @file    boost/numpy/detail/iter_iterator.hpp
  * @version $Revision$
  * @date    $Date$
  * @author  Martin Wolf <boostnumpy@martin-wolf.org>
@@ -17,8 +17,8 @@
  *        Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
-#ifndef BOOST_NUMPY_DETAIL_ITER_ITERATOR_BASE_HPP_INCLUDED
-#define BOOST_NUMPY_DETAIL_ITER_ITERATOR_BASE_HPP_INCLUDED 1
+#ifndef BOOST_NUMPY_DETAIL_ITER_ITERATOR_HPP_INCLUDED
+#define BOOST_NUMPY_DETAIL_ITER_ITERATOR_HPP_INCLUDED 1
 
 #include <boost/function.hpp>
 #include <boost/iterator/iterator_facade.hpp>
@@ -30,29 +30,32 @@ namespace boost {
 namespace numpy {
 namespace detail {
 
-class iterator_base
+struct iter_iterator_type
 {};
 
-template <class Derived, typename ValueType, typename ValueRefType>
-class iter_iterator_base
+template <class Derived, typename ValueType, class CategoryOrTraversal, typename ValueRefType>
+class iter_iterator
   : public boost::iterator_facade<
-        Derived                      // Derived
-      , ValueType                    // Value
-      , boost::forward_traversal_tag // CategoryOrTraversal
-      , ValueRefType                 // Reference
+        Derived
+      , ValueType
+      , CategoryOrTraversal
+      , ValueRefType
     >
-    , public iterator_base
+    , public iter_iterator_type
 {
   public:
-    typedef boost::function< boost::shared_ptr<iter> (iter_iterator_base &, ndarray &) >
+    typedef typename boost::iterator_facade<Derived, ValueType, CategoryOrTraversal, ValueRefType>::difference_type
+            difference_type;
+
+    typedef boost::function< boost::shared_ptr<iter> (iter_iterator_type &, ndarray &) >
             iter_construct_fct_ptr_t;
 
-    iter_iterator_base()
+    iter_iterator()
       : is_end_point_(true)
       , arr_access_flags_(iter_operand::flags::READONLY::value)
     {}
 
-    explicit iter_iterator_base(
+    explicit iter_iterator(
         ndarray & arr
       , iter_operand_flags_t arr_access_flags
       , iter_construct_fct_ptr_t iter_construct_fct
@@ -65,7 +68,7 @@ class iter_iterator_base
 
     // In case a const array is given, the READONLY flag for the array set
     // automatically.
-    explicit iter_iterator_base(
+    explicit iter_iterator(
         ndarray const & arr
       , iter_operand_flags_t arr_access_flags
       , iter_construct_fct_ptr_t iter_construct_fct
@@ -79,7 +82,11 @@ class iter_iterator_base
     void
     increment()
     {
-        if(! iter_ptr_->next())
+        if(is_end_point_)
+        {
+            reset();
+        }
+        else if(! iter_ptr_->next())
         {
             // We reached the end of the iteration. So we need to put this
             // iterator into the END state, wich is (by definition) indicated
@@ -92,7 +99,7 @@ class iter_iterator_base
     }
 
     bool
-    equal(iter_iterator_base<Derived, ValueType, ValueRefType> const & other) const
+    equal(iter_iterator<Derived, ValueType, CategoryOrTraversal, ValueRefType> const & other) const
     {
         if(is_end_point_ && other.is_end_point_)
         {
@@ -125,4 +132,4 @@ class iter_iterator_base
 }// namespace numpy
 }// namespace boost
 
-#endif // ! BOOST_NUMPY_DETAIL_ITER_ITERATOR_BASE_HPP_INCLUDED
+#endif // ! BOOST_NUMPY_DETAIL_ITER_ITERATOR_HPP_INCLUDED

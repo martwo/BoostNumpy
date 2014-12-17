@@ -132,6 +132,14 @@ iteration_needs_api()
 //______________________________________________________________________________
 intptr_t
 iter::
+get_iter_index() const
+{
+    return NpyIter_GetIterIndex(npyiter_);
+}
+
+//______________________________________________________________________________
+intptr_t
+iter::
 get_iter_size() const
 {
     return NpyIter_GetIterSize(npyiter_);
@@ -185,6 +193,17 @@ iter::
 jump_to(std::vector<intptr_t> const & indices)
 {
     if(NpyIter_GotoMultiIndex(npyiter_, (npy_intp*)const_cast<intptr_t*>(&indices.front())) == NPY_FAIL)
+    {
+        python::throw_error_already_set();
+    }
+}
+
+//______________________________________________________________________________
+void
+iter::
+jump_to_iter_index(intptr_t iteridx)
+{
+    if(NpyIter_GotoIterIndex(npyiter_, iteridx) == NPY_FAIL)
     {
         python::throw_error_already_set();
     }
