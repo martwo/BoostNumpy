@@ -18,8 +18,8 @@
  */
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/python.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <boost/numpy.hpp>
 #include <boost/numpy/dstream.hpp>
