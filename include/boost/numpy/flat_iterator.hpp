@@ -20,7 +20,7 @@
 #ifndef BOOST_NUMPY_FLAT_ITERATOR_HPP_INCLUDED
 #define BOOST_NUMPY_FLAT_ITERATOR_HPP_INCLUDED 1
 
-#include <boost/numpy/detail/iter_iterator_base.hpp>
+#include <boost/numpy/detail/iter_iterator.hpp>
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/detail/iter.hpp>
 
@@ -100,8 +100,6 @@ class flat_iterator_base
     {
         return z.iter_ptr_->get_iter_index() - base_t::iter_ptr_->get_iter_index();
     }
-
-    base_t end;
 };
 
 }//namespace detail

@@ -22,7 +22,7 @@
 #ifndef BOOST_NUMPY_INDEXED_ITERATOR_HPP_INCLUDED
 #define BOOST_NUMPY_INDEXED_ITERATOR_HPP_INCLUDED 1
 
-#include <boost/numpy/detail/iter_iterator_base.hpp>
+#include <boost/numpy/detail/iter_iterator.hpp>
 
 namespace boost {
 namespace numpy {
