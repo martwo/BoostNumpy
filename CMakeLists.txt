@@ -14,14 +14,14 @@
 cmake_minimum_required(VERSION 2.8.3)
 
 # Make it work on MacOSX with cmake greater 2.8.11.
-if(CMAKE_VERSION VERSION_GREATER 2.8.11)
-    # In cmake 2.8.11 the default behaviour for setting the @rpath in a dynamic
+if(CMAKE_VERSION VERSION_GREATER 2.9.0)
+    # In cmake 3.0 the default behaviour for setting the @rpath in a dynamic
     # library has changed (cmake sets it now). The policy sets supresses the
     # warning by telling cmake:
     # "Yes. I want that new behavior. Please be quiet.".
     set(CMAKE_MACOSX_RPATH 1)
     cmake_policy(SET CMP0042 NEW)
-endif(CMAKE_VERSION VERSION_GREATER 2.8.11)
+endif()
 
 # Choose CMAKE_BUILD_TYPE=Release if the user does not specify it.
 if(DEFINED CMAKE_BUILD_TYPE)
