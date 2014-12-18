@@ -35,7 +35,7 @@ struct iter_iterator_type
 {};
 
 template <class Derived, typename ValueType, class CategoryOrTraversal, typename ValueRefType>
-class iter_iterator_base
+class iter_iterator
   : public boost::iterator_facade<
         Derived
       , ValueType
@@ -45,18 +45,20 @@ class iter_iterator_base
     , public iter_iterator_type
 {
   public:
+    typedef iter_iterator<Derived, ValueType, CategoryOrTraversal, ValueRefType>
+            type_t;
     typedef typename boost::iterator_facade<Derived, ValueType, CategoryOrTraversal, ValueRefType>::difference_type
             difference_type;
 
     typedef boost::function< boost::shared_ptr<iter> (iter_iterator_type &, ndarray &) >
             iter_construct_fct_ptr_t;
 
-    iter_iterator_base()
+    iter_iterator()
       : is_end_point_(true)
       , arr_access_flags_(iter_operand::flags::READONLY::value)
     {}
 
-    explicit iter_iterator_base(
+    explicit iter_iterator(
         ndarray & arr
       , iter_operand_flags_t arr_access_flags
       , iter_construct_fct_ptr_t iter_construct_fct
@@ -69,7 +71,7 @@ class iter_iterator_base
 
     // In case a const array is given, the READONLY flag for the array set
     // automatically.
-    explicit iter_iterator_base(
+    explicit iter_iterator(
         ndarray const & arr
       , iter_operand_flags_t arr_access_flags
       , iter_construct_fct_ptr_t iter_construct_fct
@@ -80,10 +82,37 @@ class iter_iterator_base
         iter_ptr_ = iter_construct_fct(*this, const_cast<ndarray&>(arr));
     }
 
+    // Copy constructor.
+    iter_iterator(type_t const & other)
+      : iter_ptr_(other.iter_ptr_)
+      , is_end_point_(other.is_end_point_)
+      , arr_access_flags_(other.arr_access_flags_)
+    {
+        if(other.iter_ptr_.get()) {
+            iter_ptr_ = boost::shared_ptr<detail::iter>(new detail::iter(*other.iter_ptr_));
+        }
+    }
+
+    // Creates an interator that points to the first element.
+    Derived begin() const
+    {
+        Derived it(*static_cast<Derived*>(const_cast<type_t*>(this)));
+        it.reset();
+        return it;
+    }
+
+    // Creates an iterator that points to the element after the last element.
+    Derived end() const
+    {
+        Derived it(*static_cast<Derived*>(const_cast<type_t*>(this)));
+        it.is_end_point_ = true;
+        return it;
+    }
+
     void
     increment()
     {
-        if(is_end_point_)
+        if(is_end())
         {
             reset();
         }
@@ -100,8 +129,9 @@ class iter_iterator_base
     }
 
     bool
-    equal(iter_iterator_base<Derived, ValueType, CategoryOrTraversal, ValueRefType> const & other) const
+    equal(iter_iterator<Derived, ValueType, CategoryOrTraversal, ValueRefType> const & other) const
     {
+        //std::cout << "iter_iterator: equal" << std::endl;
         if(is_end_point_ && other.is_end_point_)
         {
             return true;
@@ -118,8 +148,15 @@ class iter_iterator_base
     bool
     reset(bool throws=true)
     {
+        //std::cout << "iter_iterator: reset" << std::endl;
         is_end_point_ = false;
         return iter_ptr_->reset(throws);
+    }
+
+    bool
+    is_end() const
+    {
+        return is_end_point_;
     }
 
   protected:
@@ -127,48 +164,6 @@ class iter_iterator_base
     bool is_end_point_;
     // Stores if the array is readonly, writeonly or readwrite'able.
     iter_operand_flags_t arr_access_flags_;
-};
-
-template <class Derived, typename ValueType, class CategoryOrTraversal, typename ValueRefType>
-class iter_iterator
-  : public iter_iterator_base<Derived, ValueType, CategoryOrTraversal, ValueRefType>
-{
-  public:
-    typedef iter_iterator_base<Derived, ValueType, CategoryOrTraversal, ValueRefType>
-            base_t;
-
-    typedef typename base_t::difference_type
-            difference_type;
-
-    typedef typename base_t::iter_construct_fct_ptr_t
-            iter_construct_fct_ptr_t;
-
-    iter_iterator()
-      : base_t()
-    {}
-
-    explicit iter_iterator(
-        ndarray & arr
-      , iter_operand_flags_t arr_access_flags
-      , iter_construct_fct_ptr_t iter_construct_fct
-    )
-      : base_t(arr, arr_access_flags, iter_construct_fct)
-    {}
-
-    // In case a const array is given, the READONLY flag for the array set
-    // automatically.
-    explicit iter_iterator(
-        ndarray const & arr
-      , iter_operand_flags_t arr_access_flags
-      , iter_construct_fct_ptr_t iter_construct_fct
-    )
-      : base_t(arr, arr_access_flags, iter_construct_fct)
-    {}
-
-    // The iterator object representing the end of the iteration process.
-    // In order to have this member here, the base class is required and
-    // introduced.
-    base_t end;
 };
 
 }// namespace detail

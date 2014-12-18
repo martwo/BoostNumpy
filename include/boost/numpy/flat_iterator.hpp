@@ -61,6 +61,8 @@ class flat_iterator_base
   : public iter_iterator<Derived, ValueType, boost::random_access_traversal_tag, ValueRefType>
 {
   public:
+    typedef flat_iterator_base<Derived, ValueType, ValueRefType>
+            type_t;
     typedef detail::iter_iterator<Derived, ValueType, boost::random_access_traversal_tag, ValueRefType>
             base_t;
     typedef typename base_t::difference_type
@@ -88,17 +90,43 @@ class flat_iterator_base
       : base_t(arr, arr_access_flags, iter_construct_fct)
     {}
 
+    // Copy constructor.
+    flat_iterator_base(type_t const & other)
+      : base_t(other)
+    {}
+
     void
     advance(difference_type n)
     {
-        intptr_t const iteridx = base_t::iter_ptr_->get_iter_index() + n;
+        intptr_t const iteridx = get_iter_index() + n;
+        if(iteridx < 0)
+        {
+            base_t::reset();
+            return;
+        }
+        else if(iteridx >= base_t::iter_ptr_->get_iter_size())
+        {
+            base_t::is_end_point_ = true;
+            return;
+        }
+
         base_t::iter_ptr_->jump_to_iter_index(iteridx);
     }
 
     difference_type
-    distance_to(flat_iterator_base<Derived, ValueType, ValueRefType> const & z)
+    distance_to(flat_iterator_base<Derived, ValueType, ValueRefType> const & z) const
     {
-        return z.iter_ptr_->get_iter_index() - base_t::iter_ptr_->get_iter_index();
+        return z.get_iter_index() - get_iter_index();
+    }
+
+    intptr_t get_iter_index() const
+    {
+        if(base_t::is_end())
+        {
+            return base_t::iter_ptr_->get_iter_size();
+        }
+
+        return base_t::iter_ptr_->get_iter_index();
     }
 };
 
@@ -111,6 +139,8 @@ class flat_iterator
   : public detail::flat_iterator_base<flat_iterator<ValueType>, ValueType, ValueType &>
 {
   public:
+    typedef flat_iterator<ValueType>
+            type_t;
     typedef detail::flat_iterator_base<flat_iterator<ValueType>, ValueType, ValueType &>
             base_t;
 
@@ -146,10 +176,14 @@ class flat_iterator
       : base_t(arr, arr_access_flags, &flat_iterator<ValueType>::construct_iter)
     {}
 
+    // Copy constructor.
+    flat_iterator(type_t const & other)
+      : base_t(other)
+    {}
+
     ValueType &
     dereference() const
     {
-        assert(base_t::iter_ptr_.get());
         return *reinterpret_cast<ValueType*>(base_t::iter_ptr_->get_data(0));
     }
 
@@ -164,6 +198,8 @@ class flat_iterator<boost::python::object>
   : public detail::flat_iterator_base<flat_iterator<boost::python::object>, boost::python::object, boost::python::object>
 {
   public:
+    typedef flat_iterator<boost::python::object>
+            type_t;
     typedef detail::flat_iterator_base<flat_iterator<boost::python::object>, boost::python::object, boost::python::object>
             base_t;
 
@@ -198,10 +234,14 @@ class flat_iterator<boost::python::object>
       : base_t(arr, arr_access_flags, &flat_iterator<boost::python::object>::construct_iter)
     {}
 
+    // Copy constructor.
+    flat_iterator(type_t const & other)
+      : base_t(other)
+    {}
+
     boost::python::object
     dereference() const
     {
-        assert(iter_ptr_.get());
         uintptr_t * data = reinterpret_cast<uintptr_t*>(iter_ptr_->get_data(0));
         boost::python::object obj(boost::python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*data)));
         return obj;
