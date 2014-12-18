@@ -58,6 +58,8 @@ iter(iter const & it)
     {
         python::throw_error_already_set();
     }
+
+    gather_iteration_pointers();
 }
 
 //______________________________________________________________________________
