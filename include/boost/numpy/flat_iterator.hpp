@@ -37,16 +37,21 @@ construct_flat_iter(
   , iter_operand_flags_t arr_op_flags
 )
 {
-    intptr_t itershape[1];
-    itershape[0] = -1;
-    int arr_op_bcr[1];
-    arr_op_bcr[0] = 0;
+    int const nd = arr.get_nd();
+    intptr_t itershape[nd];
+    int arr_op_bcr[nd];
+    for(size_t i=0; i<nd; ++i)
+    {
+        itershape[i] = -1;
+        arr_op_bcr[i] = i;
+    }
+
     detail::iter_operand arr_op(arr, arr_op_flags, arr_op_bcr);
     boost::shared_ptr<iter> iter_ptr = boost::shared_ptr<iter>(new iter(
         iter_flags
       , KEEPORDER
       , NO_CASTING
-      , 1           // n_iter_axes
+      , nd          // n_iter_axes
       , itershape
       , 0           // buffersize
       , arr_op
@@ -127,6 +132,12 @@ class flat_iterator_base
         }
 
         return base_t::iter_ptr_->get_iter_index();
+    }
+
+    void
+    jump_to_iter_index(intptr_t iteridx)
+    {
+        base_t::iter_ptr_->jump_to_iter_index(iteridx);
     }
 };
 
