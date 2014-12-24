@@ -394,7 +394,10 @@ class iter
     bool
     reset(bool throws=true);
 
-  protected:
+    //--------------------------------------------------------------------------
+    // Here starts the private section, but we keep it public, so applications
+    // don't have to call accessor methods, which slows things down.
+
     /**
      * \brief Gathers the different pointers used for iteration, i.e. the
      *     nextiter function pointer, the pointer to the data
