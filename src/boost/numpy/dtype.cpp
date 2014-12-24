@@ -207,7 +207,6 @@ add_field(std::string const & name, dtype const & dt)
         python::tuple names = python::make_tuple();
         python::incref(names.ptr());
         reinterpret_cast<PyArray_Descr*>(ptr())->names = names.ptr();
-        std::cout << "Added dict" << std::endl;
     }
 
     python::str name_str(name);
