@@ -34,6 +34,8 @@ class indexed_iterator
   : public detail::iter_iterator<indexed_iterator<ValueType>, ValueType, boost::forward_traversal_tag, ValueType &>
 {
   public:
+    typedef indexed_iterator<ValueType>
+            type_t;
     typedef detail::iter_iterator<indexed_iterator<ValueType>, ValueType, boost::forward_traversal_tag, ValueType &>
             base_t;
 
@@ -87,6 +89,11 @@ class indexed_iterator
       : base_t(arr, arr_access_flags, &indexed_iterator<ValueType>::construct_iter)
     {}
 
+    // Copy constructor.
+    indexed_iterator(type_t const & other)
+      : base_t(other)
+    {}
+
     ValueType &
     dereference() const
     {
@@ -110,6 +117,8 @@ class indexed_iterator<python::object>
   : public detail::iter_iterator<indexed_iterator<python::object>, python::object, boost::forward_traversal_tag, python::object>
 {
   public:
+    typedef indexed_iterator<python::object>
+            type_t;
     typedef detail::iter_iterator<indexed_iterator<python::object>, python::object, boost::forward_traversal_tag, python::object>
             base_t;
 
@@ -162,6 +171,11 @@ class indexed_iterator<python::object>
       , detail::iter_operand_flags_t arr_access_flags = detail::iter_operand::flags::READONLY::value
     )
       : base_t(arr, arr_access_flags, &indexed_iterator<python::object>::construct_iter)
+    {}
+
+    // Copy constructor.
+    indexed_iterator(type_t const & other)
+      : base_t(other)
     {}
 
     python::object
