@@ -84,8 +84,7 @@ class iter_iterator
 
     // Copy constructor.
     iter_iterator(type_t const & other)
-      : iter_ptr_(other.iter_ptr_)
-      , is_end_point_(other.is_end_point_)
+      : is_end_point_(other.is_end_point_)
       , arr_access_flags_(other.arr_access_flags_)
     {
         if(other.iter_ptr_.get()) {
