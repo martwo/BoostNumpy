@@ -194,7 +194,7 @@ void
 iter::
 jump_to(std::vector<intptr_t> const & indices)
 {
-    if(NpyIter_GotoMultiIndex(npyiter_, (npy_intp*)const_cast<intptr_t*>(&indices.front())) == NPY_FAIL)
+    if(NpyIter_GotoMultiIndex(npyiter_, (npy_intp*)const_cast<intptr_t*>(&indices[0])) == NPY_FAIL)
     {
         python::throw_error_already_set();
     }

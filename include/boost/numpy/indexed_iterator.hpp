@@ -97,8 +97,7 @@ class indexed_iterator
     ValueType &
     dereference() const
     {
-        assert(base_t::iter_ptr_.get());
-        return *reinterpret_cast<ValueType*>(base_t::iter_ptr_->get_data(0));
+        return *reinterpret_cast<ValueType*>(base_t::iter_ptr_->data_ptr_array_ptr_[0]);
     }
 
     void
@@ -181,8 +180,7 @@ class indexed_iterator<python::object>
     python::object
     dereference() const
     {
-        assert(base_t::iter_ptr_.get());
-        uintptr_t * ptr = reinterpret_cast<uintptr_t*>(base_t::iter_ptr_->get_data(0));
+        uintptr_t * ptr = reinterpret_cast<uintptr_t*>(base_t::iter_ptr_->data_ptr_array_ptr_[0]);
         if(*ptr == 0)
         {
             PyErr_SetString(PyExc_RuntimeError, "Dereferencing non-existing object from an object array!");
