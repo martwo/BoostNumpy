@@ -39,28 +39,25 @@ namespace iterators {
 template <typename ValueType>
 struct value_type_traits
 {
-    typedef ValueType *
-            ptr_type;
-
-    ptr_type
-    reinterpret_ptr(char* data_ptr)
+    static
+    void
+    dereference(python::object & value_obj, ValueType * & value_ptr_ptr, char* data_ptr)
     {
-        return reinterpret_cast<ptr_type>(data_ptr);
+        value_ptr_ptr = reinterpret_cast<ValueType *>(data_ptr);
     }
 };
 
 template <>
 struct value_type_traits<python::object>
 {
-    typedef python::object
-            ptr_type;
-
-    ptr_type
-    reinterpret_ptr(char* data_ptr)
+    static
+    void
+    dereference(python::object & value_obj, python::object * & value_ptr_ptr, char* data_ptr)
     {
         uintptr_t * ptr = reinterpret_cast<uintptr_t*>(data_ptr);
         python::object obj(python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*ptr)));
-        return obj;
+        value_obj = obj;
+        value_ptr_ptr = &value_obj;
     }
 };
 
@@ -161,10 +158,10 @@ struct multi_indexed_iterator<ND>
         {}
 
         bool
-        dereference() const
+        dereference()
         {
             #define BOOST_NUMPY_DEF(z, n, data) \
-                BOOST_PP_CAT(value_ptr_,n) = value_type_traits<BOOST_PP_CAT(ValueType,n)>::reinterpret_ptr( base_t::iter_ptr_->data_ptr_array_ptr_[ n ] );
+                value_type_traits<BOOST_PP_CAT(ValueType,n)>::dereference( BOOST_PP_CAT(value_obj_,n), BOOST_PP_CAT(value_ptr_,n), base_t::iter_ptr_->data_ptr_array_ptr_[ n ] );
             BOOST_PP_REPEAT(ND, BOOST_NUMPY_DEF, ~)
             #undef BOOST_NUMPY_DEF
             return true;
@@ -176,9 +173,16 @@ struct multi_indexed_iterator<ND>
             base_t::iter_ptr_->jump_to(indices);
         }
 
+        // Define value_obj_# boost::python objects as temporaties for the
+        // dereference method.
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            python::object BOOST_PP_CAT(value_obj_,n);
+        BOOST_PP_REPEAT(ND, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+
         // Define the value_ptr_# pointers to the array values.
         #define BOOST_NUMPY_DEF(z, n, data) \
-            typename value_type_traits<BOOST_PP_CAT(ValueType,n)>::ptr_type BOOST_PP_CAT(value_ptr_,n);
+            BOOST_PP_CAT(ValueType,n) * BOOST_PP_CAT(value_ptr_,n);
         BOOST_PP_REPEAT(ND, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
     };
