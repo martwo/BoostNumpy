@@ -88,6 +88,7 @@ if(BOOSTNUMPY_CONFIGURED_SUCCESSFULLY)
         src/boost/numpy/ndarray.cpp
         src/boost/numpy/numpy.cpp
         src/boost/numpy/scalars.cpp
+        src/boost/numpy/utilities.cpp
     )
 
     list(APPEND ${PROJECT_NAME}_libboost_numpy_LIBRARIES

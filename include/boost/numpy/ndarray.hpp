@@ -303,7 +303,7 @@ class ndarray : public python::object
      */
     inline
     ndarray &
-    operator=(object_cref rhs);
+    operator=(boost::python::object & rhs);
 
     //__________________________________________________________________________
     /**
@@ -668,7 +668,7 @@ operator[](T const & obj) const
 inline
 ndarray &
 ndarray::
-operator=(ndarray::object_cref rhs)
+operator=(boost::python::object & rhs)
 {
     python::object::operator=(rhs);
     return *this;

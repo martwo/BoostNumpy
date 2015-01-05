@@ -3,15 +3,14 @@
  *
  * Copyright (C)
  * 2013
- *     Martin Wolf <martin.wolf@icecube.wisc.edu>
- *     and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ *     Martin Wolf <boostnumpy@martin-wolf.org>
  * 2010-2012
  *     Jim Bosch
  *
  * @file boost/numpy/scalars.cpp
  * @version $Revision$
  * @date $Date$
- * @author Martin Wolf <martin.wolf@icecube.wisc.edu>
+ * @author Martin Wolf <boostnumpy@martin-wolf.org>
  * @brief This file contains the implementation of the numpy.void array scalar
  *        type in boost::python.
  *
