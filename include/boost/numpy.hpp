@@ -27,6 +27,7 @@
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/matrix.hpp>
 #include <boost/numpy/flat_iterator.hpp>
+#include <boost/numpy/iterators/multi_indexed_iterator.hpp>
 
 namespace boost {
 namespace numpy {
