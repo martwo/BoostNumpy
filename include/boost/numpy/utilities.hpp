@@ -22,7 +22,8 @@ namespace boost {
 namespace numpy {
 
 /**
- * @brief Checks if all array elements along the given axis evaluate to
+ * @brief Equivalent to the ``numpy.all`` function.
+ *        Checks if all array elements along the given axis evaluate to
  *        ``true``, by calling the PyArray_All function. The returned
  *        boost::python::object object is either a numpy scalar or a numpy
  *        ndarray.
@@ -32,6 +33,19 @@ all(ndarray const & a, int axis);
 
 void
 all(ndarray const & a, int axis, ndarray & out);
+
+/**
+ * @brief Equivalent to the ``numpy.any`` function.
+ *        Checks if any array elements along the given axis evalutes to
+ *        ``true``, by calling the PyArray_Any function. The returned
+ *        boost::python::object object is either a numpy scalar or a numpy
+ *        ndarray.
+ */
+python::object
+any(ndarray const & a, int axis);
+
+void
+any(ndarray const & a, int axis, ndarray & out);
 
 /**
  * @brief Compares element-wise the content the ndarray a0 and a1 if they are

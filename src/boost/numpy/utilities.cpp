@@ -45,6 +45,22 @@ all(ndarray const & a, int axis, ndarray & out)
     bp::object ret(bp::detail::new_reference(PyArray_All((PyArrayObject*)a.ptr(), axis, (PyArrayObject*)out.ptr())));
 }
 
+bp::object
+any(ndarray const & a, int axis)
+{
+    bp::object out(bp::detail::new_reference(PyArray_Any((PyArrayObject*)a.ptr(), axis, NULL)));
+    return out;
+}
+
+void
+any(ndarray const & a, int axis, ndarray & out)
+{
+    // The PyArray_Any function returns a new reference on the None object, so
+    // we need to create a bp::object to decrement the refcount of None after
+    // returning from this all function.
+    bp::object ret(bp::detail::new_reference(PyArray_Any((PyArrayObject*)a.ptr(), axis, (PyArrayObject*)out.ptr())));
+}
+
 ndarray
 equal(ndarray const & x1, ndarray const & x2)
 {
