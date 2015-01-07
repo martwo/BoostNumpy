@@ -379,6 +379,9 @@ class iter
      * \note The returned array is owned by the iterator, thus this object
      *       should get out of scope before the iter object itself gets
      *       destroyed. Otherwise bad things could happen.
+     * TODO: The ndarray operand objects should be created by this iter class
+     *       directly after the initialization of the iteration. So this
+     *       method just returns a reference to these ndarray objects.
      */
     ndarray
     get_operand(size_t op_idx);

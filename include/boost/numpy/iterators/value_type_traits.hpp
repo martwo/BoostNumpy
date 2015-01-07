@@ -32,12 +32,21 @@ template <typename ValueType>
 struct single_value
   : value_type_traits
 {
-    typedef ValueType *
+    typedef ValueType
+            value_type;
+    typedef value_type *
             value_ptr_type;
+
+    single_value(ndarray const &)
+    {}
 
     static
     void
-    dereference(value_ptr_type & value_ptr_ref, char* data_ptr)
+    dereference(
+        value_type_traits &
+      , value_ptr_type & value_ptr_ref
+      , char * data_ptr
+    )
     {
         value_ptr_ref = reinterpret_cast<value_ptr_type>(data_ptr);
     }
@@ -47,20 +56,30 @@ template <>
 struct single_value<python::object>
   : value_type_traits
 {
-    typedef python::object *
+    typedef python::object
+            value_type;
+    typedef value_type *
             value_ptr_type;
+
+    single_value(ndarray const &)
+    {}
 
     // We need a temporay bp::object for holding the value.
     python::object value_obj_;
 
     static
     void
-    dereference(value_ptr_type & value_ptr_ref, char* data_ptr)
+    dereference(
+        value_type_traits & vtt_base
+      , value_ptr_type & value_ptr_ref
+      , char * data_ptr
+    )
     {
+        single_value<python::object> & vtt = *static_cast<single_value<python::object> *>(&vtt_base);
         uintptr_t * ptr = reinterpret_cast<uintptr_t*>(data_ptr);
         python::object obj(python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*ptr)));
-        value_obj_ = obj;
-        value_ptr_ref = &value_obj_;
+        vtt.value_obj_ = obj;
+        value_ptr_ref = &vtt.value_obj_;
     }
 };
 

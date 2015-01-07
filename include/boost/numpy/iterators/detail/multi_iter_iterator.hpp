@@ -40,6 +40,7 @@
 #include <boost/numpy/limits.hpp>
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/detail/iter.hpp>
+#include <boost/numpy/iterators/value_type_traits.hpp>
 
 namespace boost {
 namespace numpy {
@@ -110,7 +111,6 @@ struct multi_iter_iterator<N>
         explicit impl(
             BOOST_PP_ENUM_PARAMS(N, ndarray & arr)
           , BOOST_PP_ENUM_PARAMS(N, boost::numpy::detail::iter_operand_flags_t arr_access_flags)
-          //, iter_construct_fct_ptr_t iter_construct_fct
         )
           : BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_value_ptr_init, ~)
           , is_end_point_(false)
@@ -119,6 +119,11 @@ struct multi_iter_iterator<N>
         #undef BOOST_NUMPY_DEF_value_ptr_init
         {
             iter_ptr_ = Derived::construct_iter(*this, BOOST_PP_ENUM_PARAMS(N, arr));
+            #define BOOST_NUMPY_DEF(z, n, data) \
+                ndarray BOOST_PP_CAT(op_arr,n) = iter_ptr_->get_operand(n); \
+                BOOST_PP_CAT(vtt_,n) = BOOST_PP_CAT(ValueTypeTraits,n)(BOOST_PP_CAT(op_arr,n));
+            BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+            #undef BOOST_NUMPY_DEF
         }
 
         // Copy constructor.
@@ -206,8 +211,12 @@ struct multi_iter_iterator<N>
         bool
         dereference()
         {
-            #define BOOST_NUMPY_DEF(z, n, data) \
-                BOOST_PP_CAT(ValueTypeTraits,n)::dereference( BOOST_PP_CAT(value_ptr_,n), iter_ptr_->data_ptr_array_ptr_[n] );
+            #define BOOST_NUMPY_DEF(z, n, data)                                \
+                BOOST_PP_CAT(ValueTypeTraits,n)::dereference(                  \
+                    BOOST_PP_CAT(vtt_,n)                                       \
+                  , BOOST_PP_CAT(value_ptr_,n)                                 \
+                  , iter_ptr_->data_ptr_array_ptr_[n]                          \
+                );
             BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
             #undef BOOST_NUMPY_DEF
             return true;
@@ -221,10 +230,19 @@ struct multi_iter_iterator<N>
 
       protected:
         boost::shared_ptr<boost::numpy::detail::iter> iter_ptr_;
+
         bool is_end_point_;
+
         // Stores if the array is readonly, writeonly or readwrite'able.
         #define BOOST_NUMPY_DEF(z, n, data) \
             boost::numpy::detail::iter_operand_flags_t BOOST_PP_CAT(arr_access_flags_,n);
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+
+        // Define object vtt_# of the ValueTypeTraits# class
+        // (using the default constructor).
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            BOOST_PP_CAT(ValueTypeTraits,n) BOOST_PP_CAT(vtt_,n);
         BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
     };
