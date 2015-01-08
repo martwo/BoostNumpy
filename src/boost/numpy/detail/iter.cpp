@@ -97,6 +97,9 @@ gather_iteration_pointers()
     inner_loop_stride_array_ptr_ = NpyIter_GetInnerStrideArray(npyiter_);
     inner_loop_size_ptr_         = NpyIter_GetInnerLoopSizePtr(npyiter_);
     descr_ptr_array_ptr_         = NpyIter_GetDescrArray(npyiter_);
+    char errmsg[2048];
+    char * errmsgptr = &errmsg[0];
+    get_multi_index_func_ = NpyIter_GetGetMultiIndex(npyiter_, &errmsgptr);
 }
 
 //______________________________________________________________________________
@@ -153,6 +156,14 @@ iter::
 get_nop() const
 {
     return NpyIter_GetNOp(npyiter_);
+}
+
+//______________________________________________________________________________
+int
+iter::
+get_ndim() const
+{
+    return NpyIter_GetNDim(npyiter_);
 }
 
 //______________________________________________________________________________
@@ -234,6 +245,39 @@ reset(bool throws)
         }
     }
     return true;
+}
+
+void
+iter::
+get_multi_index_vector(std::vector<intptr_t> & multindex) const
+{
+    if(get_multi_index_func_ == NULL)
+    {
+        PyErr_SetString(PyExc_RuntimeError,
+            "The NpyIter iterator object does not carry a multi-index, which "
+            "is required by the get_multi_index_vector method!");
+        python::throw_error_already_set();
+    }
+
+    if(multindex.size() < get_ndim())
+    {
+        std::stringstream ss;
+        ss << "The size of the multi-index vector must be at least "
+           << get_ndim() << "!";
+        PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+        python::throw_error_already_set();
+    }
+
+    get_multi_index_func_(npyiter_, &multindex[0]);
+}
+
+std::vector<intptr_t>
+iter::
+get_multi_index_vector() const
+{
+    std::vector<intptr_t> multindex(get_ndim());
+    get_multi_index_vector(multindex);
+    return multindex;
 }
 
 }// namespace detail

@@ -367,6 +367,7 @@ ndarray zeros(std::vector<intptr_t> const & shape, dtype const & dt);
  */
 ndarray empty(int nd, intptr_t const * shape, dtype const & dt);
 ndarray empty(python::tuple const & shape, dtype const & dt);
+ndarray empty(std::vector<intptr_t> const & shape, dtype const & dt);
 
 //______________________________________________________________________________
 /**

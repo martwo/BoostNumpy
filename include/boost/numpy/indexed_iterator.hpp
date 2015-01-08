@@ -106,6 +106,12 @@ class indexed_iterator
         base_t::iter_ptr_->jump_to(indices);
     }
 
+    void
+    get_multi_index_vector(std::vector<intptr_t> & indices)
+    {
+        base_t::iter_ptr_->get_multi_index_vector(indices);
+    }
+
   private:
     friend class boost::iterator_core_access;
 };
@@ -194,6 +200,12 @@ class indexed_iterator<python::object>
     jump_to(std::vector<intptr_t> const & indices)
     {
         base_t::iter_ptr_->jump_to(indices);
+    }
+
+    void
+    get_multi_index_vector(std::vector<intptr_t> & indices)
+    {
+        base_t::iter_ptr_->get_multi_index_vector(indices);
     }
 
   private:

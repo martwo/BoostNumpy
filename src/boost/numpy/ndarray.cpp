@@ -466,6 +466,13 @@ empty(
 
 //______________________________________________________________________________
 ndarray
+empty(std::vector<intptr_t> const & shape, dtype const & dt)
+{
+    return empty(int(shape.size()), &(shape.front()), dt);
+}
+
+//______________________________________________________________________________
+ndarray
 array(python::object const & obj)
 {
     // We need to set the ndarray::ENSUREARRAY flag here, because the array

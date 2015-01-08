@@ -158,6 +158,12 @@ class iter_iterator
         return is_end_point_;
     }
 
+    detail::iter &
+    get_detail_iter()
+    {
+        return *iter_ptr_;
+    }
+
   protected:
     boost::shared_ptr<detail::iter> iter_ptr_;
     bool is_end_point_;

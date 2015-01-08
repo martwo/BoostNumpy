@@ -270,6 +270,15 @@ class iter
 
     //__________________________________________________________________________
     /**
+     * \brief Returns the number of dimensions iterated over. If no multi index
+     *        is beeing tracked, this number can be smaller than the dimensions
+     *        of the operand arrays.
+     */
+    int
+    get_ndim() const;
+
+    //__________________________________________________________________________
+    /**
      * \brief Returns the inner loop stride (in bytes) of the i'th iterator
      *     operand.
      */
@@ -397,6 +406,25 @@ class iter
     bool
     reset(bool throws=true);
 
+    //__________________________________________________________________________
+    /**
+     * \brief Sets the elements of a std::vector<intptr_t> to the current multi
+     *        index being tracked by this iterator.
+     *        If the size of the vector is smaller than the result of the
+     *        get_ndim method, or if the iterator does not cary a multi-index,
+     *        this function raises a RuntimeError.
+     */
+    void
+    get_multi_index_vector(std::vector<intptr_t> & multindex) const;
+
+    /**
+     * \brief C++ style wrapper function for
+     *        get_multi_index_vector(std::vector<intptr_t> &) which might be
+     *        less efficient due to vector object copying.
+     */
+    std::vector<intptr_t>
+    get_multi_index_vector() const;
+
     //--------------------------------------------------------------------------
     // Here starts the private section, but we keep it public, so applications
     // don't have to call accessor methods, which slows things down.
@@ -444,6 +472,11 @@ class iter
      *     description objects for all iterator operands.
      */
     PyArray_Descr** descr_ptr_array_ptr_;
+
+    /**
+     * \brief The function pointer to the GetMultiIndexFunc function.
+     */
+    NpyIter_GetMultiIndexFunc * get_multi_index_func_;
 };
 
 }// namespace detail
