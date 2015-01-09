@@ -74,7 +74,7 @@ template <int Arity>
 struct loop_service_arity;
 
 #define BOOST_PP_ITERATION_PARAMS_1                                            \
-    (3, (1, BOOST_NUMPY_LIMIT_INPUT_ARITY, <boost/numpy/dstream/detail/loop_service.hpp>))
+    (3, (1, BOOST_NUMPY_LIMIT_INPUT_AND_OUTPUT_ARITY, <boost/numpy/dstream/detail/loop_service.hpp>))
 #include BOOST_PP_ITERATE()
 
 }// namespace detail

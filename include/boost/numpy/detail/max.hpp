@@ -48,7 +48,7 @@ T max(T x, T y)
     {                                                                          \
         return max(x, max(BOOST_PP_ENUM_PARAMS(n, x)));                        \
     }
-BOOST_PP_REPEAT_FROM_TO(2, BOOST_PP_ADD(BOOST_NUMPY_LIMIT_INPUT_ARITY, 2), BOOST_NUMPY_DEF, ~)
+BOOST_PP_REPEAT_FROM_TO(2, BOOST_PP_ADD(BOOST_PP_ADD(BOOST_NUMPY_LIMIT_INPUT_ARITY, BOOST_NUMPY_LIMIT_OUTPUT_ARITY), 2), BOOST_NUMPY_DEF, ~)
 #undef BOOST_NUMPY_DEF
 
 }// namespace detail
