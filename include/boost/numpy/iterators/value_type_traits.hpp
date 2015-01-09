@@ -37,6 +37,9 @@ struct single_value
     typedef value_type *
             value_ptr_type;
 
+    single_value()
+    {}
+
     single_value(ndarray const &)
     {}
 
@@ -60,6 +63,9 @@ struct single_value<python::object>
             value_type;
     typedef value_type *
             value_ptr_type;
+
+    single_value()
+    {}
 
     single_value(ndarray const &)
     {}

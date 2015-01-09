@@ -41,6 +41,7 @@
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/detail/iter.hpp>
 #include <boost/numpy/iterators/value_type_traits.hpp>
+#include <boost/numpy/dstream.hpp>
 
 namespace boost {
 namespace numpy {
@@ -89,6 +90,79 @@ struct multi_iter_iterator<N>
                 type_t;
         typedef typename boost::iterator_facade<Derived, bool, CategoryOrTraversal, bool>::difference_type
                 difference_type;
+
+        static
+        boost::shared_ptr<boost::numpy::detail::iter>
+        construct_iter(
+            detail::multi_iter_iterator_type & iter_base
+          , boost::numpy::detail::iter_flags_t special_iter_flags
+          , BOOST_PP_ENUM_PARAMS(N, ndarray & arr))
+        {
+            // TODO: Right now, all the operand are supposed to have the same
+            //       dimensionality and shape. We should use the dstream library
+            //       here with a scalar core shape for all operands in order to
+            //       get an automatic broadcasting of all the operand arrays.
+            //
+            //       Maybe this function could be out-sourced for usage also in
+            //       other multi iterators. Usually it's just the iter flags
+            //       that change.
+            type_t & thisiter = *static_cast<type_t *>(&iter_base);
+
+            // Define a scalar core shape for all the iterator operands.
+            typedef dstream::mapping::detail::core_shape<0>::shape<>
+                    scalar_core_shape_t;
+            #define BOOST_NUMPY_DEF(z, n, data) \
+                typedef dstream::array_definition<scalar_core_shape_t, typename BOOST_PP_CAT(ValueTypeTraits,n)::value_type>\
+                        BOOST_PP_CAT(arr_def,n);
+            BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+            #undef BOOST_NUMPY_DEF
+
+            // Define the type of the loop service.
+            typedef dstream::detail::loop_service_arity<N>::loop_service<BOOST_PP_ENUM_PARAMS(N, arr_def)>
+                    loop_service_t;
+            // Create input_array_service object for each array.
+            #define BOOST_NUMPY_IN_ARR_SERVICE(z, n, data) \
+                dstream::detail::input_array_service<BOOST_PP_CAT(arr_def,n)> BOOST_PP_CAT(in_arr_service,n)(BOOST_PP_CAT(arr,n));
+            BOOST_PP_REPEAT(N, BOOST_NUMPY_IN_ARR_SERVICE, ~)
+            #undef BOOST_NUMPY_IN_ARR_SERVICE
+
+            // Create the loop service object.
+            loop_service_t loop_service(BOOST_PP_ENUM_PARAMS(N, in_arr_service));
+
+            // Define the iterator operand flags for the input arrays.
+            #define BOOST_NUMPY_ITER_OPERAND_FLAGS(z, n, data) \
+                boost::numpy::detail::iter_operand_flags_t BOOST_PP_CAT(in_arr_op_flags,n) = boost::numpy::detail::iter_operand::flags::NONE::value;\
+                BOOST_PP_CAT(in_arr_op_flags,n) |= thisiter.BOOST_PP_CAT(arr_access_flags_,n) & boost::numpy::detail::iter_operand::flags::READONLY::value;\
+                BOOST_PP_CAT(in_arr_op_flags,n) |= thisiter.BOOST_PP_CAT(arr_access_flags_,n) & boost::numpy::detail::iter_operand::flags::WRITEONLY::value;\
+                BOOST_PP_CAT(in_arr_op_flags,n) |= thisiter.BOOST_PP_CAT(arr_access_flags_,n) & boost::numpy::detail::iter_operand::flags::READWRITE::value;
+            BOOST_PP_REPEAT(N, BOOST_NUMPY_ITER_OPERAND_FLAGS, ~)
+            #undef BOOST_NUMPY_ITER_OPERAND_FLAGS
+
+            // Create the iterator operand objects.
+            #define BOOST_NUMPY_ITER_OPERAND(z, n, data) \
+                boost::numpy::detail::iter_operand BOOST_PP_CAT(in_arr_iter_op,n)( BOOST_PP_CAT(in_arr_service,n).get_arr(), BOOST_PP_CAT(in_arr_op_flags,n), BOOST_PP_CAT(in_arr_service,n).get_arr_bcr_data() );
+            BOOST_PP_REPEAT(N, BOOST_NUMPY_ITER_OPERAND, ~)
+            #undef BOOST_NUMPY_ITER_OPERAND
+
+            // Define the iterator flags.
+            boost::numpy::detail::iter_flags_t iter_flags =
+                boost::numpy::detail::iter::flags::REFS_OK::value
+              | boost::numpy::detail::iter::flags::DONT_NEGATE_STRIDES::value;
+            iter_flags |= special_iter_flags;
+
+            // Create the multi iterator object.
+            boost::shared_ptr<boost::numpy::detail::iter> it(new boost::numpy::detail::iter(
+                iter_flags
+              , KEEPORDER
+              , NO_CASTING
+              , loop_service.get_loop_nd()
+              , loop_service.get_loop_shape_data()
+              , 0 // Use default buffersize.
+              , BOOST_PP_ENUM_PARAMS(N, in_arr_iter_op)
+            ));
+            it->init_full_iteration();
+            return it;
+        }
 
         // Default constructor.
         #define BOOST_NUMPY_DEF_value_ptr_init(z, n, data) \

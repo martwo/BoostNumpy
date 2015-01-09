@@ -84,52 +84,11 @@ struct multi_flat_iterator<N>
         boost::shared_ptr<boost::numpy::detail::iter>
         construct_iter(detail::multi_iter_iterator_type & iter_base, BOOST_PP_ENUM_PARAMS(N, ndarray & arr))
         {
-            // TODO: Right now, all the operand are supposed to have the same
-            //       dimensionality and shape. We should use the dstream library
-            //       here with a scalar core shape for all operands in order to
-            //       get an automatic broadcasting of all the operand arrays.
-            //
-            //       Maybe this function could be out-sourced for usage also in
-            //       other multi iterators. Usually it's just the iter flags
-            //       that change.
-            type_t & cppiter = *static_cast<type_t *>(&iter_base);
-            int const nd = arr0.get_nd();
-
-            intptr_t itershape[nd];
-            int arr_op_bcr[nd];
-            for(size_t i=0; i<nd; ++i)
-            {
-                itershape[i] = -1;
-                arr_op_bcr[i] = i;
-            }
-            boost::numpy::detail::iter_flags_t iter_flags =
-                boost::numpy::detail::iter::flags::C_INDEX::value
-              | boost::numpy::detail::iter::flags::REFS_OK::value
-              | boost::numpy::detail::iter::flags::DONT_NEGATE_STRIDES::value;
-
-            #define BOOST_NUMPY_DEF(z, n, data) \
-                boost::numpy::detail::iter_operand_flags_t BOOST_PP_CAT(arr_op_flags,n) = boost::numpy::detail::iter_operand::flags::NONE::value;\
-                BOOST_PP_CAT(arr_op_flags,n) |= cppiter.BOOST_PP_CAT(arr_access_flags_,n) & boost::numpy::detail::iter_operand::flags::READONLY::value;\
-                BOOST_PP_CAT(arr_op_flags,n) |= cppiter.BOOST_PP_CAT(arr_access_flags_,n) & boost::numpy::detail::iter_operand::flags::WRITEONLY::value;\
-                BOOST_PP_CAT(arr_op_flags,n) |= cppiter.BOOST_PP_CAT(arr_access_flags_,n) & boost::numpy::detail::iter_operand::flags::READWRITE::value;
-            BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
-            #undef BOOST_NUMPY_DEF
-            #define BOOST_NUMPY_DEF(z, n, data) \
-                boost::numpy::detail::iter_operand BOOST_PP_CAT(arr_op,n)(BOOST_PP_CAT(arr,n), BOOST_PP_CAT(arr_op_flags,n), arr_op_bcr);
-            BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
-            #undef BOOST_NUMPY_DEF
-
-            boost::shared_ptr<boost::numpy::detail::iter> it(new boost::numpy::detail::iter(
-                iter_flags
-              , KEEPORDER
-              , NO_CASTING
-              , nd           // n_iter_axes
-              , itershape
-              , 0            // buffersize
-              , BOOST_PP_ENUM_PARAMS(N, arr_op)
-            ));
-            it->init_full_iteration();
-            return it;
+            return base_t::construct_iter(
+                iter_base
+              , boost::numpy::detail::iter::flags::C_INDEX::value
+              , BOOST_PP_ENUM_PARAMS(N, arr)
+            );
         }
 
         // The existence of the default constructor is needed by the STL
