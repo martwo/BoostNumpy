@@ -94,18 +94,10 @@ struct multi_iter_iterator<N>
         static
         boost::shared_ptr<boost::numpy::detail::iter>
         construct_iter(
-            detail::multi_iter_iterator_type & iter_base
+            multi_iter_iterator_type & iter_base
           , boost::numpy::detail::iter_flags_t special_iter_flags
           , BOOST_PP_ENUM_PARAMS(N, ndarray & arr))
         {
-            // TODO: Right now, all the operand are supposed to have the same
-            //       dimensionality and shape. We should use the dstream library
-            //       here with a scalar core shape for all operands in order to
-            //       get an automatic broadcasting of all the operand arrays.
-            //
-            //       Maybe this function could be out-sourced for usage also in
-            //       other multi iterators. Usually it's just the iter flags
-            //       that change.
             type_t & thisiter = *static_cast<type_t *>(&iter_base);
 
             // Define a scalar core shape for all the iterator operands.
@@ -194,8 +186,7 @@ struct multi_iter_iterator<N>
         {
             iter_ptr_ = Derived::construct_iter(*this, BOOST_PP_ENUM_PARAMS(N, arr));
             #define BOOST_NUMPY_DEF(z, n, data) \
-                ndarray BOOST_PP_CAT(op_arr,n) = iter_ptr_->get_operand(n); \
-                BOOST_PP_CAT(vtt_,n) = BOOST_PP_CAT(ValueTypeTraits,n)(BOOST_PP_CAT(op_arr,n));
+                BOOST_PP_CAT(vtt_,n) = BOOST_PP_CAT(ValueTypeTraits,n)(BOOST_PP_CAT(arr,n));
             BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
             #undef BOOST_NUMPY_DEF
         }
@@ -205,10 +196,14 @@ struct multi_iter_iterator<N>
             BOOST_PP_CAT(value_ptr_,n)(NULL)
         #define BOOST_NUMPY_DEF_arr_access_flags_copy(z, n, data) \
             BOOST_PP_CAT(arr_access_flags_,n)(other.BOOST_PP_CAT(arr_access_flags_,n))
+        #define BOOST_NUMPY_DEF_vtt_copy(z, n, data) \
+            BOOST_PP_CAT(vtt_,n)(other.BOOST_PP_CAT(vtt_,n))
         impl(type_t const & other)
           : BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_value_ptr_init, ~)
           , is_end_point_(other.is_end_point_)
           , BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_arr_access_flags_copy, ~)
+          , BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_vtt_copy, ~)
+        #undef BOOST_NUMPY_DEF_vtt_copy
         #undef BOOST_NUMPY_DEF_arr_access_flags_copy
         #undef BOOST_NUMPY_DEF_value_ptr_init
         {
@@ -280,6 +275,12 @@ struct multi_iter_iterator<N>
         is_end() const
         {
             return is_end_point_;
+        }
+
+        boost::numpy::detail::iter &
+        get_detail_iter()
+        {
+            return *iter_ptr_;
         }
 
         bool

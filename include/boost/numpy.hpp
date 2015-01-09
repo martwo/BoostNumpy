@@ -23,10 +23,11 @@
 #include <boost/python.hpp>
 
 // For user convenience, include also the ndarray, and matrix class, as well as
-// the flat_iterator iterator.
+// the iterator templates.
 #include <boost/numpy/ndarray.hpp>
 #include <boost/numpy/matrix.hpp>
-#include <boost/numpy/flat_iterator.hpp>
+#include <boost/numpy/iterators/flat_iterator.hpp>
+#include <boost/numpy/iterators/indexed_iterator.hpp>
 #include <boost/numpy/iterators/multi_flat_iterator.hpp>
 #include <boost/numpy/iterators/multi_indexed_iterator.hpp>
 

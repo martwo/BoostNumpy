@@ -34,6 +34,8 @@ struct single_value
 {
     typedef ValueType
             value_type;
+    typedef value_type &
+            value_ref_type;
     typedef value_type *
             value_ptr_type;
 
@@ -61,6 +63,8 @@ struct single_value<python::object>
 {
     typedef python::object
             value_type;
+    typedef value_type &
+            value_ref_type;
     typedef value_type *
             value_ptr_type;
 
