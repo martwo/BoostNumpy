@@ -32,7 +32,11 @@
 #define BOOST_NUMPY_ITERATORS_DETAIL_MULTI_ITER_ITERATOR_HPP_INCLUDED 1
 
 #include <boost/preprocessor/iterate.hpp>
+#include <boost/preprocessor/facilities/intercept.hpp>
 #include <boost/preprocessor/repetition/enum.hpp>
+#include <boost/preprocessor/repetition/enum_binary_params.hpp>
+#include <boost/preprocessor/repetition/enum_params.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/python.hpp>
@@ -74,13 +78,29 @@ struct multi_iter_iterator
 template <>
 struct multi_iter_iterator<N>
 {
+    template <BOOST_PP_ENUM_PARAMS(N, typename ValueRefType)>
+    struct multi_references
+    {
+        multi_references(BOOST_PP_ENUM_BINARY_PARAMS(N, ValueRefType, ref))
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            BOOST_PP_CAT(value_,n)(BOOST_PP_CAT(ref,n))
+          : BOOST_PP_ENUM(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+        {}
+
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            BOOST_PP_CAT(ValueRefType,n) BOOST_PP_CAT(value_,n);
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+    };
+
     template <class Derived, class CategoryOrTraversal, BOOST_PP_ENUM_PARAMS(N, typename ValueTypeTraits)>
     class impl
       : public boost::iterator_facade<
           Derived
-        , bool // ValueType
+        , multi_references<BOOST_PP_ENUM_BINARY_PARAMS(N, typename ValueTypeTraits, ::value_ref_type BOOST_PP_INTERCEPT)> // ValueType
         , CategoryOrTraversal
-        , bool // ValueRefType
+        , multi_references<BOOST_PP_ENUM_BINARY_PARAMS(N, typename ValueTypeTraits, ::value_ref_type BOOST_PP_INTERCEPT)> // ValueRefType
         //, DifferenceType
         >
       , public multi_iter_iterator_type
@@ -88,7 +108,9 @@ struct multi_iter_iterator<N>
       public:
         typedef multi_iter_iterator<N>::impl<Derived, CategoryOrTraversal, BOOST_PP_ENUM_PARAMS(N, ValueTypeTraits)>
                 type_t;
-        typedef typename boost::iterator_facade<Derived, bool, CategoryOrTraversal, bool>::difference_type
+        typedef multi_references<BOOST_PP_ENUM_BINARY_PARAMS(N, typename ValueTypeTraits, ::value_ref_type BOOST_PP_INTERCEPT)>
+                multi_references_type;
+        typedef typename boost::iterator_facade<Derived, multi_references_type, CategoryOrTraversal, multi_references_type>::difference_type
                 difference_type;
 
         static
@@ -157,59 +179,47 @@ struct multi_iter_iterator<N>
         }
 
         // Default constructor.
-        #define BOOST_NUMPY_DEF_value_ptr_init(z, n, data) \
-            BOOST_PP_CAT(value_ptr_,n)(NULL)
         #define BOOST_NUMPY_DEF_arr_access_flags_init(z, n, data) \
             BOOST_PP_CAT(arr_access_flags_,n)(boost::numpy::detail::iter_operand::flags::READONLY::value)
         impl()
-          : BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_value_ptr_init, ~)
-          , is_end_point_(true)
+          : is_end_point_(true)
           , BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_arr_access_flags_init, ~)
         #undef BOOST_NUMPY_DEF_arr_access_flags_init
-        #undef BOOST_NUMPY_DEF_value_ptr_init
         {}
 
         // Explicit constructor.
-        #define BOOST_NUMPY_DEF_value_ptr_init(z, n, data) \
-            BOOST_PP_CAT(value_ptr_,n)(NULL)
         #define BOOST_NUMPY_DEF_arr_access_flags_init(z, n, data) \
             BOOST_PP_CAT(arr_access_flags_,n)(BOOST_PP_CAT(arr_access_flags,n))
         explicit impl(
             BOOST_PP_ENUM_PARAMS(N, ndarray & arr)
           , BOOST_PP_ENUM_PARAMS(N, boost::numpy::detail::iter_operand_flags_t arr_access_flags)
         )
-          : BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_value_ptr_init, ~)
-          , is_end_point_(false)
+          : is_end_point_(false)
           , BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_arr_access_flags_init, ~)
         #undef BOOST_NUMPY_DEF_arr_access_flags_init
-        #undef BOOST_NUMPY_DEF_value_ptr_init
         {
             iter_ptr_ = Derived::construct_iter(*this, BOOST_PP_ENUM_PARAMS(N, arr));
             #define BOOST_NUMPY_DEF(z, n, data) \
-                BOOST_PP_CAT(vtt_,n) = BOOST_PP_CAT(ValueTypeTraits,n)(BOOST_PP_CAT(arr,n));
+                BOOST_PP_CAT(vtt_,n) = boost::shared_ptr<BOOST_PP_CAT(ValueTypeTraits,n)>(new BOOST_PP_CAT(ValueTypeTraits,n)(BOOST_PP_CAT(arr,n)));
             BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
             #undef BOOST_NUMPY_DEF
         }
 
         // Copy constructor.
-        #define BOOST_NUMPY_DEF_value_ptr_init(z, n, data) \
-            BOOST_PP_CAT(value_ptr_,n)(NULL)
         #define BOOST_NUMPY_DEF_arr_access_flags_copy(z, n, data) \
             BOOST_PP_CAT(arr_access_flags_,n)(other.BOOST_PP_CAT(arr_access_flags_,n))
-        #define BOOST_NUMPY_DEF_vtt_copy(z, n, data) \
-            BOOST_PP_CAT(vtt_,n)(other.BOOST_PP_CAT(vtt_,n))
         impl(type_t const & other)
-          : BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_value_ptr_init, ~)
-          , is_end_point_(other.is_end_point_)
+          : is_end_point_(other.is_end_point_)
           , BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_arr_access_flags_copy, ~)
-          , BOOST_PP_ENUM(N, BOOST_NUMPY_DEF_vtt_copy, ~)
-        #undef BOOST_NUMPY_DEF_vtt_copy
         #undef BOOST_NUMPY_DEF_arr_access_flags_copy
-        #undef BOOST_NUMPY_DEF_value_ptr_init
         {
             if(other.iter_ptr_.get()) {
                 iter_ptr_ = boost::shared_ptr<boost::numpy::detail::iter>(new boost::numpy::detail::iter(*other.iter_ptr_));
             }
+            #define BOOST_NUMPY_DEF_vtt_copy(z, n, data) \
+                BOOST_PP_CAT(vtt_,n) = boost::shared_ptr<BOOST_PP_CAT(ValueTypeTraits,n)>(new BOOST_PP_CAT(ValueTypeTraits,n)(*other.BOOST_PP_CAT(vtt_,n)));
+            BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF_vtt_copy, ~)
+            #undef BOOST_NUMPY_DEF_vtt_copy
         }
 
         // Creates an interator that points to the first element.
@@ -283,25 +293,19 @@ struct multi_iter_iterator<N>
             return *iter_ptr_;
         }
 
-        bool
-        dereference()
+        multi_references_type
+        dereference() const
         {
             #define BOOST_NUMPY_DEF(z, n, data)                                \
+                typename BOOST_PP_CAT(ValueTypeTraits,n)::value_ref_type BOOST_PP_CAT(value,n) =\
                 BOOST_PP_CAT(ValueTypeTraits,n)::dereference(                  \
-                    BOOST_PP_CAT(vtt_,n)                                       \
-                  , BOOST_PP_CAT(value_ptr_,n)                                 \
+                    *BOOST_PP_CAT(vtt_,n)                                      \
                   , iter_ptr_->data_ptr_array_ptr_[n]                          \
                 );
             BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
             #undef BOOST_NUMPY_DEF
-            return true;
+            return multi_references_type(BOOST_PP_ENUM_PARAMS(N, value));
         }
-
-        // Define the value_ptr_# pointers to the array values.
-        #define BOOST_NUMPY_DEF(z, n, data) \
-            typename BOOST_PP_CAT(ValueTypeTraits,n)::value_ptr_type BOOST_PP_CAT(value_ptr_,n);
-        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
-        #undef BOOST_NUMPY_DEF
 
       protected:
         boost::shared_ptr<boost::numpy::detail::iter> iter_ptr_;
@@ -314,10 +318,10 @@ struct multi_iter_iterator<N>
         BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
 
-        // Define object vtt_# of the ValueTypeTraits# class
-        // (using the default constructor).
+        // Define shared_ptr object vtt_# holding a pointer to the
+        // ValueTypeTraits# object.
         #define BOOST_NUMPY_DEF(z, n, data) \
-            BOOST_PP_CAT(ValueTypeTraits,n) BOOST_PP_CAT(vtt_,n);
+            boost::shared_ptr<BOOST_PP_CAT(ValueTypeTraits,n)> BOOST_PP_CAT(vtt_,n);
         BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
     };

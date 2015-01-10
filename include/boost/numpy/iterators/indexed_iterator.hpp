@@ -46,6 +46,9 @@ class indexed_iterator
     typedef detail::iter_iterator< indexed_iterator<ValueTypeTraits>, boost::forward_traversal_tag, ValueTypeTraits>
             base_t;
 
+    typedef typename ValueTypeTraits::value_ref_type
+            value_ref_type;
+
     static
     boost::shared_ptr<boost::numpy::detail::iter>
     construct_iter(detail::iter_iterator_type & iter_base, ndarray & arr)
@@ -80,6 +83,12 @@ class indexed_iterator
     jump_to(std::vector<intptr_t> const & indices)
     {
         base_t::iter_ptr_->jump_to(indices);
+    }
+
+    void
+    get_indices(std::vector<intptr_t> & indices)
+    {
+        base_t::iter_ptr_->get_multi_index_vector(indices);
     }
 
   private:

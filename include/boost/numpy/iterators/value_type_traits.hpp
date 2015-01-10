@@ -46,14 +46,14 @@ struct single_value
     {}
 
     static
-    void
+    value_ref_type
     dereference(
         value_type_traits &
-      , value_ptr_type & value_ptr_ref
       , char * data_ptr
     )
     {
-        value_ptr_ref = reinterpret_cast<value_ptr_type>(data_ptr);
+        value_ref_type value = *reinterpret_cast<value_ptr_type>(data_ptr);
+        return value;
     }
 };
 
@@ -78,10 +78,9 @@ struct single_value<python::object>
     python::object value_obj_;
 
     static
-    void
+    value_ref_type
     dereference(
         value_type_traits & vtt_base
-      , value_ptr_type & value_ptr_ref
       , char * data_ptr
     )
     {
@@ -89,7 +88,7 @@ struct single_value<python::object>
         uintptr_t * ptr = reinterpret_cast<uintptr_t*>(data_ptr);
         python::object obj(python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*ptr)));
         vtt.value_obj_ = obj;
-        value_ptr_ref = &vtt.value_obj_;
+        return vtt.value_obj_;
     }
 };
 

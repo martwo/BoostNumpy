@@ -123,7 +123,7 @@ class iter_iterator
       , arr_access_flags_(arr_access_flags)
     {
         iter_ptr_ = Derived::construct_iter(*this, arr);
-        vtt_ = ValueTypeTraits(arr);
+        vtt_ = boost::shared_ptr<ValueTypeTraits>(new ValueTypeTraits(arr));
     }
 
     // In case a const array is given, the READONLY flag for the array set
@@ -136,18 +136,18 @@ class iter_iterator
       , arr_access_flags_(arr_access_flags | boost::numpy::detail::iter_operand::flags::READONLY::value)
     {
         iter_ptr_ = Derived::construct_iter(*this, const_cast<ndarray &>(arr));
-        vtt_ = ValueTypeTraits(const_cast<ndarray &>(arr));
+        vtt_ = boost::shared_ptr<ValueTypeTraits>(new ValueTypeTraits(const_cast<ndarray &>(arr)));
     }
 
     // Copy constructor.
     iter_iterator(type_t const & other)
       : is_end_point_(other.is_end_point_)
       , arr_access_flags_(other.arr_access_flags_)
-      , vtt_(other.vtt_)
     {
         if(other.iter_ptr_.get()) {
             iter_ptr_ = boost::shared_ptr<boost::numpy::detail::iter>(new boost::numpy::detail::iter(*other.iter_ptr_));
         }
+        vtt_ = boost::shared_ptr<ValueTypeTraits>(new ValueTypeTraits(*other.vtt_));
     }
 
     // Creates an interator that points to the first element.
@@ -223,16 +223,12 @@ class iter_iterator
     }
 
     typename ValueTypeTraits::value_ref_type
-    dereference()
+    dereference() const
     {
-        typename ValueTypeTraits::value_ptr_type value_ptr;
-        ValueTypeTraits::dereference(
-            vtt_
-          , value_ptr
+        return ValueTypeTraits::dereference(
+            *vtt_
           , iter_ptr_->data_ptr_array_ptr_[0]
         );
-
-        return *value_ptr;
     }
 
   protected:
@@ -245,7 +241,7 @@ class iter_iterator
 
     // Define object vtt_ of the ValueTypeTraits class
     // (using the default constructor).
-    ValueTypeTraits vtt_;
+    boost::shared_ptr<ValueTypeTraits> vtt_;
 };
 
 }// namespace detail
