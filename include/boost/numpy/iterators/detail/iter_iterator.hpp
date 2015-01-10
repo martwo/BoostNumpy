@@ -231,6 +231,12 @@ class iter_iterator
         );
     }
 
+    ValueTypeTraits &
+    get_value_type_traits()
+    {
+        return *vtt_;
+    }
+
   protected:
     boost::shared_ptr<boost::numpy::detail::iter> iter_ptr_;
 

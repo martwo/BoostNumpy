@@ -76,6 +76,7 @@ struct single_value<python::object>
 
     // We need a temporay bp::object for holding the value.
     python::object value_obj_;
+    uintptr_t * value_obj_ptr_;
 
     static
     value_ref_type
@@ -85,9 +86,9 @@ struct single_value<python::object>
     )
     {
         single_value<python::object> & vtt = *static_cast<single_value<python::object> *>(&vtt_base);
-        uintptr_t * ptr = reinterpret_cast<uintptr_t*>(data_ptr);
-        python::object obj(python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*ptr)));
-        vtt.value_obj_ = obj;
+
+        vtt.value_obj_ptr_ = reinterpret_cast<uintptr_t*>(data_ptr);
+        vtt.value_obj_ = python::object(python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*vtt.value_obj_ptr_)));
         return vtt.value_obj_;
     }
 };

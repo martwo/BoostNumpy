@@ -67,6 +67,15 @@ class flat_iterator
       : base_t(arr, arr_access_flags)
     {}
 
+    // In case a const array is given, the READONLY flag for the array set
+    // automatically.
+    explicit flat_iterator(
+        ndarray const & arr
+      , boost::numpy::detail::iter_operand_flags_t arr_access_flags = boost::numpy::detail::iter_operand::flags::READONLY::value
+    )
+      : base_t(arr, arr_access_flags)
+    {}
+
     // Copy constructor.
     flat_iterator(type_t const & other)
       : base_t(other)

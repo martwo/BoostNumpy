@@ -296,16 +296,25 @@ struct multi_iter_iterator<N>
         multi_references_type
         dereference() const
         {
-            #define BOOST_NUMPY_DEF(z, n, data)                                \
+            #define BOOST_NUMPY_DEF(z, n, data)                                 \
                 typename BOOST_PP_CAT(ValueTypeTraits,n)::value_ref_type BOOST_PP_CAT(value,n) =\
-                BOOST_PP_CAT(ValueTypeTraits,n)::dereference(                  \
-                    *BOOST_PP_CAT(vtt_,n)                                      \
-                  , iter_ptr_->data_ptr_array_ptr_[n]                          \
+                BOOST_PP_CAT(ValueTypeTraits,n)::dereference(                   \
+                    *BOOST_PP_CAT(vtt_,n)                                       \
+                  , iter_ptr_->data_ptr_array_ptr_[n]                           \
                 );
             BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
             #undef BOOST_NUMPY_DEF
             return multi_references_type(BOOST_PP_ENUM_PARAMS(N, value));
         }
+
+        // Define get_value_type_traits#() method.
+        #define BOOST_NUMPY_DEF(z, n, data)                                     \
+            BOOST_PP_CAT(ValueTypeTraits,n) &                                   \
+            BOOST_PP_CAT(get_value_type_traits,n)() {                           \
+                return *BOOST_PP_CAT(vtt_,n);                                   \
+            }
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
 
       protected:
         boost::shared_ptr<boost::numpy::detail::iter> iter_ptr_;

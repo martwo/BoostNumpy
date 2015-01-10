@@ -74,6 +74,15 @@ class indexed_iterator
       : base_t(arr, arr_access_flags)
     {}
 
+    // In case a const array is given, the READONLY flag for the array set
+    // automatically.
+    explicit indexed_iterator(
+        ndarray const & arr
+      , boost::numpy::detail::iter_operand_flags_t arr_access_flags = boost::numpy::detail::iter_operand::flags::READONLY::value
+    )
+      : base_t(arr, arr_access_flags)
+    {}
+
     // Copy constructor.
     indexed_iterator(type_t const & other)
       : base_t(other)
