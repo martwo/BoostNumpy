@@ -679,9 +679,29 @@ operator=(boost::python::object & rhs)
 /**
  * \brief Checks if the given boost::python::object object is any scalar value
  *     (either a Python scalar or a numpy array scalar (i.e. nd=0).
+ * \internal Calls PyArray_IsAnyScalar.
  */
 bool
 is_any_scalar(python::object const & obj);
+
+//______________________________________________________________________________
+/**
+ * \brief Checks of the given boost::python::object object is either an array
+ *     scalar or an instance of (a sub-class of) ndarray with a dimensionality
+ *     of zero.
+ * \internal Calls PyArray_CheckScalar.
+ */
+bool
+is_array_scalar(python::object const & obj);
+
+//______________________________________________________________________________
+/**
+ * \brief Checks of the given boost::python::object object is an instance of the
+ *     ndarray class (or an instance of a derived subclass of ndarray).
+ * \internal Calls PyArray_Check.
+ */
+bool
+is_ndarray(python::object const & obj);
 
 //______________________________________________________________________________
 /**

@@ -541,6 +541,20 @@ is_any_scalar(python::object const & obj)
 
 //______________________________________________________________________________
 bool
+is_array_scalar(python::object const & obj)
+{
+    return PyArray_CheckScalar(obj.ptr());
+}
+
+//______________________________________________________________________________
+bool
+is_ndarray(python::object const & obj)
+{
+    return PyArray_Check(obj.ptr());
+}
+
+//______________________________________________________________________________
+bool
 copy_into(ndarray & dst, ndarray const & src)
 {
     return (! PyArray_CopyInto(
