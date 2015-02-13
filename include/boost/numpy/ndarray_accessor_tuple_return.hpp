@@ -28,14 +28,13 @@
 
 #include <boost/python.hpp>
 #include <boost/python/default_call_policies.hpp>
-#include <boost/python/with_custodian_and_ward.hpp>
 
 #include <boost/numpy/ndarray.hpp>
 
 namespace boost {
 namespace numpy {
 
-struct ndarray_accessor_tuple_return_impl
+struct ndarray_accessor_tuple_return
   : python::default_call_policies
 {
     template <class ArgumentPackage>
@@ -57,9 +56,6 @@ struct ndarray_accessor_tuple_return_impl
         return result;
     }
 };
-
-typedef python::with_custodian_and_ward_postcall<0, 1, ndarray_accessor_tuple_return_impl>
-        ndarray_accessor_tuple_return;
 
 }// namespace numpy
 }// namespace boost

@@ -25,30 +25,27 @@
 #define BOOST_NUMPY_NDARRAY_ACCESSOR_RETURN_HPP_INCLUDED
 
 #include <boost/python/default_call_policies.hpp>
-#include <boost/python/with_custodian_and_ward.hpp>
 
 #include <boost/numpy/ndarray.hpp>
 
 namespace boost {
 namespace numpy {
 
-struct class_instance_as_ndarray_data_owner
+struct ndarray_accessor_return
   : python::default_call_policies
 {
     template <class ArgumentPackage>
     static PyObject* postcall(ArgumentPackage const& args_, PyObject* result)
     {
-        ndarray arr = ndarray(python::detail::borrowed_reference(result));
         PyObject* py_cls_instance = python::detail::get_prev<1>::execute(args_, result);
         python::object cls_instance = python::object(python::detail::borrowed_reference(py_cls_instance));
+
+        ndarray arr = ndarray(python::detail::borrowed_reference(result));
         arr.set_base(cls_instance);
 
         return result;
     }
 };
-
-typedef python::with_custodian_and_ward_postcall<0, 1, class_instance_as_ndarray_data_owner>
-        ndarray_accessor_return;
 
 }// namespace numpy
 }// namespace boost
