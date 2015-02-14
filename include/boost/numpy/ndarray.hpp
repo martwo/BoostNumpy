@@ -123,6 +123,14 @@ class ndarray : public python::object
 
     //__________________________________________________________________________
     /**
+     * @brief Clears (disables) the given flags of this ndarray object.
+     * @internal It calls the PyArray_CLEARFLAGS function.
+     */
+    void
+    clear_flags(flags const flags);
+
+    //__________________________________________________________________________
+    /**
      * @brief Returns the object that owns the array's data, or None if the
      *        array owns its own data.
      */
@@ -385,39 +393,48 @@ namespace detail {
 //______________________________________________________________________________
 ndarray
 from_data_impl(
-    void *                           data,
-    dtype const &                    dt,
-    std::vector<Py_intptr_t> const & shape,
-    std::vector<Py_intptr_t> const & strides,
-    python::object const *           owner,
-    bool                             writeable);
+    void *                           data
+  , dtype const &                    dt
+  , std::vector<Py_intptr_t> const & shape
+  , std::vector<Py_intptr_t> const & strides
+  , python::object const *           owner
+  , bool                             writeable
+  , bool                             set_owndata_flag
+);
 
 //______________________________________________________________________________
 template <typename Container>
 ndarray
 from_data_impl(
-    void *                 data,
-    dtype const &          dt,
-    Container              shape,
-    Container              strides,
-    python::object const * owner,
-    bool                   writeable,
-    typename boost::enable_if< boost::is_integral<typename Container::value_type> >::type* enabled = NULL)
+    void *                 data
+  , dtype const &          dt
+  , Container const &      shape
+  , Container const &      strides
+  , python::object const * owner
+  , bool                   writeable
+  , bool                   set_owndata_flag
+  , typename boost::enable_if< boost::mpl::and_< boost::mpl::not_< boost::is_same<typename Container::value_type, Py_intptr_t> >
+                                               , boost::is_integral<typename Container::value_type>
+                                               >
+                             >::type* enabled = NULL
+)
 {
     std::vector<Py_intptr_t> shape_(shape.begin(), shape.end());
     std::vector<Py_intptr_t> strides_(strides.begin(), strides.end());
-    return from_data_impl(data, dt, shape_, strides_, owner, writeable);
+    return from_data_impl(data, dt, shape_, strides_, owner, writeable, set_owndata_flag);
 }
 
 //______________________________________________________________________________
 ndarray
 from_data_impl(
-    void *                 data,
-    dtype const &          dt,
-    python::object const & shape,
-    python::object const & strides,
-    python::object const * owner,
-    bool                   writeable);
+    void *                 data
+  , dtype const &          dt
+  , python::object const & shape
+  , python::object const & strides
+  , python::object const * owner
+  , bool                   writeable
+  , bool                   set_owndata_flag
+);
 
 }/*detail*/
 //==============================================================================
@@ -440,18 +457,25 @@ from_data_impl(
  *                     the array goes out of scope. If set to python::object(),
  *                     the array will own the data and the array's base object
  *                     will be set to NULL.
+ *  @param[in] set_owndata_flag Sometimes it is necessary to set the owner
+ *                     later. If set_owndata_flag is set to false and no owner
+ *                     is specified, the created array will not own the data,
+ *                     and the data will not be deallocated when the ndarray
+ *                     is destroyed.
  */
 template <typename Container>
 inline
 ndarray
 from_data(
-    void *                 data,
-    dtype const &          dt,
-    Container              shape,
-    Container              strides,
-    python::object const * owner)
+    void *                 data
+  , dtype const &          dt
+  , Container const &      shape
+  , Container const &      strides
+  , python::object const * owner = NULL
+  , bool                   set_owndata_flag = true
+)
 {
-    return detail::from_data_impl(data, dt, shape, strides, owner, true);
+    return detail::from_data_impl(data, dt, shape, strides, owner, true, set_owndata_flag);
 }
 
 //______________________________________________________________________________
@@ -472,18 +496,25 @@ from_data(
  *                     the array goes out of scope. If set to python::object(),
  *                     the array will own the data and the array's base object
  *                     will be set to NULL.
+ *  @param[in] set_owndata_flag Sometimes it is necessary to set the owner
+ *                     later. If set_owndata_flag is set to false and no owner
+ *                     is specified, the created array will not own the data,
+ *                     and the data will not be deallocated when the ndarray
+ *                     is destroyed.
  */
 template <typename Container>
 inline
 ndarray
 from_data(
-    void const *           data,
-    dtype const &          dt,
-    Container              shape,
-    Container              strides,
-    python::object const * owner)
+    void const *           data
+  , dtype const &          dt
+  , Container const &      shape
+  , Container const &      strides
+  , python::object const * owner = NULL
+  , bool                   set_owndata_flag = true
+)
 {
-    return detail::from_data_impl(const_cast<void*>(data), dt, shape, strides, owner, false);
+    return detail::from_data_impl(const_cast<void*>(data), dt, shape, strides, owner, false, set_owndata_flag);
 }
 
 //______________________________________________________________________________

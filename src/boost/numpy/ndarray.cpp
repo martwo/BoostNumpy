@@ -124,12 +124,14 @@ incref_dtype(dtype const & dt)
 //______________________________________________________________________________
 ndarray
 from_data_impl(
-    void *                           data,
-    dtype const &                    dt,
-    std::vector<Py_intptr_t> const & shape,
-    std::vector<Py_intptr_t> const & strides,
-    python::object const *           owner,
-    bool                             writeable)
+    void *                           data
+  , dtype const &                    dt
+  , std::vector<Py_intptr_t> const & shape
+  , std::vector<Py_intptr_t> const & strides
+  , python::object const *           owner
+  , bool                             writeable
+  , bool                             set_owndata_flag
+)
 {
     if(shape.size() != strides.size())
     {
@@ -149,7 +151,7 @@ from_data_impl(
         flags = flags | ndarray::F_CONTIGUOUS;
     if(is_aligned(strides, itemsize))
         flags = flags | ndarray::ALIGNED;
-    if((!owner) || (owner && (*owner) == python::object()))
+    if( set_owndata_flag && ( (!owner) || (owner && (*owner) == python::object()) ) )
         flags = flags | ndarray::OWNDATA;
 
     ndarray arr(python::detail::new_reference(
@@ -171,12 +173,14 @@ from_data_impl(
 //______________________________________________________________________________
 ndarray
 from_data_impl(
-    void *                 data,
-    dtype const &          dt,
-    python::object const & shape,
-    python::object const & strides,
-    python::object const * owner,
-    bool                   writeable)
+    void *                 data
+  , dtype const &          dt
+  , python::object const & shape
+  , python::object const & strides
+  , python::object const * owner
+  , bool                   writeable
+  , bool                   set_owndata_flag
+)
 {
     std::vector<Py_intptr_t> shape_(python::len(shape));
     std::vector<Py_intptr_t> strides_(python::len(strides));
@@ -191,7 +195,7 @@ from_data_impl(
         shape_[i]   = python::extract<Py_intptr_t>(shape[i]);
         strides_[i] = python::extract<Py_intptr_t>(strides[i]);
     }
-    return from_data_impl(data, dt, shape_, strides_, owner, writeable);
+    return from_data_impl(data, dt, shape_, strides_, owner, writeable, set_owndata_flag);
 }
 
 }/*namespace detail*/
@@ -221,6 +225,21 @@ copy(std::string order) const
 {
     return ndarray(python::detail::new_reference(
         PyObject_CallMethod(this->ptr(), const_cast<char*>("copy"), const_cast<char*>("(s)"), const_cast<char*>(order.c_str()))));
+}
+
+//______________________________________________________________________________
+void
+ndarray::
+clear_flags(flags const flags)
+{
+#if NPY_FEATURE_VERSION >= 0x00000007
+    PyArray_CLEARFLAGS((PyArrayObject*)this->ptr(), (int)flags);
+#else
+    // There is no PyArray_CLEARFLAGS function in numpy prior to version 1.7.
+    // But there we still have full access to the members of the PyArrayObject
+    // struct, that we will make use of.
+    reinterpret_cast<PyArrayObject*>(this->ptr())->flags &= ~(int)flags;
+#endif
 }
 
 //______________________________________________________________________________
