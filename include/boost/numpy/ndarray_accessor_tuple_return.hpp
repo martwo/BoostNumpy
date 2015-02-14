@@ -40,7 +40,6 @@ struct ndarray_accessor_tuple_return
     template <class ArgumentPackage>
     static PyObject* postcall(ArgumentPackage const& args_, PyObject* result)
     {
-
         PyObject* py_cls_instance = python::detail::get_prev<1>::execute(args_, result);
         python::object cls_instance = python::object(python::detail::borrowed_reference(py_cls_instance));
 
@@ -50,6 +49,7 @@ struct ndarray_accessor_tuple_return
         {
             python::object arr_obj = python::extract<python::object>(tup[i]);
             ndarray arr = ndarray(python::detail::borrowed_reference(arr_obj.ptr()));
+            arr.clear_flags(ndarray::OWNDATA);
             arr.set_base(cls_instance);
         }
 

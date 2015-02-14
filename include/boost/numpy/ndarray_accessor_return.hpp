@@ -41,6 +41,7 @@ struct ndarray_accessor_return
         python::object cls_instance = python::object(python::detail::borrowed_reference(py_cls_instance));
 
         ndarray arr = ndarray(python::detail::borrowed_reference(result));
+        arr.clear_flags(ndarray::OWNDATA);
         arr.set_base(cls_instance);
 
         return result;
