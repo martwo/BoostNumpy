@@ -237,8 +237,23 @@ clear_flags(flags const flags)
 #else
     // There is no PyArray_CLEARFLAGS function in numpy prior to version 1.7.
     // But there we still have full access to the members of the PyArrayObject
-    // struct, that we will make use of.
+    // struct. So we will make use of that.
     reinterpret_cast<PyArrayObject*>(this->ptr())->flags &= ~(int)flags;
+#endif
+}
+
+//______________________________________________________________________________
+void
+ndarray::
+enable_flags(flags const flags)
+{
+#if NPY_FEATURE_VERSION >= 0x00000007
+    PyArray_ENABLEFLAGS((PyArrayObject*)this->ptr(), (int)flags);
+#else
+    // There is no PyArray_ENABLEFLAGS function in numpy prior to version 1.7.
+    // But there we still have full access to the members of the PyArrayObject
+    // struct. So we will make use of that.
+    reinterpret_cast<PyArrayObject*>(this->ptr())->flags |= (int)flags;
 #endif
 }
 

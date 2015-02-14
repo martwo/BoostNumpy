@@ -131,6 +131,14 @@ class ndarray : public python::object
 
     //__________________________________________________________________________
     /**
+     * @brief Enables the given flags of this ndarray object.
+     * @internal It calls the PyArray_ENABLEFLAGS function.
+     */
+    void
+    enable_flags(flags const flags);
+
+    //__________________________________________________________________________
+    /**
      * @brief Returns the object that owns the array's data, or None if the
      *        array owns its own data.
      */
