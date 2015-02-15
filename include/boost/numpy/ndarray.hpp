@@ -116,7 +116,12 @@ class ndarray : public python::object
     //__________________________________________________________________________
     /**
      * @brief Makes a deep copy of the array. The result
-     *        array will have the given order ("C", "F", "A", "K").
+     *     array will have the given order ("C", "F", "A", "K").
+     *
+     * @note In cases where the ndarray is an object array, the objects are
+     *     only copied when they are atomic Python types. Otherwise the
+     *     objects are not copied.
+     *
      * @internal It calls the Python method "copy" of numpy's ndarray class.
      */
     ndarray
