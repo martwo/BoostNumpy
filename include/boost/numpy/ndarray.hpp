@@ -117,6 +117,7 @@ class ndarray : public python::object
     /**
      * @brief Copies the array (deep for all non-object fields). The result
      *        array will have the given order ("C", "F", "A").
+     * @internal It calls the Python method "copy" of numpy's ndarray class.
      */
     ndarray
     copy(std::string order="C") const;
