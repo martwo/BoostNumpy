@@ -111,11 +111,11 @@ class ndarray : public python::object
      * @brief Flattened copy of the array.
      */
     ndarray
-    flatten(std::string order="C") const;
+    flatten(std::string const & order="C") const;
 
     //__________________________________________________________________________
     /**
-     * @brief Makes a deep copy of the array. The result
+     * @brief Makes a copy of the array. The result
      *     array will have the given order ("C", "F", "A", "K").
      *
      * @note In cases where the ndarray is an object array, the objects are
@@ -125,7 +125,20 @@ class ndarray : public python::object
      * @internal It calls the Python method "copy" of numpy's ndarray class.
      */
     ndarray
-    copy(std::string order="C") const;
+    copy(std::string const & order="C") const;
+
+    //__________________________________________________________________________
+    /**
+     * @brief Makes a deep copy of the array. The result
+     *     array will have the given order ("C", "F", "A", "K").
+     *     If the array is an object array, the objects are also copied using
+     *     the copy.deepcopy function.
+     *
+     * @internal It calls copy() first and then copies each element if the
+     *     array is an object array.
+     */
+    ndarray
+    deepcopy(std::string const & order="C") const;
 
     //__________________________________________________________________________
     /**
@@ -269,6 +282,15 @@ class ndarray : public python::object
      */
     char *
     get_data() const;
+
+    //__________________________________________________________________________
+    /**
+     * @brief Checks if the array is an object array, i.e. holding pointers to
+     *     (arbitrary) Python objects. Returns true if it as an object array,
+     *     and false otherwise.
+     */
+    bool
+    is_object_array() const;
 
     //__________________________________________________________________________
     /**

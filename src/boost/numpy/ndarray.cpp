@@ -31,6 +31,8 @@
 
 #include <boost/numpy/numpy_c_api.hpp>
 #include <boost/numpy/object_manager_traits_impl.hpp>
+#include <boost/numpy/iterators/flat_iterator.hpp>
+#include <boost/numpy/iterators/value_type_traits.hpp>
 #include <boost/numpy/ndarray.hpp>
 
 BOOST_NUMPY_OBJECT_MANAGER_TRAITS_IMPL(boost::numpy::ndarray, PyArray_Type);
@@ -212,7 +214,7 @@ view(dtype const & dt) const
 //______________________________________________________________________________
 ndarray
 ndarray::
-flatten(std::string order) const
+flatten(std::string const & order) const
 {
     return ndarray(python::detail::new_reference(
         PyObject_CallMethod(this->ptr(), const_cast<char*>("flatten"), const_cast<char*>("(s)"), const_cast<char*>(order.c_str()))));
@@ -221,10 +223,44 @@ flatten(std::string order) const
 //______________________________________________________________________________
 ndarray
 ndarray::
-copy(std::string order) const
+copy(std::string const & order) const
 {
     return ndarray(python::detail::new_reference(
         PyObject_CallMethod(this->ptr(), const_cast<char*>("copy"), const_cast<char*>("(s)"), const_cast<char*>(order.c_str()))));
+}
+
+//______________________________________________________________________________
+ndarray
+ndarray::
+deepcopy(std::string const & order) const
+{
+    ndarray arr = this->copy(order);
+
+    if(arr.is_object_array())
+    {
+        python::object copy_module = python::import("copy");
+        python::object deepcopy_fct = copy_module.attr("deepcopy");
+
+        // The ndarray is an object array. So we need to copy each object
+        // individually.
+        typedef iterators::flat_iterator< iterators::single_value<uintptr_t> >
+                iter_t;
+        iter_t iter(arr, detail::iter_operand::flags::READWRITE::value);
+        while(! iter.is_end())
+        {
+            iterators::single_value<uintptr_t>::value_ref_type obj_ptr_value_ref = *iter;
+
+            python::object obj(python::detail::borrowed_reference(reinterpret_cast<PyObject*>(obj_ptr_value_ref)));
+            python::object obj_copy = deepcopy_fct(obj);
+            python::xdecref<PyObject>(obj.ptr());
+            python::incref<PyObject>(obj_copy.ptr());
+            obj_ptr_value_ref = reinterpret_cast<uintptr_t>(obj_copy.ptr());
+
+            ++iter;
+        }
+    }
+
+    return arr;
 }
 
 //______________________________________________________________________________
@@ -340,6 +376,14 @@ ndarray::
 get_data() const
 {
     return PyArray_BYTES((PyArrayObject*)this->ptr());
+}
+
+//______________________________________________________________________________
+bool
+ndarray::
+is_object_array() const
+{
+    return dtype::equivalent(get_dtype(), dtype::get_builtin<boost::python::object>());
 }
 
 //______________________________________________________________________________
