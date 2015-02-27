@@ -122,6 +122,12 @@ class flat_iterator
         base_t::iter_ptr_->jump_to_iter_index(iteridx);
     }
 
+    void
+    decrement()
+    {
+        advance(-1);
+    }
+
   private:
     friend class boost::iterator_core_access;
 };
