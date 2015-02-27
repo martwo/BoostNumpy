@@ -140,6 +140,12 @@ class ndarray : public python::object
     ndarray
     deepcopy(std::string const & order="C") const;
 
+    /**
+     * @brief Checks if the given flags are set for this ndarray.
+     */
+    bool
+    check_flags(flags const flags) const;
+
     //__________________________________________________________________________
     /**
      * @brief Clears (disables) the given flags of this ndarray object.
@@ -674,6 +680,16 @@ as_vector() const
             "The given type is not equivalent to the array data type!");
         python::throw_error_already_set();
     }
+
+    // Check if the ndarray is contigious in memory.
+    if(! (check_flags(C_CONTIGUOUS) || check_flags(F_CONTIGUOUS)))
+    {
+        PyErr_SetString(PyExc_AssertionError,
+            "The ndarray must be stored as a C or Fortran contiguous array in "
+            "memory.");
+        python::throw_error_already_set();
+    }
+
     const intptr_t N = get_size();
 
     std::vector<T> vec(

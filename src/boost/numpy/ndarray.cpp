@@ -264,6 +264,14 @@ deepcopy(std::string const & order) const
 }
 
 //______________________________________________________________________________
+bool
+ndarray::
+check_flags(flags const flags) const
+{
+    return PyArray_CHKFLAGS(reinterpret_cast<PyArrayObject*>(const_cast<PyObject*>(this->ptr())), (int)flags);
+}
+
+//______________________________________________________________________________
 void
 ndarray::
 clear_flags(flags const flags)
