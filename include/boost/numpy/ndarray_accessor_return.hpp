@@ -40,9 +40,14 @@ struct ndarray_accessor_return
         PyObject* py_cls_instance = python::detail::get_prev<1>::execute(args_, result);
         python::object cls_instance = python::object(python::detail::borrowed_reference(py_cls_instance));
 
-        ndarray arr = ndarray(python::detail::borrowed_reference(result));
-        arr.clear_flags(ndarray::OWNDATA);
-        arr.set_base(cls_instance);
+        // Check if result is actually a ndarray object. If not, do nothing.
+        python::object const result_obj((python::detail::borrowed_reference)result);
+        if(is_ndarray(result_obj))
+        {
+            ndarray arr = ndarray(python::detail::borrowed_reference(result));
+            arr.clear_flags(ndarray::OWNDATA);
+            arr.set_base(cls_instance);
+        }
 
         return result;
     }
