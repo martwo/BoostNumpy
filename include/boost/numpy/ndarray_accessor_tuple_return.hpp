@@ -47,10 +47,13 @@ struct ndarray_accessor_tuple_return
         size_t const tuple_size = python::len(tup);
         for(size_t i=0; i<tuple_size; ++i)
         {
-            python::object arr_obj = python::extract<python::object>(tup[i]);
-            ndarray arr = ndarray(python::detail::borrowed_reference(arr_obj.ptr()));
-            arr.clear_flags(ndarray::OWNDATA);
-            arr.set_base(cls_instance);
+            python::object obj = python::extract<python::object>(tup[i]);
+            if(is_ndarray(obj))
+            {
+                ndarray arr = ndarray(python::detail::borrowed_reference(obj.ptr()));
+                arr.clear_flags(ndarray::OWNDATA);
+                arr.set_base(cls_instance);
+            }
         }
 
         return result;
