@@ -102,6 +102,13 @@ struct single_value<python::object>
     )
     {
         uintptr_t * value_obj_ptr = reinterpret_cast<uintptr_t*>(data_ptr);
+        if(*value_obj_ptr)
+        {
+            // We need to decref before we lose the pointer value, due to
+            // setting the new value.
+            PyObject* ptr = reinterpret_cast<PyObject*>(*value_obj_ptr);
+            python::decref<PyObject>(ptr);
+        }
         *value_obj_ptr = reinterpret_cast<uintptr_t>(python::incref<PyObject>(obj.ptr()));
     }
 
@@ -115,7 +122,12 @@ struct single_value<python::object>
         single_value<python::object> & vtt = *static_cast<single_value<python::object> *>(&vtt_base);
 
         vtt.value_obj_ptr_ = reinterpret_cast<uintptr_t*>(data_ptr);
-        vtt.value_obj_ = python::object(python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*vtt.value_obj_ptr_)));
+        if(*(vtt.value_obj_ptr_) == 0) {
+            vtt.value_obj_ = python::object();
+        }
+        else {
+            vtt.value_obj_ = python::object(python::detail::borrowed_reference(reinterpret_cast<PyObject*>(*vtt.value_obj_ptr_)));
+        }
         return vtt.value_obj_;
     }
 };
