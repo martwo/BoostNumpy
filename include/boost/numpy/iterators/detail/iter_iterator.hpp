@@ -112,7 +112,9 @@ class iter_iterator
     iter_iterator()
       : is_end_point_(true)
       , arr_access_flags_(boost::numpy::detail::iter_operand::flags::READONLY::value)
-    {}
+    {
+        vtt_ = boost::shared_ptr<ValueTypeTraits>(new ValueTypeTraits());
+    }
 
     // Explicit constructor.
     explicit iter_iterator(
@@ -144,10 +146,34 @@ class iter_iterator
       : is_end_point_(other.is_end_point_)
       , arr_access_flags_(other.arr_access_flags_)
     {
+        //std::cout << "detail::iter_iterator: Copy constructor."<<std::endl;
         if(other.iter_ptr_.get()) {
             iter_ptr_ = boost::shared_ptr<boost::numpy::detail::iter>(new boost::numpy::detail::iter(*other.iter_ptr_));
         }
+        assert(other.vtt_.get());
         vtt_ = boost::shared_ptr<ValueTypeTraits>(new ValueTypeTraits(*other.vtt_));
+    }
+
+    /**
+     * \brief The assignment operator. It will deallocate the current iterator
+     *     object and will make a copy of the right-hand-side iterator object.
+     */
+    type_t& operator=(type_t const & rhs)
+    {
+        //std::cout << "detail::iter_iterator: Assignment operator BEGIN."<<std::endl;
+        if(rhs.iter_ptr_.get()) {
+            iter_ptr_ = boost::shared_ptr<boost::numpy::detail::iter>(new boost::numpy::detail::iter(*rhs.iter_ptr_));
+        }
+        else
+        {
+            iter_ptr_ = boost::shared_ptr<boost::numpy::detail::iter>();
+        }
+        is_end_point_ = rhs.is_end_point_;
+        arr_access_flags_ = rhs.arr_access_flags_;
+        assert(rhs.vtt_.get());
+        vtt_ = boost::shared_ptr<ValueTypeTraits>(new ValueTypeTraits(*rhs.vtt_));
+        //std::cout << "detail::iter_iterator: Assignment operator END."<<std::endl;
+        return *this;
     }
 
     // Creates an interator that points to the first element.
@@ -225,28 +251,43 @@ class iter_iterator
     typename ValueTypeTraits::value_ref_type
     dereference() const
     {
+        assert(vtt_.get());
+        assert(iter_ptr_.get());
         return ValueTypeTraits::dereference(
             *vtt_
           , iter_ptr_->data_ptr_array_ptr_[0]
         );
     }
 
+    void
+    set_value(typename ValueTypeTraits::value_ref_type v) const
+    {
+        assert(vtt_.get());
+        ValueTypeTraits::set_value(
+            *vtt_
+          , iter_ptr_->data_ptr_array_ptr_[0]
+          , v
+        );
+    }
+
     ValueTypeTraits &
     get_value_type_traits()
     {
+        assert(vtt_.get());
         return *vtt_;
     }
 
   protected:
     boost::shared_ptr<boost::numpy::detail::iter> iter_ptr_;
 
+    // Stores the information if the iterator points to the element after the
+    // last element.
     bool is_end_point_;
 
     // Stores if the array is readonly, writeonly or readwrite'able.
     boost::numpy::detail::iter_operand_flags_t arr_access_flags_;
 
-    // Define object vtt_ of the ValueTypeTraits class
-    // (using the default constructor).
+    // Define object vtt_ of the ValueTypeTraits class.
     boost::shared_ptr<ValueTypeTraits> vtt_;
 };
 

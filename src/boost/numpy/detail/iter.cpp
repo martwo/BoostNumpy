@@ -41,6 +41,7 @@ namespace detail {
 iter::
 ~iter()
 {
+    assert(npyiter_);
     if(NpyIter_Deallocate(npyiter_) != NPY_SUCCEED)
     {
         PyErr_SetString(PyExc_RuntimeError,
@@ -53,13 +54,14 @@ iter::
 iter::
 iter(iter const & it)
 {
+    //std::cout << "detail::iter: Copy constructor BEGIN."<<std::endl;
     npyiter_ = NpyIter_Copy(it.npyiter_);
     if(npyiter_ == NULL)
     {
         python::throw_error_already_set();
     }
-
     gather_iteration_pointers();
+    //std::cout << "detail::iter: Copy constructor END."<<std::endl;
 }
 
 //______________________________________________________________________________
@@ -67,6 +69,7 @@ iter&
 iter::
 operator=(iter const & rhs)
 {
+    //std::cout << "detail::iter: Assignemnt operator."<<std::endl;
     if(NpyIter_Deallocate(npyiter_) != NPY_SUCCEED)
     {
         PyErr_SetString(PyExc_RuntimeError,
@@ -79,6 +82,7 @@ operator=(iter const & rhs)
     {
         python::throw_error_already_set();
     }
+    gather_iteration_pointers();
 
     return *this;
 }

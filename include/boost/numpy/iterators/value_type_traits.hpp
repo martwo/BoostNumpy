@@ -48,6 +48,17 @@ struct single_value
     {}
 
     static
+    void
+    set_value(
+        value_type_traits &
+      , char * data_ptr
+      , value_ref_type v)
+    {
+        value_ref_type value = *reinterpret_cast<value_ptr_type>(data_ptr);
+        value = v;
+    }
+
+    static
     value_ref_type
     dereference(
         value_type_traits &
@@ -81,6 +92,18 @@ struct single_value<python::object>
     // We need a temporay bp::object for holding the value.
     python::object value_obj_;
     uintptr_t * value_obj_ptr_;
+
+    static
+    void
+    set_value(
+        value_type_traits &
+      , char * data_ptr
+      , value_ref_type obj
+    )
+    {
+        uintptr_t * value_obj_ptr = reinterpret_cast<uintptr_t*>(data_ptr);
+        *value_obj_ptr = reinterpret_cast<uintptr_t>(python::incref<PyObject>(obj.ptr()));
+    }
 
     static
     value_ref_type
