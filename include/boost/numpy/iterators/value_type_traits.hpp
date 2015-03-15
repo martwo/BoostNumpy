@@ -38,6 +38,9 @@ struct single_value
     typedef value_type &
             value_ref_type;
 
+    typedef value_type const &
+            value_cref_type;
+
     typedef value_type *
             value_ptr_type;
 
@@ -52,7 +55,7 @@ struct single_value
     set_value(
         value_type_traits &
       , char * data_ptr
-      , value_ref_type v)
+      , value_cref_type v)
     {
         value_ref_type value = *reinterpret_cast<value_ptr_type>(data_ptr);
         value = v;
@@ -80,6 +83,9 @@ struct single_value<python::object>
     typedef value_type &
             value_ref_type;
 
+    typedef value_type const &
+            value_cref_type;
+
     typedef value_type *
             value_ptr_type;
 
@@ -98,7 +104,7 @@ struct single_value<python::object>
     set_value(
         value_type_traits &
       , char * data_ptr
-      , value_ref_type obj
+      , value_cref_type obj
     )
     {
         uintptr_t * value_obj_ptr = reinterpret_cast<uintptr_t*>(data_ptr);

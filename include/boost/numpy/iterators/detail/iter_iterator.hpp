@@ -260,7 +260,7 @@ class iter_iterator
     }
 
     void
-    set_value(typename ValueTypeTraits::value_ref_type v) const
+    set_value(typename ValueTypeTraits::value_cref_type v) const
     {
         assert(vtt_.get());
         ValueTypeTraits::set_value(
