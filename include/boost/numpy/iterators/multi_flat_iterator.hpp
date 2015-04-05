@@ -73,6 +73,13 @@ struct multi_flat_iterator<N>
         typedef typename base_t::difference_type
                 difference_type;
 
+        // Define typedefs value_type_# for each operand.
+        #define BOOST_NUMPY_DEF(z, n, data) \
+            typedef typename BOOST_PP_CAT(ValueTypeTraits,n)::value_type \
+                    BOOST_PP_CAT(value_type_,n);
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+
         // Define typedefs value_ref_type_# for each operand.
         #define BOOST_NUMPY_DEF(z, n, data) \
             typedef typename BOOST_PP_CAT(ValueTypeTraits,n)::value_ref_type \

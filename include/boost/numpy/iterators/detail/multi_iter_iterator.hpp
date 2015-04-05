@@ -316,6 +316,16 @@ struct multi_iter_iterator<N>
         BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
         #undef BOOST_NUMPY_DEF
 
+        // Define set_value_#(ValueTypeTraits#::value_cref_type value) method.
+        #define BOOST_NUMPY_DEF(z, n, data)                                     \
+            void                                                                \
+            BOOST_PP_CAT(set_value_,n)(typename BOOST_PP_CAT(ValueTypeTraits,n)::value_cref_type value)\
+            {                                                                   \
+                BOOST_PP_CAT(ValueTypeTraits,n)::set_value(*BOOST_PP_CAT(vtt_,n), iter_ptr_->get_data(n), value);\
+            }
+        BOOST_PP_REPEAT(N, BOOST_NUMPY_DEF, ~)
+        #undef BOOST_NUMPY_DEF
+
       protected:
         boost::shared_ptr<boost::numpy::detail::iter> iter_ptr_;
 
