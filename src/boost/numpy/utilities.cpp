@@ -77,5 +77,17 @@ equal(ndarray const & x1, ndarray const & x2, ndarray & out)
     np.attr("equal")(x1, x2, out);
 }
 
+ndarray
+empty_like(ndarray const & a)
+{
+    return empty(a.get_nd(), a.get_shape(), a.get_dtype());
+}
+
+ndarray
+empty_like(ndarray const & a, dtype const & dt)
+{
+    return empty(a.get_nd(), a.get_shape(), dt);
+}
+
 }// namespace numpy
 }// namespace boost

@@ -16,6 +16,7 @@
 #ifndef BOOST_NUMPY_UTILITIES_HPP_INCLUDED
 #define BOOST_NUMPY_UTILITIES_HPP_INCLUDED
 
+#include <boost/numpy/dtype.hpp>
 #include <boost/numpy/ndarray.hpp>
 
 namespace boost {
@@ -58,6 +59,19 @@ equal(ndarray const & x1, ndarray const & x2);
 void
 equal(ndarray const & x1, ndarray const & x2, ndarray & out);
 
+/**
+ * @brief Creates an empty ndarray of the same shape and data type as the given
+ *     ndarray.
+ */
+ndarray
+empty_like(ndarray const & a);
+
+/**
+ * @brief Creates an empty ndarray of the same shape as the given ndarray but
+ *    with the given data type.
+ */
+ndarray
+empty_like(ndarray const & a, dtype const & dt);
 
 }// namespace numpy
 }// namespace boost
