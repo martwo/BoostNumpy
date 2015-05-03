@@ -42,6 +42,9 @@ class flat_iterator
     typedef typename base_t::difference_type
             difference_type;
 
+    typedef typename ValueTypeTraits::value_ref_type
+            value_ref_type;
+
     static
     boost::shared_ptr<boost::numpy::detail::iter>
     construct_iter(detail::iter_iterator_type & iter_base, ndarray & arr)
