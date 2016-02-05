@@ -81,6 +81,9 @@ execute the ``configure`` script within the BoostNumpy source root directory::
 The location of the final installation can be specified via the ``--prefix``
 option. If this option is not specified, it will be installed inside the ./build
 directory.
+By default the g++ C++ compiler is chosen for compiling BoostNumpy. The compiler
+can be selected via the --c-compiler and --cxx-compiler option.
+Type ``./configure --help`` for a list of possible options.
 
 After success, change to the build directory::
 

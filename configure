@@ -7,14 +7,25 @@ parser = OptionParser()
 parser.add_option("", "--prefix", type="string", dest="prefix", default=".",
     help="The path where the software should get installed to. "
          "By default it installs into the build directory.", metavar="PATH")
-parser.add_option("", "--build_type", type="string", dest="build_type", default="Release",
-    help="The cmake build type. Possible values are: None, Debug, Release")
+parser.add_option("", "--build-type", type="string", dest="build_type", default="Release", metavar="STRING",
+    help="The cmake build type. Possible values are: \"None\", \"Debug\", \"Release\". "
+         "Default is \"Release\".")
+parser.add_option("", "--c-compiler", type="string", dest="c_compiler", default="gcc", metavar="STRING",
+    help="The C compiler to use. The value of this option is used to call ``which <C-COMPILER>`` "
+         "to determine the location of the C compiler. Try \"gcc\" or \"clang\". "
+         "Default is \"gcc\".")
+parser.add_option("", "--cxx-compiler", type="string", dest="cxx_compiler", default="g++", metavar="STRING",
+    help="The C++ compiler to use. The value of this option is used to call ``which <CXX-COMPILER>`` "
+         "to determine the location of the C++ compiler. Try \"g++\" or \"clang++\". "
+         "Default is \"g++\".")
 (options, args) = parser.parse_args()
 
 print("Configuring boost_numpy ...")
 print("    prefix=%s"%(options.prefix))
+print("    c-compiler=%s"%(options.c_compiler))
+print("    cxx-compiler=%s"%(options.cxx_compiler))
 
 system("rm -rf build")
 system("mkdir -p build")
-#system("cd build && /usr/bin/env cmake -DCMAKE_BUILD_TYPE=\"%s\" -DCMAKE_INSTALL_PREFIX=\"%s\" -DCMAKE_CXX_COMPILER=`which clang++` -DCMAKE_C_COMPILER=`which clang` .."%(options.build_type, options.prefix))
-system("cd build && /usr/bin/env cmake -DCMAKE_BUILD_TYPE=\"%s\" -DCMAKE_INSTALL_PREFIX=\"%s\" -DCMAKE_CXX_COMPILER=`which g++` -DCMAKE_C_COMPILER=`which gcc` .."%(options.build_type, options.prefix))
+system("cd build && /usr/bin/env cmake -DCMAKE_BUILD_TYPE=\"%s\" -DCMAKE_INSTALL_PREFIX=\"%s\" -DCMAKE_CXX_COMPILER=`which %s` -DCMAKE_C_COMPILER=`which %s` .."%(options.build_type, options.prefix, options.cxx_compiler, options.c_compiler))
+
