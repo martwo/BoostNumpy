@@ -17,6 +17,7 @@
  *        http://www.boost.org/LICENSE_1_0.txt).
  */
 #include <vector>
+#include <Python.h>
 
 #include <boost/python.hpp>
 #include <boost/shared_ptr.hpp>
