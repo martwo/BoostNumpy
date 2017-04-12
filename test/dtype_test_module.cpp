@@ -60,7 +60,7 @@ BOOST_PYTHON_MODULE(dtype_test_module)
     bp::def("accept_int32",  &test::accept<int32_t>);
     bp::def("accept_uint32", &test::accept<uint32_t>);
     bp::def("accept_int64",  &test::accept<int64_t>);
-    bp::def("accept_uint64", &test::accept<uint64_t>);
+    bp::def("accept_uint64", &test::accept<npy_uint64>);
 
     // integers, by C name according to NumPy
     bp::def("accept_bool_",  &test::accept<bool>);
