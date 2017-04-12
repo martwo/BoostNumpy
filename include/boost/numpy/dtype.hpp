@@ -209,9 +209,9 @@ template <typename T>
 struct is_intish
 {
     BOOST_STATIC_CONSTANT(bool, value =
-        (::boost::type_traits::ice_or<
-            ::boost::is_integral<T>::value,
-            ::boost::is_enum<T>::value
+        (::boost::mpl::or_<
+            ::boost::is_integral<T>,
+            ::boost::is_enum<T>
          >::value));
 };
 
